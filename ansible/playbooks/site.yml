@@ -1,0 +1,7 @@
+---
+# Full stack deployment. Only the `common` role exists so far (issue #1); caddy,
+# mirth-connect, monitoring, and backup will be added here as their own issues land.
+- name: Linumed OS - full stack
+  hosts: linumed
+  roles:
+    - common
