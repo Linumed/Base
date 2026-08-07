@@ -32,6 +32,9 @@ repository.
   added must be evaluated for data residency and logging behavior.
 - No credentials, secrets, or real IP addresses in any committed file.
   Always use .env.example templates and Ansible Vault references.
+- Target host baseline is not assumed: `python3` and `sudo` are both `Priority: optional`
+  in Debian 13, so a minimal/netinst install has neither. `scripts/bootstrap.sh` (shell,
+  no Ansible dependency) exists to establish the baseline before any playbook runs.
 
 ---
 
@@ -55,7 +58,7 @@ linumed-os/
 ├── docker/                  # Docker Compose files per service
 ├── docs/                    # Documentation source (MkDocs)
 ├── scripts/                 # Bootstrap and utility scripts
-├── vagrant/                 # Local test environment (Vagrant + VirtualBox)
+├── test/                    # Local test environment (libvirt/KVM, see below)
 ├── ARCHITECTURE.md          # Architecture reference
 ├── CLAUDE.md                # This file
 └── README.md
@@ -109,10 +112,12 @@ Clinics bring their own applications. Linumed OS provides the secure base.
 
 ## Testing
 
-- Local testing uses Vagrant with a Debian 13 base box
-- Vagrantfile is in `vagrant/` and provisions via the Ansible playbooks
+- Local testing uses libvirt/KVM against the official Debian 13 genericcloud image, driven
+  by `test/vm-test.sh`. Not Vagrant/VirtualBox: VirtualBox is not packaged for Debian 13,
+  Vagrant is stuck on 2.3.7 (last MPL-licensed release before the BUSL relicense), and there
+  is no official Debian 13 Vagrant box (Debian bug #1110834, open as of 2026).
 - Before opening a PR, the full `site.yml` playbook must run idempotently
-  against the Vagrant VM (no errors, no changes on second run)
+  against the test VM (no errors, no changes on second run) - `test/vm-test.sh` checks this.
 - Target CI/CD: Forgejo (forgejo.linumed.com on HostEurope VPS) with Forgejo Runner
   on the local Linumed dev server, connected via Headscale/WireGuard tunnel
 - Interim CI/CD (until dev server is operational): GitHub Actions runs ansible-lint
@@ -128,8 +133,8 @@ Target setup (once Linumed dev server is operational):
 - Forgejo at forgejo.linumed.com (HostEurope VPS) as Git host and CI platform
 - Forgejo Runner on the Linumed dev server (local EliteDesk), connected to the VPS
   via Headscale/WireGuard tunnel
-- Pipelines run locally on the dev server: ansible-lint, Vagrant VM provisioning,
-  idempotency checks
+- Pipelines run locally on the dev server: ansible-lint, libvirt/KVM VM provisioning
+  (`test/vm-test.sh`), idempotency checks
 
 Interim setup (GitHub Actions, until dev server is ready):
 
