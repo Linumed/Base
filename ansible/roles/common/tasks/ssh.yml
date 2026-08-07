@@ -1,0 +1,104 @@
+---
+# Pre-flight: refuse to disable root login if nobody could get back in.
+- name: Pre-flight - look for a sudo-capable non-root user with an SSH key
+  ansible.builtin.shell: |
+    set -o pipefail
+    for u in $(getent passwd | awk -F: '$3>=1000 && $3<65534 {print $1}'); do
+      home=$(getent passwd "$u" | cut -d: -f6)
+      keyfile="$home/.ssh/authorized_keys"
+      if [ -s "$keyfile" ] && id -nG "$u" 2>/dev/null | tr ' ' '\n' | grep -qx sudo; then
+        echo "$u"
+        exit 0
+      fi
+    done
+    exit 1
+  args:
+    executable: /bin/bash
+  register: common_ssh_preflight_user
+  changed_when: false
+  failed_when: false
+  become: true
+  when: common_ssh_preflight_enabled | bool and common_ssh_permit_root_login == "no"
+
+- name: Pre-flight - abort if no qualifying user was found
+  ansible.builtin.assert:
+    that:
+      - common_ssh_preflight_user.rc == 0
+    fail_msg: >-
+      Refusing to disable PermitRootLogin: no non-root user (UID >= 1000) with sudo rights
+      and a populated ~/.ssh/authorized_keys was found. Create one first, or set
+      common_ssh_preflight_enabled: false if this is a deliberately root-only host.
+    success_msg: "Pre-flight OK, found sudo-capable user: {{ common_ssh_preflight_user.stdout }}"
+  when: common_ssh_preflight_enabled | bool and common_ssh_permit_root_login == "no"
+
+# Socket guard: with ssh.socket active, sshd ignores its own Port directive - the port comes
+# from the socket unit's ListenStream=. Silently deploying a mismatched port would be the
+# worst failure mode here, so this aborts loudly instead.
+- name: Socket guard - read ssh.socket unit state
+  ansible.builtin.systemd_service:
+    name: ssh.socket
+  register: common_ssh_socket_status
+  changed_when: false
+  become: true
+
+- name: Socket guard - abort if socket activation is in use with a non-default port
+  ansible.builtin.assert:
+    that:
+      - >-
+        common_ssh_port == 22 or
+        (common_ssh_socket_status.status.ActiveState != 'active' and
+         common_ssh_socket_status.status.UnitFileState not in ('enabled', 'enabled-runtime'))
+    fail_msg: >-
+      ssh.socket is enabled/active and common_ssh_port is not 22. Socket activation ignores
+      the sshd Port directive (the port comes from ssh.socket's ListenStream=). Adjust
+      /etc/systemd/system/ssh.socket.d/listen.conf yourself, or keep common_ssh_port: 22.
+
+# Config is written as a drop-in rather than templating /etc/ssh/sshd_config itself, because
+# that file is ucf-managed on Debian - a full-file template would fight ucf on every
+# openssh-server upgrade. The 10- prefix matters: sshd uses the first value it finds for each
+# keyword, and cloud images ship a 50-cloud-init.conf drop-in that would otherwise win.
+- name: Deploy SSH hardening drop-in
+  ansible.builtin.template:
+    src: sshd_hardening.conf.j2
+    dest: /etc/ssh/sshd_config.d/10-linumed-hardening.conf
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+  register: common_ssh_dropin
+  become: true
+  notify: Reload ssh
+
+- name: Validate full sshd configuration
+  ansible.builtin.command: /usr/sbin/sshd -t
+  register: common_ssh_validate
+  changed_when: false
+  failed_when: false
+  become: true
+
+- name: Roll back drop-in if validation failed and a previous version existed
+  ansible.builtin.copy:
+    src: "{{ common_ssh_dropin.backup_file }}"
+    dest: /etc/ssh/sshd_config.d/10-linumed-hardening.conf
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  when:
+    - common_ssh_validate.rc != 0
+    - common_ssh_dropin.backup_file is defined
+
+- name: Remove drop-in if validation failed and no previous version existed
+  ansible.builtin.file:
+    path: /etc/ssh/sshd_config.d/10-linumed-hardening.conf
+    state: absent
+  become: true
+  when:
+    - common_ssh_validate.rc != 0
+    - common_ssh_dropin.backup_file is not defined
+
+- name: Fail if sshd configuration is invalid
+  ansible.builtin.fail:
+    msg: "sshd -t failed after deploying the hardening drop-in: {{ common_ssh_validate.stderr }}"
+  when: common_ssh_validate.rc != 0

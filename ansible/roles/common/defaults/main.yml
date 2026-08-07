@@ -1,0 +1,15 @@
+---
+# SSH hardening
+common_ssh_port: 22
+common_ssh_permit_root_login: "no"
+common_ssh_password_authentication: "no"
+common_ssh_pubkey_authentication: "yes"
+common_ssh_kbd_interactive_authentication: "no"
+common_ssh_x11_forwarding: "no"
+common_ssh_max_auth_tries: 3
+common_ssh_login_grace_time: 30
+common_ssh_allow_users: []
+common_ssh_allow_groups: []
+
+# Set to false only for deliberately root-only setups (e.g. throwaway CI images).
+common_ssh_preflight_enabled: true

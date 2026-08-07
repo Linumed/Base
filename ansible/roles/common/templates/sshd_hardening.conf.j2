@@ -1,0 +1,17 @@
+# Managed by Ansible (linumed-os, role: common). Do not edit by hand, changes will be overwritten.
+# Ciphers/MACs/KexAlgorithms are deliberately left at the OpenSSH upstream defaults shipped by
+# Debian and not overridden here.
+Port {{ common_ssh_port }}
+PermitRootLogin {{ common_ssh_permit_root_login }}
+PasswordAuthentication {{ common_ssh_password_authentication }}
+PubkeyAuthentication {{ common_ssh_pubkey_authentication }}
+KbdInteractiveAuthentication {{ common_ssh_kbd_interactive_authentication }}
+X11Forwarding {{ common_ssh_x11_forwarding }}
+MaxAuthTries {{ common_ssh_max_auth_tries }}
+LoginGraceTime {{ common_ssh_login_grace_time }}
+{% if common_ssh_allow_users %}
+AllowUsers {{ common_ssh_allow_users | join(' ') }}
+{% endif %}
+{% if common_ssh_allow_groups %}
+AllowGroups {{ common_ssh_allow_groups | join(' ') }}
+{% endif %}
