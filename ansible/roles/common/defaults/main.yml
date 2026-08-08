@@ -40,3 +40,17 @@ common_fail2ban_bantime: "1h"
 common_fail2ban_ignoreip:
   - "127.0.0.1/8"
   - "::1"
+
+# unattended-upgrades - automatic package updates
+common_unattended_upgrades_enabled: true
+# Security-only by default. Add "${distro_id}:${distro_codename}-updates" for full
+# unattended updates, but that pulls in non-security changes unattended too.
+common_unattended_upgrades_origins:
+  - "${distro_id}:${distro_codename}-security"
+# Off by default: an unannounced reboot on healthcare infrastructure is worse than a
+# pending kernel update. Enable deliberately per-host if the maintenance window allows it.
+common_unattended_upgrades_automatic_reboot: false
+common_unattended_upgrades_automatic_reboot_time: "02:00"
+common_unattended_upgrades_remove_unused_deps: true
+# Empty = no mail report (no MTA is assumed to be configured on a fresh host).
+common_unattended_upgrades_mail: ""
