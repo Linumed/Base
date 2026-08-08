@@ -1,0 +1,8 @@
+# Managed by Ansible (linumed-os, role: common). Do not edit by hand, changes will be overwritten.
+[Time]
+{% if common_ntp_servers %}
+NTP={{ common_ntp_servers | join(' ') }}
+{% endif %}
+{% if common_ntp_fallback_servers %}
+FallbackNTP={{ common_ntp_fallback_servers | join(' ') }}
+{% endif %}

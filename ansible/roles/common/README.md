@@ -2,9 +2,8 @@
 
 Base hardening role for Linumed OS. Runs first, before any other role.
 
-Currently implements SSH hardening (issue #1), ufw (#3), fail2ban (#10), and
-unattended-upgrades (#5). NTP/timezone (#11) will be added as a separate task file
-imported from `tasks/main.yml`.
+Implements SSH hardening (issue #1), ufw (#3), fail2ban (#10), unattended-upgrades (#5),
+and NTP/timezone (#11) - the full planned scope of the common role.
 
 Requires the `community.general` collection (for the `ufw` module) - see
 `ansible/requirements.yml`, install with
@@ -74,6 +73,14 @@ sidesteps dpkg conffile prompts on package upgrades.
 on infrastructure that may run patient-adjacent services (Mirth, PACS) is worse than a
 pending kernel update sitting until the next planned maintenance window. Enable it
 deliberately per-host, not as a blanket default.
+
+## NTP and timezone
+
+Timezone via `community.general.timezone` (defaults to `Etc/UTC` - unambiguous log
+timestamps and cross-host correlation matter more than local wall-clock time on a server).
+NTP via `systemd-timesyncd`, which Debian ships active by default - no extra package. A
+drop-in under `timesyncd.conf.d/` for the same reason as the other drop-ins in this role:
+survives package upgrades cleanly.
 
 ### `become: true` on every privileged task, no exceptions
 

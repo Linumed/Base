@@ -10,3 +10,6 @@
 
 - name: Unattended upgrades
   ansible.builtin.import_tasks: unattended-upgrades.yml
+
+- name: NTP and timezone
+  ansible.builtin.import_tasks: ntp.yml
