@@ -1,0 +1,33 @@
+name: ansible-lint
+
+# Interim CI (see CLAUDE.md): once the Linumed dev server's Forgejo Runner is live, this
+# gets replaced by a Forgejo Actions workflow. Deliberately minimal and free of
+# GitHub-specific features (no marketplace ansible-lint action, no matrix, no caching
+# tied to GitHub's cache backend) so the migration is a straight file move.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ansible-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      # Pinned so a lint rule change upstream can't turn green CI red without a
+      # deliberate version bump here.
+      - name: Install ansible-lint
+        run: pip install ansible-lint==26.6.0
+
+      - name: Install required collections
+        run: ansible-galaxy collection install -r ansible/requirements.yml
+
+      - name: Run ansible-lint
+        working-directory: ansible
+        run: ansible-lint
