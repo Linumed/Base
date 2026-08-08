@@ -1,0 +1,31 @@
+name: ansible-lint
+
+# Canonical CI (see CLAUDE.md): runs on the linumed-dev Forgejo Runner, registered with
+# label "docker" only (no "ubuntu-latest" like GitHub) - runs-on must match that label.
+# .github/workflows/ansible-lint.yml is the GitHub-side interim copy kept in sync
+# manually until the GitHub mirror is retired.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ansible-lint:
+    runs-on: docker
+    container:
+      image: python:3.13-slim
+    steps:
+      - uses: actions/checkout@v4
+
+      # Pinned so a lint rule change upstream can't turn green CI red without a
+      # deliberate version bump here.
+      - name: Install ansible-lint
+        run: pip install --no-cache-dir ansible-lint==26.6.0
+
+      - name: Install required collections
+        run: ansible-galaxy collection install -r ansible/requirements.yml
+
+      - name: Run ansible-lint
+        working-directory: ansible
+        run: ansible-lint
