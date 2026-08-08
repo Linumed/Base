@@ -54,3 +54,14 @@ common_unattended_upgrades_automatic_reboot_time: "02:00"
 common_unattended_upgrades_remove_unused_deps: true
 # Empty = no mail report (no MTA is assumed to be configured on a fresh host).
 common_unattended_upgrades_mail: ""
+
+# Timezone and NTP
+# UTC by default - log timestamps and cross-host correlation stay unambiguous regardless of
+# where a given clinic's server physically sits. Override per-inventory if local wall-clock
+# time is required (e.g. for staff reading logs directly on the host).
+common_timezone: "Etc/UTC"
+common_ntp_enabled: true
+# Empty = use systemd-timesyncd's compiled-in default (Debian's own NTP pool). Override for
+# an on-prem NTP server where internet egress is restricted.
+common_ntp_servers: []
+common_ntp_fallback_servers: []
