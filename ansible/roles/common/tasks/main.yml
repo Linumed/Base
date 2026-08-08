@@ -4,3 +4,6 @@
 
 - name: Ufw firewall
   ansible.builtin.import_tasks: ufw.yml
+
+- name: Fail2ban
+  ansible.builtin.import_tasks: fail2ban.yml

@@ -1,0 +1,9 @@
+# Managed by Ansible (linumed-os, role: common). Do not edit by hand, changes will be overwritten.
+[sshd]
+enabled = true
+port = {{ common_ssh_port }}
+backend = {{ common_fail2ban_backend }}
+maxretry = {{ common_fail2ban_maxretry }}
+findtime = {{ common_fail2ban_findtime }}
+bantime = {{ common_fail2ban_bantime }}
+ignoreip = {{ common_fail2ban_ignoreip | join(' ') }}

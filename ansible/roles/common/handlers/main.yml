@@ -4,3 +4,12 @@
     name: ssh
     state: reloaded
   become: true
+
+# Restart, not reload: fail2ban's reload picks up jail changes in modern versions, but a
+# restart is simpler to reason about and the brief gap in ban enforcement is acceptable for
+# a config change that happens rarely.
+- name: Restart fail2ban
+  ansible.builtin.systemd_service:
+    name: fail2ban
+    state: restarted
+  become: true
