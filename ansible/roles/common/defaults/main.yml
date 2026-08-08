@@ -28,3 +28,15 @@ common_ufw_allow_ssh: true
 #       proto: tcp
 #       comment: "HTTPS (Caddy)"
 common_ufw_extra_rules: []
+
+# fail2ban - SSH brute-force protection
+common_fail2ban_enabled: true
+# systemd journal, not /var/log/auth.log - avoids a hard dependency on rsyslog being
+# installed and configured to write that file.
+common_fail2ban_backend: "systemd"
+common_fail2ban_maxretry: 5
+common_fail2ban_findtime: "10m"
+common_fail2ban_bantime: "1h"
+common_fail2ban_ignoreip:
+  - "127.0.0.1/8"
+  - "::1"

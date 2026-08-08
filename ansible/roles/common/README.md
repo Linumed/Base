@@ -2,8 +2,8 @@
 
 Base hardening role for Linumed OS. Runs first, before any other role.
 
-Currently implements SSH hardening (issue #1) and ufw (#3). fail2ban (#10),
-unattended-upgrades (#5), and NTP/timezone (#11) will be added as separate task files
+Currently implements SSH hardening (issue #1), ufw (#3), and fail2ban (#10).
+unattended-upgrades (#5) and NTP/timezone (#11) will be added as separate task files
 imported from `tasks/main.yml`.
 
 Requires the `community.general` collection (for the `ufw` module) - see
@@ -50,6 +50,17 @@ ports go through `common_ufw_extra_rules`. See `defaults/main.yml` for both.
 Rule ordering in `tasks/ufw.yml` matters: policies are set, then the SSH allow rule, then
 any extra rules, and `ufw enable` runs last - enabling first would apply the deny-incoming
 default before any allow rule exists.
+
+## fail2ban
+
+Bans IPs on repeated SSH auth failures. Config is a drop-in under `jail.d/`
+(`10-linumed-sshd.conf`), not a template of `jail.local` - fail2ban's own docs point at
+`jail.d/` as the place for local overrides, and `jail.conf` gets overwritten on package
+upgrades either way. Backend is `systemd` (reads the journal directly) rather than
+`/var/log/auth.log`, so this doesn't pick up a dependency on rsyslog being installed.
+
+Works alongside ufw: fail2ban's default `iptables-multiport` action and ufw's rules live
+in separate netfilter chains and don't conflict.
 
 ### `become: true` on every privileged task, no exceptions
 
