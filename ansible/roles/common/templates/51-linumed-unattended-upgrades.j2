@@ -1,0 +1,15 @@
+// Managed by Ansible (linumed-os, role: common). Do not edit by hand, changes will be overwritten.
+// Separate file rather than editing the package-provided 50unattended-upgrades - apt.conf.d
+// files are all merged regardless of name, so this avoids fighting dpkg conffile prompts on
+// unattended-upgrades package upgrades.
+Unattended-Upgrade::Origins-Pattern {
+{% for origin in common_unattended_upgrades_origins %}
+    "{{ origin }}";
+{% endfor %}
+};
+Unattended-Upgrade::Remove-Unused-Dependencies "{{ common_unattended_upgrades_remove_unused_deps | lower }}";
+Unattended-Upgrade::Automatic-Reboot "{{ common_unattended_upgrades_automatic_reboot | lower }}";
+Unattended-Upgrade::Automatic-Reboot-Time "{{ common_unattended_upgrades_automatic_reboot_time }}";
+{% if common_unattended_upgrades_mail %}
+Unattended-Upgrade::Mail "{{ common_unattended_upgrades_mail }}";
+{% endif %}

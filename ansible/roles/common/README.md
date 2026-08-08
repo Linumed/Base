@@ -2,8 +2,8 @@
 
 Base hardening role for Linumed OS. Runs first, before any other role.
 
-Currently implements SSH hardening (issue #1), ufw (#3), and fail2ban (#10).
-unattended-upgrades (#5) and NTP/timezone (#11) will be added as separate task files
+Currently implements SSH hardening (issue #1), ufw (#3), fail2ban (#10), and
+unattended-upgrades (#5). NTP/timezone (#11) will be added as a separate task file
 imported from `tasks/main.yml`.
 
 Requires the `community.general` collection (for the `ufw` module) - see
@@ -61,6 +61,19 @@ upgrades either way. Backend is `systemd` (reads the journal directly) rather th
 
 Works alongside ufw: fail2ban's default `iptables-multiport` action and ufw's rules live
 in separate netfilter chains and don't conflict.
+
+## unattended-upgrades
+
+Security-origin package updates applied automatically via the standard
+`apt-daily-upgrade.timer`. Config lives in a separate `51-linumed-unattended-upgrades`
+drop-in rather than editing the package-provided `50unattended-upgrades` - `apt.conf.d`
+files are all merged regardless of filename (unlike sshd's first-wins drop-ins), so this
+sidesteps dpkg conffile prompts on package upgrades.
+
+`common_unattended_upgrades_automatic_reboot` defaults to `false` - an unannounced reboot
+on infrastructure that may run patient-adjacent services (Mirth, PACS) is worse than a
+pending kernel update sitting until the next planned maintenance window. Enable it
+deliberately per-host, not as a blanket default.
 
 ### `become: true` on every privileged task, no exceptions
 
