@@ -1,0 +1,9 @@
+# Copy to Caddyfile and adjust before running `docker compose up -d` in this directory.
+# See docs/roles/caddy.md for the Ansible-managed equivalent (ansible/roles/caddy).
+{
+	email admin@example.com
+}
+
+example.linumed.local {
+	reverse_proxy 127.0.0.1:8080
+}

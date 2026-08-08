@@ -1,0 +1,48 @@
+# caddy
+
+Reverse proxy with automatic ACME/TLS, deployed as a single Docker Compose stack
+(issue #6).
+
+## Variables
+
+See `defaults/main.yml`, all prefixed `caddy_*`. German user-facing writeup with
+verification steps: `docs/roles/caddy.md`.
+
+## What this role does not do
+
+- **Does not install Docker or the compose plugin.** The role preflight-checks for
+  `docker compose version` and fails with a clear message if it's missing, rather than
+  installing Docker itself - that's a separate concern (GPG key management, apt repo
+  setup) tracked in a follow-up issue, not part of "Caddyfile via Ansible Template,
+  automatisches TLS via ACME" (#6). Every future docker-based role (mirth-connect,
+  monitoring) will hit the same gap until that's built.
+- **Does not open ufw ports.** Set `common_ufw_extra_rules` (see the `common` role) to
+  open 80/tcp and 443/tcp - Caddy needs both reachable for HTTP-01 ACME challenges and
+  regular traffic. Unlike the Docker stacks on the dev server itself, Caddy is *meant* to
+  be reachable from the LAN/internet - do not bind its ports to 127.0.0.1.
+
+## Two docker-compose.yml files, deliberately
+
+`docker/caddy/docker-compose.yml` is a static reference for spinning Caddy up manually
+(local testing, `.env`-driven). `ansible/roles/caddy/templates/docker-compose.yml.j2` is
+what actually gets deployed by this role - it uses Ansible variables instead of `.env`,
+since the role already owns the whole config lifecycle. They're kept close in structure
+on purpose; bump `caddy_image` here *and* the image tag in `docker/caddy/` together.
+
+## Validation and rollback
+
+Mirrors the pattern in `common`'s SSH role: the Caddyfile is deployed with `backup: true`,
+then validated with `docker run ... caddy validate` using the same pinned image that will
+actually run it. On failure, the previous Caddyfile (or no file, if this was the first
+deploy) is restored before the play fails - the stack is never left pointed at a Caddyfile
+that doesn't parse.
+
+## Reload vs. recreate
+
+A Caddyfile-only change (`caddy_sites` edit) triggers the `Reload caddy` handler
+(`caddy reload` inside the running container, zero downtime) rather than a container
+recreate - `docker_compose_v2` doesn't recreate a container over a bind-mounted file
+change, since it diffs the *service definition*, not mounted file content. A
+`docker-compose.yml.j2` change (image bump, port change) goes through
+`community.docker.docker_compose_v2` normally, which does recreate when the service
+definition itself changes.

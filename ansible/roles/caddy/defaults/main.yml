@@ -1,0 +1,17 @@
+---
+caddy_image: "caddy:2.9.1-alpine"
+caddy_deploy_dir: "/opt/linumed-os/caddy"
+caddy_http_port: 80
+caddy_https_port: 443
+
+# ACME account email for Let's Encrypt notifications. Empty is valid (Caddy still gets
+# certs), but Let's Encrypt strongly recommends setting one for expiry/revocation notices.
+caddy_email: ""
+
+# Reverse-proxied sites. Each entry:
+#   domain: the hostname Caddy answers on (ACME auto-TLS is per domain)
+#   reverse_proxy: upstream address, e.g. "127.0.0.1:8080"
+#   extra: optional raw Caddyfile lines appended inside the site block (e.g. extra headers)
+# Empty by default - an empty Caddyfile with no site blocks is valid but does nothing
+# useful, so this must be set per-inventory before the role is worth running.
+caddy_sites: []

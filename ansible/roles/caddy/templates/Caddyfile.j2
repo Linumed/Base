@@ -1,0 +1,15 @@
+# Managed by Ansible (linumed-os, role: caddy). Do not edit by hand, changes will be overwritten.
+{
+{% if caddy_email %}
+	email {{ caddy_email }}
+{% endif %}
+}
+
+{% for site in caddy_sites %}
+{{ site.domain }} {
+	reverse_proxy {{ site.reverse_proxy }}
+{% if site.extra is defined and site.extra %}
+	{{ site.extra }}
+{% endif %}
+}
+{% endfor %}

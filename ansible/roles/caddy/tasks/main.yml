@@ -1,0 +1,94 @@
+---
+# Docker/Compose installation is out of scope for this role (tracked separately - see
+# README.md). Fail early with a clear message instead of a confusing error deep in the
+# docker_compose_v2 module.
+- name: Preflight - check docker compose is available
+  ansible.builtin.command: docker compose version
+  register: caddy_compose_check
+  changed_when: false
+  failed_when: false
+  become: true
+
+- name: Preflight - abort if docker compose is missing
+  ansible.builtin.assert:
+    that:
+      - caddy_compose_check.rc == 0
+    fail_msg: >-
+      'docker compose version' failed - Docker Engine and the compose plugin must be
+      installed on the target before this role runs. Not automated by linumed-os yet.
+    success_msg: "Preflight OK: {{ caddy_compose_check.stdout }}"
+
+- name: Ensure deploy directory exists
+  ansible.builtin.file:
+    path: "{{ caddy_deploy_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+
+- name: Deploy Caddyfile
+  ansible.builtin.template:
+    src: Caddyfile.j2
+    dest: "{{ caddy_deploy_dir }}/Caddyfile"
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+  register: caddy_dropin
+  become: true
+  notify: Reload caddy
+
+- name: Validate Caddyfile
+  ansible.builtin.command: >-
+    docker run --rm
+    -v {{ caddy_deploy_dir }}/Caddyfile:/etc/caddy/Caddyfile:ro
+    {{ caddy_image }}
+    caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
+  register: caddy_validate
+  changed_when: false
+  failed_when: false
+  become: true
+
+- name: Roll back Caddyfile if validation failed and a previous version existed
+  ansible.builtin.copy:
+    src: "{{ caddy_dropin.backup_file }}"
+    dest: "{{ caddy_deploy_dir }}/Caddyfile"
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  when:
+    - caddy_validate.rc != 0
+    - caddy_dropin.backup_file is defined
+
+- name: Remove Caddyfile if validation failed and no previous version existed
+  ansible.builtin.file:
+    path: "{{ caddy_deploy_dir }}/Caddyfile"
+    state: absent
+  become: true
+  when:
+    - caddy_validate.rc != 0
+    - caddy_dropin.backup_file is not defined
+
+- name: Fail if Caddyfile is invalid
+  ansible.builtin.fail:
+    msg: "Caddyfile validation failed: {{ caddy_validate.stderr }}"
+  when: caddy_validate.rc != 0
+
+- name: Deploy docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ caddy_deploy_dir }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+
+- name: Deploy the caddy stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ caddy_deploy_dir }}"
+    state: present
+    pull: missing
+  become: true
