@@ -1,7 +1,8 @@
 ---
-# Docker/Compose installation is out of scope for this role (tracked separately - see
-# README.md). Fail early with a clear message instead of a confusing error deep in the
-# docker_compose_v2 module.
+# Docker/Compose installation is a separate role (docker, issue #17), run before this one
+# in playbooks/site.yml. This preflight is defense in depth for anyone running the caddy
+# role standalone without it - fail early with a clear message instead of a confusing
+# error deep in the docker_compose_v2 module.
 - name: Preflight - check docker compose is available
   ansible.builtin.command: docker compose version
   register: caddy_compose_check
@@ -15,7 +16,8 @@
       - caddy_compose_check.rc == 0
     fail_msg: >-
       'docker compose version' failed - Docker Engine and the compose plugin must be
-      installed on the target before this role runs. Not automated by linumed-os yet.
+      installed on the target before this role runs. Run the 'docker' role first
+      (see playbooks/site.yml), or install it yourself if running caddy standalone.
     success_msg: "Preflight OK: {{ caddy_compose_check.stdout }}"
 
 - name: Ensure deploy directory exists

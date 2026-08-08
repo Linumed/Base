@@ -38,10 +38,11 @@ caddy_sites:
 
 ## Voraussetzungen
 
-- Docker Engine und Compose-Plugin müssen auf dem Zielhost bereits installiert sein - die
-  Rolle prüft das per Preflight (`docker compose version`) und bricht mit einer klaren
-  Meldung ab, installiert aber nichts selbst. Das ist ein bekannter, separat verfolgter
-  Lückenschluss (betrifft auch die künftigen mirth-connect- und monitoring-Rollen).
+- Docker Engine und Compose-Plugin - bereitgestellt durch die `docker`-Rolle (siehe
+  [docker: Docker Engine](docker.md)), die in `playbooks/site.yml` vor `caddy` läuft.
+  `caddy` prüft das per Preflight (`docker compose version`) und bricht mit einer klaren
+  Meldung ab, falls die Voraussetzung fehlt - z. B. beim eigenständigen Ausführen ohne die
+  `docker`-Rolle.
 - Collection `community.docker` (siehe `ansible/requirements.yml`):
   `ansible-galaxy collection install -r ansible/requirements.yml`
 - ufw-Regeln für Port 80/tcp und 443/tcp selbst setzen (`common_ufw_extra_rules` in der

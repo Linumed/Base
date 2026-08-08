@@ -1,0 +1,143 @@
+---
+# Docker Engine + compose plugin from the official Docker apt repo. Consumed by caddy,
+# mirth-connect, and monitoring, all of which otherwise hit the same
+# "docker compose version: command not found" wall (issue #17).
+
+- name: Install prerequisites for adding the Docker apt repo
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+      - gnupg
+    state: present
+    update_cache: true
+  become: true
+
+- name: Create keyring directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+
+- name: Download Docker's GPG key
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/debian/gpg
+    dest: /etc/apt/keyrings/docker.asc
+    owner: root
+    group: root
+    mode: "0644"
+    force: true
+  become: true
+
+# Debian 13 (Trixie) is the target, but Docker's repo can lag a new Debian release for
+# weeks/months after it goes stable. Probe before committing to ansible_distribution_release,
+# and fall back to docker_apt_release_fallback (bookworm) rather than fail the whole role.
+- name: Probe whether Docker's repo has a Release file for this release
+  ansible.builtin.uri:
+    url: "https://download.docker.com/linux/debian/dists/{{ docker_apt_release }}/Release"
+    status_code: [200, 404]
+  register: docker_apt_release_probe
+  changed_when: false
+
+- name: Set the apt release line to use
+  ansible.builtin.set_fact:
+    docker_apt_release_effective: >-
+      {{ docker_apt_release if docker_apt_release_probe.status == 200 else docker_apt_release_fallback }}
+
+- name: Warn when falling back to an older release line
+  ansible.builtin.debug:
+    msg: >-
+      Docker has no apt repo yet for '{{ docker_apt_release }}' - using
+      '{{ docker_apt_release_fallback }}' instead. Revisit docker_apt_release once
+      Docker publishes a native Trixie repo.
+  when: docker_apt_release_probe.status != 200
+
+- name: Add the Docker apt repository
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb [arch={{ 'amd64' if ansible_architecture == 'x86_64' else ansible_architecture }}
+      signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian
+      {{ docker_apt_release_effective }} stable
+    filename: docker
+    state: present
+    update_cache: true
+  become: true
+
+- name: Install Docker Engine and compose plugin
+  ansible.builtin.apt:
+    name: "{{ docker_packages }}"
+    state: present
+  become: true
+  register: docker_package_install
+
+- name: Configure Docker daemon log rotation
+  ansible.builtin.copy:
+    content: |
+      {
+        "log-driver": "json-file",
+        "log-opts": {
+          "max-size": "{{ docker_log_max_size }}",
+          "max-file": "{{ docker_log_max_file }}"
+        }
+      }
+    dest: /etc/docker/daemon.json
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  register: docker_daemon_json
+
+# A plain handler here would only fire at the end of the whole play - after later roles
+# (caddy, mirth-connect, monitoring) have already started containers via
+# docker_compose_v2. Restarting a daemon with live containers under it is slow and, on a
+# constrained VM, times out outright. Restarting inline instead guarantees it happens
+# before anything is running on top of Docker.
+- name: Restart docker if the package or daemon config changed
+  when: docker_package_install is changed or docker_daemon_json is changed
+  become: true
+  block:
+    - name: Restart docker
+      ansible.builtin.systemd_service:
+        name: docker
+        state: restarted
+  rescue:
+    # Verified by hand on the libvirt/KVM test VM (2 vCPUs): the D-Bus RestartUnit call
+    # can report "Connection timed out" purely because the bus is busy right after the
+    # docker-ce apt install (containerd, buildx, compose, plus git/perl pulled in
+    # transitively) - even though the restart itself completes within a couple of
+    # seconds. Immediately after the module reported failure, `systemctl status docker`
+    # showed it already active from that same restart. Trusting the module's own
+    # reported failure here would be exactly the "closed from tooling output, not
+    # measured behavior" mistake - so verify the actual unit state instead of trusting
+    # the same racy D-Bus call.
+    - name: Re-check actual docker unit state after the reported failure
+      ansible.builtin.service_facts:
+      register: docker_service_facts_check
+      until: docker_service_facts_check.ansible_facts.services['docker.service'].state | default('') == 'running'
+      retries: 6
+      delay: 5
+
+    - name: Fail if docker is not actually active after all
+      ansible.builtin.fail:
+        msg: >-
+          docker.service is not active after a restart attempt - this is a real failure,
+          not the known D-Bus reply timeout. See 'journalctl -u docker' on the target.
+      when: docker_service_facts_check.ansible_facts.services['docker.service'].state | default('') != 'running'
+
+- name: Ensure Docker is enabled and running
+  ansible.builtin.systemd_service:
+    name: docker
+    enabled: true
+    state: started
+  become: true
+
+- name: Add users to the docker group
+  ansible.builtin.user:
+    name: "{{ item }}"
+    groups: docker
+    append: true
+  loop: "{{ docker_users }}"
+  become: true

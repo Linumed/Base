@@ -13,3 +13,12 @@
 
 - name: NTP and timezone
   ansible.builtin.import_tasks: ntp.yml
+
+# Flush here rather than letting these pile up with later roles' own restarts (docker,
+# caddy, ...) at the end of the play. Four systemd restart/reload D-Bus calls fired back
+# to back can outrun the bus's reply timeout on constrained hardware even though every
+# job actually completes - observed while adding the docker role (issue #17): its restart
+# handler reported "Connection timed out" while `systemctl status docker` showed it had
+# in fact restarted seconds earlier. Splitting the bursts apart removes the contention.
+- name: Flush handlers
+  ansible.builtin.meta: flush_handlers

@@ -10,12 +10,10 @@ verification steps: `docs/roles/caddy.md`.
 
 ## What this role does not do
 
-- **Does not install Docker or the compose plugin.** The role preflight-checks for
-  `docker compose version` and fails with a clear message if it's missing, rather than
-  installing Docker itself - that's a separate concern (GPG key management, apt repo
-  setup) tracked in a follow-up issue, not part of "Caddyfile via Ansible Template,
-  automatisches TLS via ACME" (#6). Every future docker-based role (mirth-connect,
-  monitoring) will hit the same gap until that's built.
+- **Does not install Docker or the compose plugin.** That's the `docker` role (#17),
+  which runs before `caddy` in `playbooks/site.yml`. This role only preflight-checks for
+  `docker compose version` and fails with a clear message if it's missing - defense in
+  depth for anyone running the caddy role standalone.
 - **Does not open ufw ports.** Set `common_ufw_extra_rules` (see the `common` role) to
   open 80/tcp and 443/tcp - Caddy needs both reachable for HTTP-01 ACME challenges and
   regular traffic. Unlike the Docker stacks on the dev server itself, Caddy is *meant* to

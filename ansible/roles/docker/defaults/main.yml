@@ -1,0 +1,25 @@
+---
+# Docker Engine + compose plugin, installed from the official Docker apt repo.
+# Debian 13 (Trixie) is the target, but Docker's repo may lag a new Debian release -
+# fall back to the last stable codename's line if `trixie` isn't published yet.
+docker_apt_release: "{{ ansible_distribution_release }}"
+docker_apt_release_fallback: "bookworm"
+
+# Packages installed from the Docker apt repo (docker-ce provides the daemon,
+# docker-compose-plugin provides `docker compose`, buildx is required by some
+# multi-arch image pulls even on single-arch hosts).
+docker_packages:
+  - docker-ce
+  - docker-ce-cli
+  - containerd.io
+  - docker-buildx-plugin
+  - docker-compose-plugin
+
+# Users to add to the `docker` group (passwordless access to the Docker socket -
+# equivalent to root on the host, so keep this list short and deliberate).
+docker_users: []
+
+# Log rotation, so container logs don't fill the disk (real constraint on the dev
+# server's 256 GB SSD, but applies to any target).
+docker_log_max_size: "10m"
+docker_log_max_file: "3"
