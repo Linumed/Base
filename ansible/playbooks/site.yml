@@ -5,4 +5,5 @@
   hosts: linumed
   roles:
     - common
+    - docker
     - caddy
