@@ -1,0 +1,48 @@
+---
+- name: Install ufw
+  ansible.builtin.apt:
+    name: ufw
+    state: present
+    update_cache: true
+  become: true
+
+- name: Set default incoming policy
+  community.general.ufw:
+    direction: incoming
+    policy: "{{ common_ufw_default_incoming }}"
+  become: true
+
+- name: Set default outgoing policy
+  community.general.ufw:
+    direction: outgoing
+    policy: "{{ common_ufw_default_outgoing }}"
+  become: true
+
+# Must run before "Enable ufw" below - enabling first, with no allow rule in place yet,
+# would apply the deny-incoming default to the connection Ansible is running over.
+- name: Allow SSH port (matches common_ssh_port from ssh.yml)
+  community.general.ufw:
+    rule: allow
+    port: "{{ common_ssh_port | string }}"
+    proto: tcp
+    comment: "SSH (managed by common role)"
+  become: true
+  when: common_ufw_allow_ssh | bool
+
+- name: Allow extra ports
+  community.general.ufw:
+    rule: "{{ item.rule | default('allow') }}"
+    port: "{{ item.port | string }}"
+    proto: "{{ item.proto | default('tcp') }}"
+    src: "{{ item.src | default(omit) }}"
+    comment: "{{ item.comment | default(omit) }}"
+  loop: "{{ common_ufw_extra_rules }}"
+  loop_control:
+    label: "{{ item.port }}/{{ item.proto | default('tcp') }}"
+  become: true
+
+- name: Enable ufw
+  community.general.ufw:
+    state: enabled
+  become: true
+  when: common_ufw_enabled | bool

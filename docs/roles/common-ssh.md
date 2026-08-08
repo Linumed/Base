@@ -15,7 +15,7 @@ Alle Variablen haben den Präfix `common_ssh_*` und stehen mit sinnvollen Defaul
 
 | Variable | Default | Bedeutung |
 |---|---|---|
-| `common_ssh_port` | `22` | SSH-Port. Bei Änderung: passende ufw-Regel selbst pflegen (Issue #3 liefert die ufw-Rolle noch nicht automatisch) |
+| `common_ssh_port` | `22` | SSH-Port. Die ufw-Rolle öffnet diesen Port automatisch (siehe `common-ufw.md`) - beim Ändern reicht es, `common_ssh_port` einmal zentral zu setzen |
 | `common_ssh_permit_root_login` | `"no"` | Root-Login komplett aus |
 | `common_ssh_password_authentication` | `"no"` | Passwort-Login aus, nur noch Key |
 | `common_ssh_pubkey_authentication` | `"yes"` | Key-Login an |
@@ -66,8 +66,6 @@ Zusätzlich: ein Passwort-Login muss fehlschlagen, ein Key-Login muss funktionie
   `README.Debian` von `openssh-server`), ignoriert `sshd` seine eigene `Port`-Direktive — der
   Port kommt dann aus `ListenStream=` der Socket-Unit. Die Rolle erkennt das und bricht ab,
   statt einen wirkungslosen Port zu setzen.
-- **Port-Wechsel ohne ufw-Regel**: wer `common_ssh_port` ändert, sperrt sich aus, solange die
-  ufw-Rolle (Issue #3) den neuen Port nicht freigibt. Erst ufw anpassen, dann Port wechseln.
 - **Root-Login-Sperre ohne Rettungsanker**: die Rolle bricht von sich aus ab, wenn kein
   Nicht-Root-Nutzer mit Sudo-Rechten und hinterlegtem SSH-Key existiert — das ist Absicht,
   nicht ein Bug. Vor dem ersten Lauf also erst einen Admin-Nutzer mit Key anlegen (siehe
