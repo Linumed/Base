@@ -1,0 +1,32 @@
+# Managed by Ansible (linumed-os, role: caddy). Do not edit by hand, changes will be overwritten.
+# Deliberately close to docker/caddy/docker-compose.yml (the manual-testing reference) but
+# not identical - this one uses Ansible variables instead of a .env file, since the role
+# already owns config generation end to end. Keep both in sync when bumping caddy_image.
+services:
+  caddy:
+    image: {{ caddy_image }}
+    # Fixed name, not left to compose's default project-derived naming - the "Reload caddy"
+    # handler execs into this container by name and needs a stable target.
+    container_name: linumed-os-caddy
+    restart: unless-stopped
+    ports:
+      - "{{ caddy_http_port }}:80"
+      - "{{ caddy_https_port }}:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    healthcheck:
+      # 127.0.0.1, not localhost - Caddy's admin API only binds the IPv4 loopback, and
+      # "localhost" resolves to ::1 first inside the container, which wget then can't
+      # reach (confirmed 2026-08-08: healthcheck stuck at "starting" with "Connection
+      # refused" until switched to the literal IP).
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:2019/config/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  caddy_data:
+  caddy_config:

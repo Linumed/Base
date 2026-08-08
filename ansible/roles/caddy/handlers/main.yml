@@ -1,0 +1,9 @@
+---
+# Zero-downtime reload: the Caddyfile is bind-mounted, so a content-only change doesn't
+# make docker_compose_v2 recreate the container (it diffs the service definition, not the
+# mounted file). An explicit reload picks up the new config without dropping connections.
+- name: Reload caddy
+  community.docker.docker_container_exec:
+    container: linumed-os-caddy
+    command: caddy reload --config /etc/caddy/Caddyfile --force
+  become: true
