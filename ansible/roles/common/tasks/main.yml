@@ -7,3 +7,6 @@
 
 - name: Fail2ban
   ansible.builtin.import_tasks: fail2ban.yml
+
+- name: Unattended upgrades
+  ansible.builtin.import_tasks: unattended-upgrades.yml
