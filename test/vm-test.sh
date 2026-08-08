@@ -10,6 +10,11 @@
 #   libvirt-daemon-system virtinst cloud-image-utils qemu-utils ansible ansible-lint
 set -euo pipefail
 
+# Non-root libvirt clients default to qemu:///session, which has no "default" NAT network
+# defined (that lives under qemu:///system, alongside libvirtd's system-wide config). Pin
+# the connection explicitly so virsh/virt-install use the system instance this repo assumes.
+export LIBVIRT_DEFAULT_URI="qemu:///system"
+
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORK_DIR="$(mktemp -d /tmp/linumed-os-vmtest.XXXXXX)"
 # The libvirt-qemu user (not root/the invoking user) needs to reach the disk images.
@@ -62,8 +67,8 @@ echo "==> Starting VM"
 # partition), so plain SeaBIOS just loops re-drawing the GRUB banner without ever booting.
 virt-install \
   --name "${VM_NAME}" \
-  --memory 1024 \
-  --vcpus 1 \
+  --memory 1536 \
+  --vcpus 2 \
   --disk "path=${WORK_DIR}/disk.qcow2,format=qcow2" \
   --disk "path=${WORK_DIR}/seed.img,device=cdrom" \
   --os-variant debian12 \

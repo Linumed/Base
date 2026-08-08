@@ -45,6 +45,7 @@ linumed-os/
 ├── ansible/
 │   ├── roles/
 │   │   ├── common/          # Hardening, firewall, SSH, updates
+│   │   ├── docker/          # Docker Engine + compose plugin, shared prerequisite
 │   │   ├── mirth-connect/   # HL7/FHIR integration engine (Dockerized)
 │   │   ├── monitoring/      # Prometheus + Grafana + Loki + Node Exporter
 │   │   ├── caddy/           # Reverse proxy with automatic TLS
@@ -94,6 +95,7 @@ linumed-os/
 | Service | Role | Notes |
 |---|---|---|
 | common | ansible/roles/common | SSH hardening, ufw, fail2ban, unattended-upgrades |
+| Docker | ansible/roles/docker | Docker Engine + compose plugin, shared prerequisite for every Docker-based role |
 | Caddy | ansible/roles/caddy | Reverse proxy, automatic TLS via ACME |
 | Mirth Connect | ansible/roles/mirth-connect | HL7 v2, FHIR R4 integration engine |
 | Prometheus | ansible/roles/monitoring | Metrics collection |
