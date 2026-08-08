@@ -2,9 +2,13 @@
 
 Base hardening role for Linumed OS. Runs first, before any other role.
 
-Currently implements SSH hardening only (issue #1). ufw (#3), fail2ban (#10),
+Currently implements SSH hardening (issue #1) and ufw (#3). fail2ban (#10),
 unattended-upgrades (#5), and NTP/timezone (#11) will be added as separate task files
 imported from `tasks/main.yml`.
+
+Requires the `community.general` collection (for the `ufw` module) - see
+`ansible/requirements.yml`, install with
+`ansible-galaxy collection install -r requirements.yml`.
 
 ## SSH hardening
 
@@ -36,6 +40,16 @@ See `defaults/main.yml`. All variables are prefixed `common_ssh_*`.
 
 Deliberately left untouched. Debian 13 ships OpenSSH 10.0p1, which already disables weak
 KEX/DSA by default upstream; a role-maintained allowlist would only go stale.
+
+## ufw firewall
+
+Default-deny incoming, default-allow outgoing. `common_ssh_port` is opened automatically
+so the role can never lock itself out over the connection Ansible is running on; further
+ports go through `common_ufw_extra_rules`. See `defaults/main.yml` for both.
+
+Rule ordering in `tasks/ufw.yml` matters: policies are set, then the SSH allow rule, then
+any extra rules, and `ufw enable` runs last - enabling first would apply the deny-incoming
+default before any allow rule exists.
 
 ### `become: true` on every privileged task, no exceptions
 

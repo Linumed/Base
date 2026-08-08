@@ -13,3 +13,18 @@ common_ssh_allow_groups: []
 
 # Set to false only for deliberately root-only setups (e.g. throwaway CI images).
 common_ssh_preflight_enabled: true
+
+# ufw firewall
+common_ufw_enabled: true
+common_ufw_default_incoming: "deny"
+common_ufw_default_outgoing: "allow"
+# Automatically allows common_ssh_port/tcp. Set to false only if SSH access is handled
+# outside ufw entirely (e.g. a host firewall managed elsewhere) - leaving this on and
+# forgetting to open the port yourself is how you get locked out.
+common_ufw_allow_ssh: true
+# Additional ports beyond SSH, e.g.:
+#   common_ufw_extra_rules:
+#     - port: 443
+#       proto: tcp
+#       comment: "HTTPS (Caddy)"
+common_ufw_extra_rules: []
