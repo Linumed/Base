@@ -99,9 +99,12 @@ linumed-os/
 | Caddy | ansible/roles/caddy | Reverse proxy, automatic TLS via ACME |
 | Mirth Connect | ansible/roles/mirth-connect | HL7 v2, FHIR R4 integration engine |
 | Prometheus | ansible/roles/monitoring | Metrics collection |
-| Grafana | ansible/roles/monitoring | Dashboards |
+| Grafana | ansible/roles/monitoring | Dashboards, loopback-only by default |
 | Loki | ansible/roles/monitoring | Log aggregation |
-| Node Exporter | ansible/roles/monitoring | Host metrics |
+| Grafana Alloy | ansible/roles/monitoring | Log shipping to Loki - not Promtail, which reached EOL 2026-03-02 |
+| Alertmanager | ansible/roles/monitoring | Alert routing |
+| cAdvisor | ansible/roles/monitoring | Container metrics |
+| Node Exporter | ansible/roles/monitoring | Host metrics - native Debian package, not a container |
 | restic | ansible/roles/backup | Encrypted backup |
 
 Services explicitly out of scope for v0.1: Authentik (SSO, v0.2), Orthanc (DICOM, v0.3), Linumed Passpin (separate product, long-term).
