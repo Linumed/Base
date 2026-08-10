@@ -1,0 +1,70 @@
+# Static reference stack for spinning BridgeLink up manually (local testing, .env-driven).
+# The Ansible-managed equivalent is ansible/roles/bridgelink/templates/docker-compose.yml.j2
+# - keep both in sync when bumping the image tag.
+#
+# Before first start, create the two secret files (see .env.example):
+#   mkdir -p secrets && chmod 700 secrets
+#   printf 'database.password = ...\nkeystore.storepass = ...\nkeystore.keypass = ...\n' > secrets/mirth.properties
+#   printf '...' > secrets/db_password
+#   chmod 600 secrets/*
+services:
+  bridgelink:
+    image: innovarhealthcare/bridgelink:26.6.0-dhi-slim
+    restart: unless-stopped
+    # Upstream's launcher drains queues for up to 30s; Docker's default 10s would cut
+    # that short and risk losing in-flight messages.
+    stop_grace_period: 35s
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      MP_DATABASE: "postgres"
+      MP_DATABASE_URL: "jdbc:postgresql://bridgelink-db:5432/${BRIDGELINK_DB_NAME:-bridgelink}"
+      MP_DATABASE_USERNAME: "${BRIDGELINK_DB_USER:-bridgelink}"
+      MP_DATABASE_MAX__CONNECTIONS: "20"
+      MP_DATABASE_MAX_RETRY: "5"
+      MP_DATABASE_RETRY_WAIT: "10000"
+      MP_VMOPTIONS: "${BRIDGELINK_MAX_HEAP_MB:-512}"
+      SERVER_ID: "${BRIDGELINK_SERVER_ID}"
+    secrets:
+      - mirth_properties
+    ports:
+      - "127.0.0.1:${BRIDGELINK_ADMIN_PORT:-8443}:8443"
+    volumes:
+      - bridgelink_appdata:/opt/bridgelink/appdata
+      - bridgelink_extensions:/opt/bridgelink/custom-extensions
+    # No HEALTHCHECK: the -dhi image has no shell and no package manager, so there is no
+    # wget/curl/sh for an exec-form healthcheck to run.
+    depends_on:
+      bridgelink-db:
+        condition: service_healthy
+
+  bridgelink-db:
+    image: postgres:17.10-alpine
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      POSTGRES_DB: "${BRIDGELINK_DB_NAME:-bridgelink}"
+      POSTGRES_USER: "${BRIDGELINK_DB_USER:-bridgelink}"
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_password
+    volumes:
+      - bridgelink_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${BRIDGELINK_DB_USER:-bridgelink} -d ${BRIDGELINK_DB_NAME:-bridgelink}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+secrets:
+  mirth_properties:
+    file: ./secrets/mirth.properties
+  db_password:
+    file: ./secrets/db_password
+
+volumes:
+  bridgelink_appdata:
+  bridgelink_extensions:
+  bridgelink_db_data:

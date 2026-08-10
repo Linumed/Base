@@ -2,7 +2,7 @@
 
 ## Problem
 
-Jede Docker-basierte Rolle in diesem Repo (caddy, künftig mirth-connect und monitoring)
+Jede Docker-basierte Rolle in diesem Repo (caddy, monitoring, bridgelink)
 braucht Docker Engine und das Compose-Plugin (`docker compose`) auf dem Zielhost. Ohne
 eine gemeinsame Rolle würde jede von ihnen entweder Docker selbst installieren
 (Code-Duplikation) oder mit einer unklaren Fehlermeldung abbrechen, wenn es fehlt - genau

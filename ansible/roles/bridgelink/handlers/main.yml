@@ -1,0 +1,13 @@
+---
+# The secret files are bind-mounted, so a content-only change doesn't alter the service
+# definition docker_compose_v2 diffs - the container would keep running with the old
+# values until something else recreates it. Same trap as the caddy Caddyfile and the
+# monitoring configs; an explicit restart is the fix. become: true, without exception -
+# a missing one here fails as a PolicyKit timeout, see ansible/roles/common/README.md.
+- name: Restart bridgelink
+  community.docker.docker_compose_v2:
+    project_src: "{{ bridgelink_deploy_dir }}"
+    state: restarted
+    wait: true
+    wait_timeout: 180
+  become: true

@@ -16,7 +16,7 @@
 
 # Flush here so common's restarts (ssh, fail2ban, timesyncd) land before later roles
 # start anything on top of the system they configure - docker (issue #17) needs its own
-# restart to happen, and any Docker Compose stack afterwards (caddy, mirth-connect,
+# restart to happen, and any Docker Compose stack afterwards (caddy, bridgelink,
 # monitoring) needs a running daemon, before common's handlers would otherwise fire at
 # the very end of the whole play. Not a workaround for a D-Bus/hardware timing issue -
 # that turned out to be a missing `become: true` on the docker role's restart task (see

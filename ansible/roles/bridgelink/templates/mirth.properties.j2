@@ -1,0 +1,12 @@
+{#
+  Managed by Ansible (linumed-os, role: bridgelink). Do not edit by hand.
+
+  Mounted into the container as the `mirth_properties` Docker secret (at
+  /run/secrets/mirth_properties), NOT passed as environment variables: env vars are
+  visible to anyone who can run `docker inspect` and end up in the container's config
+  JSON on disk. Everything in this file gets merged into mirth.properties at startup.
+  File mode 0600, root-owned - see tasks/main.yml.
+#}
+database.password = {{ bridgelink_db_password }}
+keystore.storepass = {{ bridgelink_keystore_storepass }}
+keystore.keypass = {{ bridgelink_keystore_keypass }}
