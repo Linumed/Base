@@ -157,6 +157,12 @@ Forgejo Actions workflow.
 - Every role has its own doc page under `docs/roles/`
 - Language: German for end-user docs, English for technical/developer docs
 - Do not document things that are already obvious from the code
+- Decisions that someone will predictably challenge from the outside ("why not X?")
+  go into `docs/adr/` as a numbered ADR - context, evaluated alternatives, the
+  downsides accepted, and what would make the decision worth revisiting. Reserved for
+  decisions that are expensive to reverse and whose reasoning is not readable from the
+  code; everything else is a comment at the relevant place. Role READMEs and role docs
+  link to the ADR instead of restating the reasoning, so there is one source of truth.
 
 ---
 

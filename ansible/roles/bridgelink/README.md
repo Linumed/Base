@@ -5,32 +5,20 @@ HL7/FHIR integration engine plus its PostgreSQL backend, as a Docker Compose sta
 
 ## Why BridgeLink and not Mirth Connect
 
-The original plan (`ARCHITECTURE.md`) called for Mirth Connect. That is no longer
-possible under this repo's FOSS-only rule: NextGen Healthcare moved Mirth Connect to a
-**single commercial, proprietary licence in March 2025**. From 4.6 onwards the source is
-closed. The last MPL-2.0 release is 4.5.2, and it is frozen - no further security fixes.
+**BridgeLink is not a replacement for Mirth Connect - it is the same codebase under a
+different name.** Same channel XML, same Administrator, same transformers and connectors;
+the Java packages are still `com.mirth.connect`. NextGen moved Mirth Connect to a
+proprietary licence in March 2025 and the open-source lineage continued under new names.
 
-Shipping 4.5.2 would repeat the mistake this repo already rejected once, when Promtail
-was dropped from the monitoring role for being EOL and unpatched.
+Full reasoning, the alternatives that were evaluated (Open Integration Engine, licensed
+Mirth 4.6+, frozen 4.5.2), the downsides this buys us, and the conditions under which the
+decision should be revisited: **[ADR 0001](../../../docs/adr/0001-bridgelink-statt-mirth-connect.md)**.
 
-Two community forks of the last open-source Mirth codebase exist, both MPL-2.0:
-
-| | Open Integration Engine (OIE) | **BridgeLink** (chosen) |
-|---|---|---|
-| Governance | Vendor-neutral, non-profit steering committee | Single vendor (Innovar Healthcare) |
-| Current release | 4.6.0 (Java 17, 24 CVEs remediated) | 26.6.0 |
-| Published container image | **only 4.5.2, from Aug 2025** - no 4.6.0 image | current, published alongside each release |
-
-OIE has the better governance model on paper - and it is the structure specifically
-designed to prevent a repeat of the NextGen situation. It lost on a practical point:
-there is no published container image for its current release, so using it would mean
-either building our own image (impractical for the target audience - clinic IT service
-providers without a registry) or shipping the year-old 4.5.2 image with its known CVEs.
-
-This decision is worth revisiting once OIE publishes images for current releases
-(tracked upstream as OpenIntegrationEngine/engine#40). Both forks descend from the same
-Mirth codebase and channels are portable between them, so a later switch is not a
-rewrite.
+Short version: licensed Mirth 4.6+ violates the FOSS-only rule (and has no public
+container image), frozen 4.5.2 gets no security fixes, and OIE - which has the better
+governance - publishes no container image for its current release. BridgeLink is the only
+option that is simultaneously open source, currently patched, and deployable without
+building an image ourselves.
 
 ## Which image variant
 
