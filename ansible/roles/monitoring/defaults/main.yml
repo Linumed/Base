@@ -1,0 +1,60 @@
+---
+monitoring_deploy_dir: "/opt/linumed-os/monitoring"
+
+# Container images, all pinned (checked 2026-08-10, no "latest" per CLAUDE.md).
+monitoring_prometheus_image: "prom/prometheus:v3.13.2"
+monitoring_grafana_image: "grafana/grafana:13.1.3"
+monitoring_loki_image: "grafana/loki:3.7.6"
+# Alloy, not Promtail - Promtail reached Node.js-unrelated EOL on 2026-03-02 and gets no
+# more security fixes. See ARCHITECTURE.md.
+monitoring_alloy_image: "grafana/alloy:v1.18.1"
+monitoring_alertmanager_image: "prom/alertmanager:v0.33.1"
+monitoring_cadvisor_image: "ghcr.io/google/cadvisor:v0.60.5"
+
+# Only Grafana and Prometheus get a host port, and only on loopback - Loki, Alertmanager,
+# and cAdvisor are reached by the other containers via service name inside the stack's own
+# Compose network and need no host port at all. Access Grafana via SSH port forwarding:
+#   ssh -L 3000:127.0.0.1:3000 <user>@<host>
+monitoring_grafana_port: 3000
+monitoring_prometheus_port: 9090
+
+# No default admin password - the role's preflight refuses to run without one set
+# (same pattern as common_ssh_preflight). Set via Ansible Vault, never committed.
+monitoring_grafana_admin_user: "admin"
+monitoring_grafana_admin_password: ""
+
+# Grafana phone-home, off - matches CLAUDE.md's "no phone-home telemetry" principle.
+monitoring_grafana_reporting_enabled: false
+monitoring_grafana_check_for_updates: false
+monitoring_grafana_analytics_enabled: false
+
+# Retention is split by data kind, not one global value: logs can contain personal data
+# (IP addresses, usernames) and get a shorter default than metrics - data minimization,
+# not an arbitrary choice. monitoring_retention_days is an escape hatch that, if set,
+# overrides both (kept so the single variable name documented in ARCHITECTURE.md's
+# earlier draft doesn't point at nothing).
+monitoring_metrics_retention_days: 90
+monitoring_logs_retention_days: 30
+monitoring_retention_days: ~
+
+# Hard size caps in addition to time-based retention - a retention policy alone doesn't
+# stop the disk filling if ingestion volume spikes.
+monitoring_prometheus_retention_size: "5GB"
+
+# Node Exporter - native Debian package (prometheus-node-exporter), not a container: gets
+# security updates via the common role's unattended-upgrades, needs no --pid=host/rootfs
+# mounts, and ufw can actually protect its port (a published container port would bypass
+# ufw entirely, see common role docs). Prometheus reaches it via
+# extra_hosts: host.docker.internal, since a container can't reach 127.0.0.1 on the host.
+monitoring_node_exporter_port: 9100
+# Debian's own convention for the package - the backup role (#7) can drop a .prom file
+# here later without this role needing to change.
+monitoring_node_exporter_textfile_dir: "/var/lib/prometheus/node-exporter"
+# Denies monitoring_node_exporter_port from every interface except loopback/Docker so the
+# intent is explicit and can't be silently widened later by an unrelated allow rule.
+monitoring_node_exporter_deny_external: true
+
+# Alloy needs the Docker socket (read-only) for discovery.docker container labels - a
+# real privilege trade-off, documented in the role README. A docker-socket-proxy in front
+# of it is tracked as a v0.2 hardening issue (#21), not part of v0.1.
+monitoring_alloy_docker_socket_ro: true

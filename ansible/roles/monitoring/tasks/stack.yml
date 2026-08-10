@@ -1,0 +1,362 @@
+---
+# Docker Compose stack: Prometheus, Loki, Alloy, cAdvisor, Grafana. Alertmanager follows.
+
+# Same preflight pattern as common's SSH role: refuse to run rather than deploy Grafana
+# with no admin password (never "admin/admin", not even "just for testing").
+- name: Preflight - abort if no Grafana admin password is set
+  ansible.builtin.assert:
+    that:
+      - monitoring_grafana_admin_password | length > 0
+    fail_msg: >-
+      monitoring_grafana_admin_password is not set - refusing to deploy Grafana with no
+      admin password. Set it via Ansible Vault, never committed in plain text.
+
+- name: Ensure deploy directory exists
+  ansible.builtin.file:
+    path: "{{ monitoring_deploy_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+
+- name: Deploy Prometheus config
+  ansible.builtin.template:
+    src: prometheus.yml.j2
+    dest: "{{ monitoring_deploy_dir }}/prometheus.yml"
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+  register: monitoring_prometheus_config
+  become: true
+  notify: Reload prometheus
+
+- name: Deploy Prometheus alert rules
+  ansible.builtin.template:
+    src: alert-rules.yml.j2
+    dest: "{{ monitoring_deploy_dir }}/alert-rules.yml"
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+  register: monitoring_alert_rules
+  become: true
+  notify: Reload prometheus
+
+# Same validate-before-activating pattern as the caddy role: check the new config with
+# the same image that will actually run it, before trusting it. `check config` also loads
+# every path listed under rule_files, so alert-rules.yml has to be mounted too, or this
+# fails on a missing file rather than validating the actual config.
+- name: Validate Prometheus config
+  ansible.builtin.command: >-
+    docker run --rm
+    -v {{ monitoring_deploy_dir }}/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    -v {{ monitoring_deploy_dir }}/alert-rules.yml:/etc/prometheus/alert-rules.yml:ro
+    --entrypoint promtool
+    {{ monitoring_prometheus_image }}
+    check config /etc/prometheus/prometheus.yml
+  register: monitoring_prometheus_validate
+  changed_when: false
+  failed_when: false
+  become: true
+
+- name: Roll back Prometheus config if validation failed and a previous version existed
+  ansible.builtin.copy:
+    src: "{{ monitoring_prometheus_config.backup_file }}"
+    dest: "{{ monitoring_deploy_dir }}/prometheus.yml"
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  when:
+    - monitoring_prometheus_validate.rc != 0
+    - monitoring_prometheus_config.backup_file is defined
+
+- name: Remove Prometheus config if validation failed and no previous version existed
+  ansible.builtin.file:
+    path: "{{ monitoring_deploy_dir }}/prometheus.yml"
+    state: absent
+  become: true
+  when:
+    - monitoring_prometheus_validate.rc != 0
+    - monitoring_prometheus_config.backup_file is not defined
+
+- name: Roll back alert rules if validation failed and a previous version existed
+  ansible.builtin.copy:
+    src: "{{ monitoring_alert_rules.backup_file }}"
+    dest: "{{ monitoring_deploy_dir }}/alert-rules.yml"
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  when:
+    - monitoring_prometheus_validate.rc != 0
+    - monitoring_alert_rules.backup_file is defined
+
+- name: Remove alert rules if validation failed and no previous version existed
+  ansible.builtin.file:
+    path: "{{ monitoring_deploy_dir }}/alert-rules.yml"
+    state: absent
+  become: true
+  when:
+    - monitoring_prometheus_validate.rc != 0
+    - monitoring_alert_rules.backup_file is not defined
+
+- name: Fail if Prometheus config or alert rules are invalid
+  ansible.builtin.fail:
+    msg: "Prometheus config/rules validation failed: {{ monitoring_prometheus_validate.stdout }}"
+  when: monitoring_prometheus_validate.rc != 0
+
+- name: Deploy Loki config
+  ansible.builtin.template:
+    src: loki-config.yml.j2
+    dest: "{{ monitoring_deploy_dir }}/loki-config.yml"
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+  register: monitoring_loki_config
+  become: true
+  notify: Restart loki
+
+- name: Validate Loki config
+  ansible.builtin.command: >-
+    docker run --rm
+    -v {{ monitoring_deploy_dir }}/loki-config.yml:/etc/loki/loki-config.yml:ro
+    {{ monitoring_loki_image }}
+    -config.file=/etc/loki/loki-config.yml
+    -verify-config
+  register: monitoring_loki_validate
+  changed_when: false
+  failed_when: false
+  become: true
+
+- name: Roll back Loki config if validation failed and a previous version existed
+  ansible.builtin.copy:
+    src: "{{ monitoring_loki_config.backup_file }}"
+    dest: "{{ monitoring_deploy_dir }}/loki-config.yml"
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  when:
+    - monitoring_loki_validate.rc != 0
+    - monitoring_loki_config.backup_file is defined
+
+- name: Remove Loki config if validation failed and no previous version existed
+  ansible.builtin.file:
+    path: "{{ monitoring_deploy_dir }}/loki-config.yml"
+    state: absent
+  become: true
+  when:
+    - monitoring_loki_validate.rc != 0
+    - monitoring_loki_config.backup_file is not defined
+
+- name: Fail if Loki config is invalid
+  ansible.builtin.fail:
+    msg: "Loki config validation failed: {{ monitoring_loki_validate.stderr }}"
+  when: monitoring_loki_validate.rc != 0
+
+- name: Deploy Alloy config
+  ansible.builtin.template:
+    src: alloy-config.alloy.j2
+    dest: "{{ monitoring_deploy_dir }}/alloy-config.alloy"
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+  register: monitoring_alloy_config
+  become: true
+  notify: Restart alloy
+
+- name: Validate Alloy config
+  ansible.builtin.command: >-
+    docker run --rm
+    -v {{ monitoring_deploy_dir }}/alloy-config.alloy:/etc/alloy/config.alloy:ro
+    --entrypoint alloy
+    {{ monitoring_alloy_image }}
+    fmt -t /etc/alloy/config.alloy
+  register: monitoring_alloy_validate
+  changed_when: false
+  failed_when: false
+  become: true
+
+- name: Roll back Alloy config if validation failed and a previous version existed
+  ansible.builtin.copy:
+    src: "{{ monitoring_alloy_config.backup_file }}"
+    dest: "{{ monitoring_deploy_dir }}/alloy-config.alloy"
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  when:
+    - monitoring_alloy_validate.rc != 0
+    - monitoring_alloy_config.backup_file is defined
+
+- name: Remove Alloy config if validation failed and no previous version existed
+  ansible.builtin.file:
+    path: "{{ monitoring_deploy_dir }}/alloy-config.alloy"
+    state: absent
+  become: true
+  when:
+    - monitoring_alloy_validate.rc != 0
+    - monitoring_alloy_config.backup_file is not defined
+
+- name: Fail if Alloy config is invalid
+  ansible.builtin.fail:
+    msg: "Alloy config validation failed: {{ monitoring_alloy_validate.stderr }}"
+  when: monitoring_alloy_validate.rc != 0
+
+# Looked up at play time rather than hardcoded - the GID varies per host, same caveat as
+# the docker group GID noted in the Forgejo runner setup (/srv/data/system-doku).
+- name: Look up the systemd-journal group GID for Alloy's group_add
+  ansible.builtin.command: getent group systemd-journal
+  register: monitoring_journal_gid_raw
+  changed_when: false
+
+- name: Extract the GID
+  ansible.builtin.set_fact:
+    monitoring_journal_gid: "{{ monitoring_journal_gid_raw.stdout.split(':')[2] }}"
+
+- name: Deploy Alertmanager config
+  ansible.builtin.template:
+    src: alertmanager.yml.j2
+    dest: "{{ monitoring_deploy_dir }}/alertmanager.yml"
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+  register: monitoring_alertmanager_config
+  become: true
+  notify: Restart alertmanager
+
+- name: Validate Alertmanager config
+  ansible.builtin.command: >-
+    docker run --rm
+    -v {{ monitoring_deploy_dir }}/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    --entrypoint amtool
+    {{ monitoring_alertmanager_image }}
+    check-config /etc/alertmanager/alertmanager.yml
+  register: monitoring_alertmanager_validate
+  changed_when: false
+  failed_when: false
+  become: true
+
+- name: Roll back Alertmanager config if validation failed and a previous version existed
+  ansible.builtin.copy:
+    src: "{{ monitoring_alertmanager_config.backup_file }}"
+    dest: "{{ monitoring_deploy_dir }}/alertmanager.yml"
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  when:
+    - monitoring_alertmanager_validate.rc != 0
+    - monitoring_alertmanager_config.backup_file is defined
+
+- name: Remove Alertmanager config if validation failed and no previous version existed
+  ansible.builtin.file:
+    path: "{{ monitoring_deploy_dir }}/alertmanager.yml"
+    state: absent
+  become: true
+  when:
+    - monitoring_alertmanager_validate.rc != 0
+    - monitoring_alertmanager_config.backup_file is not defined
+
+- name: Fail if Alertmanager config is invalid
+  ansible.builtin.fail:
+    msg: "Alertmanager config validation failed: {{ monitoring_alertmanager_validate.stdout }}"
+  when: monitoring_alertmanager_validate.rc != 0
+
+- name: Ensure Grafana provisioning directories exist
+  ansible.builtin.file:
+    path: "{{ monitoring_deploy_dir }}/{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+  loop:
+    - grafana/provisioning/datasources
+    - grafana/provisioning/dashboards
+    - grafana/dashboards
+
+- name: Deploy Grafana datasource provisioning
+  ansible.builtin.template:
+    src: grafana/datasources.yml.j2
+    dest: "{{ monitoring_deploy_dir }}/grafana/provisioning/datasources/datasources.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+
+- name: Deploy Grafana dashboard provisioning
+  ansible.builtin.template:
+    src: grafana/dashboards.yml.j2
+    dest: "{{ monitoring_deploy_dir }}/grafana/provisioning/dashboards/dashboards.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+
+# Vendored, not downloaded from grafana.com at runtime - no network dependency at deploy
+# time, reproducible, no phone-home.
+- name: Deploy vendored dashboards
+  ansible.builtin.copy:
+    src: "dashboards/{{ item }}"
+    dest: "{{ monitoring_deploy_dir }}/grafana/dashboards/{{ item }}"
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  loop:
+    - host-overview.json
+    - container-overview.json
+    - log-explorer.json
+
+- name: Deploy docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ monitoring_deploy_dir }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+
+# Pulled explicitly, ahead of the compose apply, rather than relying on pull: missing
+# during "Deploy the monitoring stack". Root-caused 2026-08-10: for services with no
+# explicit `command:` override (grafana, cadvisor - both rely on the image's own default
+# entrypoint/CMD), docker compose resolves that default command as part of the
+# container's config-hash. If the image isn't fully present locally yet at the moment the
+# very first apply computes that hash, the resolved value differs from what a second,
+# later apply computes once the image is fully local - causing a one-time spurious
+# recreate on the second run and breaking idempotency. Confirmed by reproducing with
+# pre-pulled images: zero recreates. Services with an explicit `command:` (prometheus,
+# loki, alloy) were never affected, since their hash doesn't depend on image introspection.
+- name: Pull monitoring images ahead of the compose apply
+  community.docker.docker_image:
+    name: "{{ item }}"
+    source: pull
+  become: true
+  loop:
+    - "{{ monitoring_prometheus_image }}"
+    - "{{ monitoring_grafana_image }}"
+    - "{{ monitoring_loki_image }}"
+    - "{{ monitoring_alloy_image }}"
+    - "{{ monitoring_alertmanager_image }}"
+    - "{{ monitoring_cadvisor_image }}"
+
+- name: Deploy the monitoring stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ monitoring_deploy_dir }}"
+    state: present
+    pull: missing
+    wait: true
+    wait_timeout: 120
+  become: true

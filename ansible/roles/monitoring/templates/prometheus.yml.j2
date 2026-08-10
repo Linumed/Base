@@ -1,0 +1,29 @@
+# Managed by Ansible (linumed-os, role: monitoring). Do not edit by hand, changes will be
+# overwritten.
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - /etc/prometheus/alert-rules.yml
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ["alertmanager:9093"]
+
+scrape_configs:
+  - job_name: prometheus
+    static_configs:
+      - targets: ["127.0.0.1:{{ monitoring_prometheus_port }}"]
+
+  # host.docker.internal, not 127.0.0.1 - a container can't reach the host's loopback.
+  # Node Exporter listens on all interfaces for exactly this reason (see
+  # defaults/main.yml); ufw denies it from anywhere except the Docker bridge.
+  - job_name: node
+    static_configs:
+      - targets: ["host.docker.internal:{{ monitoring_node_exporter_port }}"]
+
+  - job_name: cadvisor
+    static_configs:
+      - targets: ["cadvisor:8080"]

@@ -1,9 +1,11 @@
 ---
-# Full stack deployment. common and caddy exist so far (#1/#3/#10/#5/#11, #6);
-# mirth-connect, monitoring, and backup will be added here as their own issues land.
+# Full stack deployment. common, docker, caddy, and monitoring exist so far
+# (#1/#3/#10/#5/#11, #17, #6, #8/#9); mirth-connect and backup will be added here as
+# their own issues land.
 - name: Linumed OS - full stack
   hosts: linumed
   roles:
     - common
     - docker
     - caddy
+    - monitoring

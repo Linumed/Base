@@ -1,0 +1,19 @@
+---
+galaxy_info:
+  role_name: monitoring
+  author: Linumed
+  description: Observability stack for Linumed OS (Prometheus, Grafana, Loki, Alloy, Alertmanager, cAdvisor, native Node Exporter)
+  license: MIT
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Debian
+      versions:
+        - trixie
+  galaxy_tags:
+    - monitoring
+    - prometheus
+    - grafana
+    - loki
+    - observability
+
+dependencies: []

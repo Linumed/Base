@@ -1,0 +1,15 @@
+# Managed by Ansible (linumed-os, role: monitoring). Do not edit by hand, changes will be
+# overwritten.
+#
+# No delivery is configured yet (no SMTP, no receiver integrations) - routing and rules
+# ship in v0.1, but nobody actually gets notified until #22 (v0.2) adds a real receiver.
+# Alerts are still visible via the Alertmanager API/UI in the meantime.
+route:
+  receiver: default
+  group_by: ["alertname"]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+
+receivers:
+  - name: default

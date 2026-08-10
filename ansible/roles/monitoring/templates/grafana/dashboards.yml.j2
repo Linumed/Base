@@ -1,0 +1,15 @@
+# Managed by Ansible (linumed-os, role: monitoring). Do not edit by hand, changes will be
+# overwritten. Points at vendored dashboard JSON (files/dashboards/) - no runtime download
+# from grafana.com, matches CLAUDE.md's "no phone-home" principle.
+apiVersion: 1
+
+providers:
+  - name: linumed-os
+    orgId: 1
+    folder: ""
+    type: file
+    disableDeletion: false
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards

@@ -1,0 +1,57 @@
+---
+# Bind-mounted config files don't change the service definition docker_compose_v2 diffs,
+# so a content-only edit needs an explicit reload/restart - same pattern as caddy's
+# "Reload caddy" handler. Prometheus supports a live reload endpoint (zero downtime);
+# Loki/Alertmanager/Alloy don't need zero-downtime here (backend-only, no user-facing
+# proxy in front of them for v0.1), so a plain restart is simpler and good enough.
+
+- name: Reload prometheus
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ monitoring_prometheus_port }}/-/reload"
+    method: POST
+    status_code: 200
+  register: monitoring_prometheus_reload
+  until: monitoring_prometheus_reload is succeeded
+  retries: 6
+  delay: 5
+  # Runs on the target host itself (default for the uri module), not the control node -
+  # correct here since Prometheus is only bound to the target's own loopback. Retries
+  # because this handler also fires on the very first deploy (the config file is "new",
+  # so it reports changed) - at that point the container was just created by the "Deploy
+  # the monitoring stack" task moments earlier and can still be a few seconds from
+  # actually listening, which is a real startup race, not a bug in the reload logic
+  # itself.
+
+- name: Restart loki
+  community.docker.docker_container:
+    name: linumed-os-loki
+    state: started
+    restart: true
+  become: true
+
+- name: Restart alertmanager
+  community.docker.docker_container:
+    name: linumed-os-alertmanager
+    state: started
+    restart: true
+  become: true
+
+- name: Restart alloy
+  community.docker.docker_container:
+    name: linumed-os-alloy
+    state: started
+    restart: true
+  become: true
+
+- name: Restart node exporter
+  ansible.builtin.systemd_service:
+    name: prometheus-node-exporter
+    state: restarted
+  become: true
+
+- name: Apply monitoring stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ monitoring_deploy_dir }}"
+    state: present
+    pull: missing
+  become: true
