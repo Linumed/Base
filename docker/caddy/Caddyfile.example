@@ -4,6 +4,9 @@
 	email admin@example.com
 }
 
+# host.docker.internal, not 127.0.0.1 - Caddy runs as a container itself, so
+# 127.0.0.1 here would mean Caddy, not the Docker host (issue #23). Requires
+# extra_hosts: host-gateway, already set in this directory's docker-compose.yml.
 example.linumed.local {
-	reverse_proxy 127.0.0.1:8080
+	reverse_proxy host.docker.internal:8080
 }

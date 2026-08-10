@@ -20,14 +20,20 @@ Alle Variablen haben den Präfix `caddy_*` und stehen mit sinnvollen Defaults in
 | `caddy_email` | `""` (aus) | ACME-Account-E-Mail für Let's-Encrypt-Benachrichtigungen. Leer ist gültig, aber nicht empfohlen |
 | `caddy_sites` | `[]` | Liste von `{domain, reverse_proxy, extra}` - siehe Beispiel unten. Leer = Caddy läuft, tut aber nichts |
 
-Beispiel:
+Beispiel für einen Dienst, der nativ auf dem Host läuft (nicht in Docker):
 
 ```yaml
 caddy_email: "admin@klinik-beispiel.de"
 caddy_sites:
   - domain: "shifts.klinik-beispiel.de"
-    reverse_proxy: "127.0.0.1:8080"
+    reverse_proxy: "host.docker.internal:8080"
 ```
+
+**Nicht `127.0.0.1:8080`** - Caddy läuft selbst als Container, `127.0.0.1` wäre darin
+Caddy selbst, nicht der Docker-Host (Issue #23). `host.docker.internal` funktioniert,
+weil die Rolle `extra_hosts: host-gateway` für den Caddy-Container setzt. Für einen Dienst
+in einem anderen Compose-Stack braucht es stattdessen ein gemeinsames Docker-Netzwerk und
+den Servicenamen als Hostnamen - das automatisiert diese Rolle noch nicht.
 
 ## Was wird verändert
 

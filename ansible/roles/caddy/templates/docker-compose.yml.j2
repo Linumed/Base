@@ -9,6 +9,12 @@ services:
     # handler execs into this container by name and needs a stable target.
     container_name: linumed-os-caddy
     restart: unless-stopped
+    # A container can't reach the host's own 127.0.0.1 - host-gateway resolves
+    # host.docker.internal to the host, for reverse_proxy targets that run natively on
+    # the host rather than in another container (see caddy_sites example in
+    # defaults/main.yml - issue #23).
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "{{ caddy_http_port }}:80"
       - "{{ caddy_https_port }}:443"
