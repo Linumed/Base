@@ -1,0 +1,70 @@
+# Managed by Ansible (linumed-os, role: monitoring). Do not edit by hand, changes will be
+# overwritten.
+groups:
+  - name: linumed-os-host
+    rules:
+      - alert: HostDown
+        expr: up == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ '{{ $labels.job }}' }} target down on {{ '{{ $labels.instance }}' }}"
+          description: >-
+            Prometheus has not been able to scrape {{ '{{ $labels.job }}' }} at
+            {{ '{{ $labels.instance }}' }} for 5 minutes.
+
+      - alert: DiskSpaceLow
+        expr: >-
+          100 * (1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})) > 85
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Root filesystem above 85% used"
+          description: >-
+            {{ '{{ $value | printf "%.1f" }}' }}% of the root filesystem is in use on
+            {{ '{{ $labels.instance }}' }}.
+
+      - alert: MemoryLow
+        expr: >-
+          100 * (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) > 90
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Memory usage above 90%"
+          description: >-
+            {{ '{{ $value | printf "%.1f" }}' }}% of memory is in use on
+            {{ '{{ $labels.instance }}' }}.
+
+  - name: linumed-os-containers
+    rules:
+      # container_start_time_seconds changing repeatedly means the container keeps
+      # restarting - cAdvisor doesn't expose a direct restart counter, so the start
+      # timestamp changing is the proxy signal.
+      - alert: ContainerRestartLoop
+        expr: changes(container_start_time_seconds{name!=""}[15m]) > 3
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container {{ '{{ $labels.name }}' }} is restarting repeatedly"
+          description: >-
+            {{ '{{ $labels.name }}' }} has restarted more than 3 times in the last 15
+            minutes.
+
+  - name: linumed-os-backup
+    rules:
+      # Dormant until the backup role (#7) exports backup_last_success_timestamp_seconds -
+      # an absent metric simply produces no series, so this rule never fires and never
+      # errors in the meantime. Activates automatically once #7 lands, no change needed
+      # here.
+      - alert: BackupStale
+        expr: time() - backup_last_success_timestamp_seconds > 90000
+        labels:
+          severity: warning
+        annotations:
+          summary: "No successful backup in over 25 hours"
+          description: >-
+            The last successful restic backup on {{ '{{ $labels.instance }}' }} was more
+            than 25 hours ago.

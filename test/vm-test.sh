@@ -67,8 +67,8 @@ echo "==> Starting VM"
 # partition), so plain SeaBIOS just loops re-drawing the GRUB banner without ever booting.
 virt-install \
   --name "${VM_NAME}" \
-  --memory 1536 \
-  --vcpus 2 \
+  --memory 4096 \
+  --vcpus 3 \
   --disk "path=${WORK_DIR}/disk.qcow2,format=qcow2" \
   --disk "path=${WORK_DIR}/seed.img,device=cdrom" \
   --os-variant debian12 \
@@ -107,6 +107,10 @@ all:
           ansible_user: vmtest
           ansible_ssh_private_key_file: ${SSH_KEY}
           ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
+          # Test-only credential for a throwaway VM - real deployments set this via
+          # Ansible Vault, never in plain text. The monitoring role's preflight refuses
+          # to run without it set at all.
+          monitoring_grafana_admin_password: "throwaway-test-password"
 EOF
 
 cd "${REPO_ROOT}/ansible"

@@ -134,7 +134,9 @@ Node Exporter läuft nativ.
 
 Komponenten:
 - Prometheus - Metriken-Scraping und -Speicherung (Container)
-- Grafana - Dashboards, vorbereitete Healthcare-Dashboards inklusive; per
+- Grafana - Dashboards, drei vendorte Standard-Dashboards inklusive (Host-Übersicht,
+  Container-Übersicht, Log-Explorer) - bewusst generisch für die Infrastruktur, nicht
+  klinisch/patientenbezogen, da Linumed OS keine Patientendaten verarbeitet; per
   Default nur auf `127.0.0.1` gebunden, Zugriff via SSH-Tunnel (Container)
 - Loki - Log-Aggregation (Container)
 - **Grafana Alloy** - Log-Shipping von Host und Containern nach Loki

@@ -1,0 +1,49 @@
+---
+# Node Exporter as a native Debian package, not a container - see defaults/main.yml for
+# why. Runs as the system user `prometheus` (created by the package's postinst).
+
+- name: Install prometheus-node-exporter
+  ansible.builtin.apt:
+    name: prometheus-node-exporter
+    state: present
+    update_cache: true
+  become: true
+
+- name: Ensure the textfile-collector directory exists
+  ansible.builtin.file:
+    path: "{{ monitoring_node_exporter_textfile_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+
+- name: Configure Node Exporter command-line arguments
+  ansible.builtin.template:
+    src: node-exporter-default.j2
+    dest: /etc/default/prometheus-node-exporter
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  notify: Restart node exporter
+
+# Node Exporter must listen on all interfaces (see monitoring_node_exporter_port comment
+# in defaults/main.yml) - a container (Prometheus) can't reach 127.0.0.1 on the host.
+# ufw is what actually keeps this from being reachable from the LAN: unlike a published
+# Docker container port, ufw's rules genuinely apply to a native process's socket.
+- name: Deny external access to the Node Exporter port
+  community.general.ufw:
+    rule: deny
+    port: "{{ monitoring_node_exporter_port | string }}"
+    proto: tcp
+    comment: "Node Exporter (managed by monitoring role) - scraped via the Docker host gateway, not the LAN"
+  become: true
+  when: monitoring_node_exporter_deny_external | bool
+
+- name: Ensure Node Exporter is enabled and running
+  ansible.builtin.systemd_service:
+    name: prometheus-node-exporter
+    enabled: true
+    state: started
+  become: true

@@ -1,0 +1,45 @@
+{
+  "title": "Linumed OS: Log Explorer",
+  "uid": "linumed-os-log-explorer",
+  "schemaVersion": 39,
+  "version": 1,
+  "editable": true,
+  "timezone": "",
+  "time": { "from": "now-1h", "to": "now" },
+  "refresh": "30s",
+  "templating": {
+    "list": [
+      {
+        "name": "container",
+        "type": "query",
+        "datasource": { "type": "loki", "uid": "loki" },
+        "query": "label_values(container)",
+        "refresh": 2,
+        "includeAll": true,
+        "multi": true
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Host journal",
+      "type": "logs",
+      "gridPos": { "h": 11, "w": 24, "x": 0, "y": 0 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        { "expr": "{job=\"journal\"}", "refId": "A" }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "Container logs",
+      "type": "logs",
+      "gridPos": { "h": 11, "w": 24, "x": 0, "y": 11 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        { "expr": "{container=~\"$container\"}", "refId": "A" }
+      ]
+    }
+  ]
+}
