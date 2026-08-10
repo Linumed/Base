@@ -14,13 +14,14 @@ jobs:
   ansible-lint:
     runs-on: docker
     # No custom `container:` - actions/checkout@v4 is a Node action and needs the `node`
-    # binary the runner's own label image (node:20-bookworm) already provides. A
-    # python:3.13-slim container has no node, so checkout's post-step fails with
-    # "exec: node: executable file not found in $PATH" (confirmed 2026-08-08, task 49).
+    # binary the runner's own label image (node:24-bookworm, bumped 2026-08-10 - node:20
+    # reached its Node.js EOL on 2026-04-30) already provides. A python:3.13-slim container
+    # has no node, so checkout's post-step fails with "exec: node: executable file not
+    # found in $PATH" (confirmed 2026-08-08, task 49).
     steps:
       - uses: actions/checkout@v4
 
-      # node:20-bookworm has no Python - installed here rather than switching container
+      # node:24-bookworm has no Python - installed here rather than switching container
       # images, to keep node available for actions/checkout.
       # Pinned so a lint rule change upstream can't turn green CI red without a
       # deliberate version bump here.
