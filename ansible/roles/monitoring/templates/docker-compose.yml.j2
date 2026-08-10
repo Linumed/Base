@@ -1,0 +1,135 @@
+# Managed by Ansible (linumed-os, role: monitoring). Do not edit by hand, changes will be
+# overwritten. Services are added incrementally as the role grows (Prometheus first,
+# Loki/Alloy/Grafana/Alertmanager/cAdvisor follow) - each verified against a real target
+# before the next is added.
+services:
+  loki:
+    image: {{ monitoring_loki_image }}
+    container_name: linumed-os-loki
+    restart: unless-stopped
+    # No published port - only Alloy and Grafana (added later) reach it, both inside this
+    # same Compose network, by service name.
+    command: -config.file=/etc/loki/loki-config.yml
+    volumes:
+      - ./loki-config.yml:/etc/loki/loki-config.yml:ro
+      - loki_data:/loki
+    # No HEALTHCHECK: grafana/loki is a minimal image with no shell, wget, or any other
+    # executable besides the loki binary itself (confirmed 2026-08-10 - `docker exec`
+    # fails on wget, sh, even ls) - there is no command an exec-form healthcheck could
+    # run. Functional health is verified externally instead (see docs/roles/monitoring.md
+    # verification section: a real query against /loki/api/v1/query_range).
+
+  alloy:
+    image: {{ monitoring_alloy_image }}
+    container_name: linumed-os-alloy
+    restart: unless-stopped
+    command:
+      - run
+      - --stability.level=generally-available
+      - /etc/alloy/config.alloy
+    # Read-only Docker socket for discovery.docker container labels - a real privilege
+    # trade-off (socket access is close to root-equivalent even read-only), tracked for
+    # hardening via docker-socket-proxy in #21. group_add is the journal group's GID on
+    # THIS host (looked up at play time, not hardcoded - it varies per machine, same
+    # caveat as the docker group GID in the Forgejo runner setup) so Alloy can read
+    # /var/log/journal without running as root.
+    group_add:
+      - "{{ monitoring_journal_gid }}"
+    volumes:
+      - ./alloy-config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock{{ ':ro' if monitoring_alloy_docker_socket_ro else '' }}
+      - /var/log/journal:/var/log/journal:ro
+      - /etc/machine-id:/etc/machine-id:ro
+    depends_on:
+      - loki
+
+  alertmanager:
+    image: {{ monitoring_alertmanager_image }}
+    container_name: linumed-os-alertmanager
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+    # No published port - Prometheus reaches it by service name inside this stack's
+    # Compose network. No delivery configured yet either (see alertmanager.yml.j2) - #22.
+    volumes:
+      - ./alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - alertmanager_data:/alertmanager
+
+  cadvisor:
+    image: {{ monitoring_cadvisor_image }}
+    container_name: linumed-os-cadvisor
+    restart: unless-stopped
+    # No published port - only Prometheus scrapes it, by service name inside this stack's
+    # Compose network. Standard cAdvisor mounts, no --privileged needed on Debian (that's
+    # only required on CentOS/RHEL/Fedora per upstream docs).
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker:/var/lib/docker:ro
+
+  grafana:
+    image: {{ monitoring_grafana_image }}
+    container_name: linumed-os-grafana
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: "{{ monitoring_grafana_admin_user }}"
+      GF_SECURITY_ADMIN_PASSWORD: "{{ monitoring_grafana_admin_password }}"
+      # Telemetry off - matches CLAUDE.md's "no phone-home telemetry" principle. Grafana
+      # phones home by default otherwise (usage stats, update checks).
+      GF_ANALYTICS_REPORTING_ENABLED: "{{ monitoring_grafana_reporting_enabled | string | lower }}"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "{{ monitoring_grafana_check_for_updates | string | lower }}"
+      GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES: "{{ monitoring_grafana_check_for_updates | string | lower }}"
+      GF_ANALYTICS_FEEDBACK_LINKS_ENABLED: "false"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    ports:
+      - "127.0.0.1:{{ monitoring_grafana_port }}:3000"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana_data:/var/lib/grafana
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    depends_on:
+      - prometheus
+      - loki
+  prometheus:
+    image: {{ monitoring_prometheus_image }}
+    container_name: linumed-os-prometheus
+    restart: unless-stopped
+    # --web.enable-lifecycle: needed for the "Reload prometheus" handler's /-/reload call.
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time={{ (monitoring_retention_days | default(monitoring_metrics_retention_days, true)) }}d
+      - --storage.tsdb.retention.size={{ monitoring_prometheus_retention_size }}
+      - --web.enable-lifecycle
+    # Container can't reach the host's 127.0.0.1 - host-gateway resolves
+    # host.docker.internal to the host, which Node Exporter listens on (see
+    # defaults/main.yml for why Node Exporter isn't loopback-only).
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "127.0.0.1:{{ monitoring_prometheus_port }}:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./alert-rules.yml:/etc/prometheus/alert-rules.yml:ro
+      - prometheus_data:/prometheus
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:9090/-/healthy"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  prometheus_data:
+  loki_data:
+  grafana_data:
+  alertmanager_data:

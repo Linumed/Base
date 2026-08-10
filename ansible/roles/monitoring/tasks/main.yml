@@ -1,0 +1,9 @@
+---
+# Observability stack for Linumed OS (issues #8, #9). Node Exporter is native (see
+# defaults/main.yml); everything else is a Docker Compose stack, added in stack.yml.
+
+- name: Node Exporter (native)
+  ansible.builtin.import_tasks: node-exporter.yml
+
+- name: Docker Compose stack
+  ansible.builtin.import_tasks: stack.yml

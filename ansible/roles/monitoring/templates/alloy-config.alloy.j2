@@ -1,0 +1,39 @@
+// Managed by Ansible (linumed-os, role: monitoring). Do not edit by hand, changes will
+// be overwritten. Ships host journal and container logs to Loki - replaces Promtail,
+// which reached end-of-life on 2026-03-02 (see ARCHITECTURE.md).
+
+loki.write "default" {
+	endpoint {
+		url = "http://loki:3100/loki/api/v1/push"
+	}
+}
+
+loki.source.journal "host" {
+	forward_to = [loki.write.default.receiver]
+	labels     = {
+		job = "journal",
+	}
+}
+
+discovery.docker "containers" {
+	host = "unix:///var/run/docker.sock"
+}
+
+// Without this, every container log line lands under service_name="unknown_service" -
+// discovery.docker's __meta_docker_container_name isn't picked up as a real label on its
+// own, it has to be relabeled explicitly (confirmed 2026-08-10 against a real container).
+discovery.relabel "containers" {
+	targets = discovery.docker.containers.targets
+
+	rule {
+		source_labels = ["__meta_docker_container_name"]
+		regex         = "/(.*)"
+		target_label  = "container"
+	}
+}
+
+loki.source.docker "containers" {
+	host       = "unix:///var/run/docker.sock"
+	targets    = discovery.relabel.containers.output
+	forward_to = [loki.write.default.receiver]
+}
