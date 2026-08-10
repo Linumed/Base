@@ -1,5 +1,5 @@
 ---
-caddy_image: "caddy:2.9.1-alpine"
+caddy_image: "caddy:2.11.4-alpine"
 caddy_deploy_dir: "/opt/linumed-os/caddy"
 caddy_http_port: 80
 caddy_https_port: 443
@@ -10,7 +10,12 @@ caddy_email: ""
 
 # Reverse-proxied sites. Each entry:
 #   domain: the hostname Caddy answers on (ACME auto-TLS is per domain)
-#   reverse_proxy: upstream address, e.g. "127.0.0.1:8080"
+#   reverse_proxy: upstream address. Caddy runs as a container, so "127.0.0.1" here means
+#     the Caddy container itself, not the Docker host or another container - a common
+#     mistake (issue #23). For a service running natively on the host, use
+#     "host.docker.internal:PORT" (extra_hosts: host-gateway is already set up by this
+#     role). For a service in another Compose stack, both stacks need a shared Docker
+#     network and the target's service name as hostname - not automated by this role yet.
 #   extra: optional raw Caddyfile lines appended inside the site block (e.g. extra headers)
 # Empty by default - an empty Caddyfile with no site blocks is valid but does nothing
 # useful, so this must be set per-inventory before the role is worth running.
