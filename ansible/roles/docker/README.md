@@ -2,7 +2,7 @@
 
 Docker Engine and the compose plugin (`docker compose`), installed from the official
 Docker apt repository. Closes issue #17 - every Docker-based role (caddy, and later
-mirth-connect, monitoring) needs this and previously had to fail with a clear preflight
+bridgelink, monitoring) needs this and previously had to fail with a clear preflight
 message instead of installing it.
 
 ## Variables

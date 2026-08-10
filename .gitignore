@@ -28,6 +28,9 @@ venv/
 *_secret
 *_token
 *_key
+# Docker secret files are created locally at runtime (docker/<stack>/secrets/) and hold
+# plain-text credentials - the whole directory stays out of the repo.
+docker/*/secrets/
 *.pem
 *.key
 *.crt

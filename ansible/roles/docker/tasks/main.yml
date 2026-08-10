@@ -1,6 +1,6 @@
 ---
 # Docker Engine + compose plugin from the official Docker apt repo. Consumed by caddy,
-# mirth-connect, and monitoring, all of which otherwise hit the same
+# bridgelink, and monitoring, all of which otherwise hit the same
 # "docker compose version: command not found" wall (issue #17).
 
 - name: Install prerequisites for adding the Docker apt repo
@@ -91,7 +91,7 @@
   register: docker_daemon_json
 
 # A plain handler here would only fire at the end of the whole play - after later roles
-# (caddy, mirth-connect, monitoring) have already started containers via
+# (caddy, bridgelink, monitoring) have already started containers via
 # docker_compose_v2. Restarting a daemon with live containers under it is slow, so
 # restarting inline instead guarantees it happens before anything is running on top of
 # Docker. become: true is required here - without it this call runs unprivileged, systemd

@@ -1,0 +1,76 @@
+# Managed by Ansible (linumed-os, role: bridgelink). Do not edit by hand, changes will be
+# overwritten. Deliberately close to docker/bridgelink/docker-compose.yml (the
+# manual-testing reference), but this one is driven by Ansible variables instead of a
+# .env file - keep both in sync when bumping bridgelink_image.
+services:
+  bridgelink:
+    image: {{ bridgelink_image }}
+    container_name: linumed-os-bridgelink
+    restart: unless-stopped
+    # Upstream's launcher drains queues and DB connections for up to 30s on shutdown;
+    # Docker's default 10s would cut that short and risk losing in-flight messages.
+    stop_grace_period: {{ bridgelink_stop_grace_period }}s
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      MP_DATABASE: "postgres"
+      MP_DATABASE_URL: "jdbc:postgresql://bridgelink-db:5432/{{ bridgelink_db_name }}"
+      MP_DATABASE_USERNAME: "{{ bridgelink_db_user }}"
+      # database.password, keystore.storepass and keystore.keypass deliberately come from
+      # the mirth_properties secret below, not from here - env vars show up in
+      # `docker inspect` and in the container config on disk.
+      MP_DATABASE_MAX__CONNECTIONS: "20"
+      MP_DATABASE_MAX_RETRY: "5"
+      MP_DATABASE_RETRY_WAIT: "10000"
+      MP_VMOPTIONS: "{{ bridgelink_max_heap_mb }}"
+      SERVER_ID: "{{ bridgelink_server_id }}"
+    secrets:
+      - mirth_properties
+    # Loopback only. A published container port bypasses ufw (see the common role's ufw
+    # docs), so only what genuinely needs to be reachable gets published - and the admin
+    # API is reached through an SSH tunnel, not from the network.
+    ports:
+      - "127.0.0.1:{{ bridgelink_admin_port }}:8443"
+    volumes:
+      - bridgelink_appdata:/opt/bridgelink/appdata
+      - bridgelink_extensions:/opt/bridgelink/custom-extensions
+    # No HEALTHCHECK: the -dhi image is a hardened Docker Hardened Image with no shell and
+    # no package manager - there is no wget/curl/sh an exec-form healthcheck could run
+    # (same situation as grafana/loki in the monitoring role). Functional health is
+    # verified externally instead, see docs/roles/bridgelink.md.
+    depends_on:
+      bridgelink-db:
+        condition: service_healthy
+
+  bridgelink-db:
+    image: {{ bridgelink_postgres_image }}
+    container_name: linumed-os-bridgelink-db
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      POSTGRES_DB: "{{ bridgelink_db_name }}"
+      POSTGRES_USER: "{{ bridgelink_db_user }}"
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_password
+    # No published port at all - only BridgeLink talks to it, over this stack's network.
+    volumes:
+      - bridgelink_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U {{ bridgelink_db_user }} -d {{ bridgelink_db_name }}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+secrets:
+  mirth_properties:
+    file: ./secrets/mirth.properties
+  db_password:
+    file: ./secrets/db_password
+
+volumes:
+  bridgelink_appdata:
+  bridgelink_extensions:
+  bridgelink_db_data:

@@ -46,14 +46,14 @@ linumed-os/
 │   ├── roles/
 │   │   ├── common/          # Hardening, firewall, SSH, updates
 │   │   ├── docker/          # Docker Engine + compose plugin, shared prerequisite
-│   │   ├── mirth-connect/   # HL7/FHIR integration engine (Dockerized)
+│   │   ├── bridgelink/      # HL7/FHIR integration engine (MPL-2.0 Mirth fork)
 │   │   ├── monitoring/      # Prometheus + Grafana + Loki + Node Exporter
 │   │   ├── caddy/           # Reverse proxy with automatic TLS
 │   │   └── backup/          # restic-based backup (local + optional S3)
 │   ├── playbooks/
 │   │   ├── site.yml         # Full stack deployment
 │   │   ├── monitoring.yml   # Monitoring stack only
-│   │   └── mirth.yml        # Mirth Connect only
+│   │   └── bridgelink.yml   # BridgeLink only
 │   └── inventory/
 │       └── example/         # Example inventory, never real hosts
 ├── docker/                  # Docker Compose files per service
@@ -97,7 +97,7 @@ linumed-os/
 | common | ansible/roles/common | SSH hardening, ufw, fail2ban, unattended-upgrades |
 | Docker | ansible/roles/docker | Docker Engine + compose plugin, shared prerequisite for every Docker-based role |
 | Caddy | ansible/roles/caddy | Reverse proxy, automatic TLS via ACME |
-| Mirth Connect | ansible/roles/mirth-connect | HL7 v2, FHIR R4 integration engine |
+| BridgeLink | ansible/roles/bridgelink | HL7 v2, FHIR R4 integration engine - MPL-2.0 fork of Mirth Connect, which went proprietary in March 2025 |
 | Prometheus | ansible/roles/monitoring | Metrics collection |
 | Grafana | ansible/roles/monitoring | Dashboards, loopback-only by default |
 | Loki | ansible/roles/monitoring | Log aggregation |
