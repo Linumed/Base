@@ -92,40 +92,19 @@
 
 # A plain handler here would only fire at the end of the whole play - after later roles
 # (caddy, mirth-connect, monitoring) have already started containers via
-# docker_compose_v2. Restarting a daemon with live containers under it is slow and, on a
-# constrained VM, times out outright. Restarting inline instead guarantees it happens
-# before anything is running on top of Docker.
+# docker_compose_v2. Restarting a daemon with live containers under it is slow, so
+# restarting inline instead guarantees it happens before anything is running on top of
+# Docker. become: true is required here - without it this call runs unprivileged, systemd
+# routes it through PolicyKit, and it fails with "Connection timed out" waiting on a
+# pkttyagent authorization that never arrives over SSH. See
+# ansible/roles/common/README.md ("become: true on every privileged task, no exceptions")
+# for the same failure mode hit and fixed earlier in this repo.
 - name: Restart docker if the package or daemon config changed
-  when: docker_package_install is changed or docker_daemon_json is changed
+  ansible.builtin.systemd_service:
+    name: docker
+    state: restarted
   become: true
-  block:
-    - name: Restart docker
-      ansible.builtin.systemd_service:
-        name: docker
-        state: restarted
-  rescue:
-    # Verified by hand on the libvirt/KVM test VM (2 vCPUs): the D-Bus RestartUnit call
-    # can report "Connection timed out" purely because the bus is busy right after the
-    # docker-ce apt install (containerd, buildx, compose, plus git/perl pulled in
-    # transitively) - even though the restart itself completes within a couple of
-    # seconds. Immediately after the module reported failure, `systemctl status docker`
-    # showed it already active from that same restart. Trusting the module's own
-    # reported failure here would be exactly the "closed from tooling output, not
-    # measured behavior" mistake - so verify the actual unit state instead of trusting
-    # the same racy D-Bus call.
-    - name: Re-check actual docker unit state after the reported failure
-      ansible.builtin.service_facts:
-      register: docker_service_facts_check
-      until: docker_service_facts_check.ansible_facts.services['docker.service'].state | default('') == 'running'
-      retries: 6
-      delay: 5
-
-    - name: Fail if docker is not actually active after all
-      ansible.builtin.fail:
-        msg: >-
-          docker.service is not active after a restart attempt - this is a real failure,
-          not the known D-Bus reply timeout. See 'journalctl -u docker' on the target.
-      when: docker_service_facts_check.ansible_facts.services['docker.service'].state | default('') != 'running'
+  when: docker_package_install is changed or docker_daemon_json is changed
 
 - name: Ensure Docker is enabled and running
   ansible.builtin.systemd_service:
