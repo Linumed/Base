@@ -1,0 +1,57 @@
+---
+bridgelink_deploy_dir: "/opt/linumed-os/bridgelink"
+
+# BridgeLink, not Mirth Connect: NextGen moved Mirth Connect to a proprietary licence in
+# March 2025 (closed source from 4.6 onwards), which collides with this repo's FOSS-only
+# rule. BridgeLink is an MPL-2.0 community fork of the last open-source Mirth codebase.
+# See the role README for why this fork and not Open Integration Engine.
+#
+# -dhi-slim: Docker Hardened Image (Amazon Corretto on Debian 13 - same base OS this repo
+# targets) with no shell, no package manager, non-root UID 65532, and a Trivy gate on
+# fixable HIGH/CRITICAL OS findings in CI. "slim" additionally strips the legacy Swing
+# admin client from the image; server and REST API are unaffected, only the Java Web Start
+# landing page is gone - Web Start has been dead since JDK 11, admins use the standalone
+# Administrator Launcher or WebAdmin instead.
+bridgelink_image: "innovarhealthcare/bridgelink:26.6.0-dhi-slim"
+bridgelink_postgres_image: "postgres:17.10-alpine"
+
+# The DHI image runs as this UID; any bind-mounted appdata directory has to be owned by it
+# or the container cannot write its keystore and server.id.
+bridgelink_uid: 65532
+bridgelink_gid: 65532
+
+# Admin/API port. Bound to 127.0.0.1 only - same reasoning as Grafana in the monitoring
+# role: a published container port bypasses ufw entirely, so nothing is exposed that does
+# not have to be. Access via SSH tunnel:
+#   ssh -L 8443:127.0.0.1:8443 <user>@<host>
+# Channel listeners (HL7 MLLP, HTTP, ...) are configured per channel inside BridgeLink and
+# are NOT published by this role - publishing those is a deliberate, per-deployment
+# decision, see docs/roles/bridgelink.md.
+bridgelink_admin_port: 8443
+
+# Database. PostgreSQL runs in the same Compose stack and gets no host port at all -
+# only BridgeLink talks to it, over the stack's own network.
+bridgelink_db_name: "bridgelink"
+bridgelink_db_user: "bridgelink"
+# No defaults for any of these - the role's preflight refuses to run unless they are set.
+# Supply via Ansible Vault, never in plain text in an inventory that gets committed.
+bridgelink_db_password: ""
+# Keystore passwords: BridgeLink generates a keystore on first start and needs these to
+# unlock it on every subsequent start. Changing them after the first run makes the
+# existing keystore unreadable, so set them once and keep them in the vault.
+bridgelink_keystore_storepass: ""
+bridgelink_keystore_keypass: ""
+
+# server.id, persisted explicitly rather than left to the appdata volume - upstream
+# recommends the env var, because it survives a volume being recreated. Generate once
+# (uuidgen) and keep it stable for the life of the installation; a changed server ID
+# makes BridgeLink treat itself as a different server.
+bridgelink_server_id: ""
+
+# JVM max heap in MB, passed through as the first entry of the vmoptions list.
+bridgelink_max_heap_mb: 512
+
+# Seconds Docker waits on shutdown before killing the container. Upstream's launcher
+# drains queues and DB connections for up to 30s; Docker's default of 10s would cut that
+# short, so this is deliberately above it.
+bridgelink_stop_grace_period: 35

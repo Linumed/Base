@@ -1,0 +1,169 @@
+---
+# BridgeLink (MPL-2.0 fork of Mirth Connect) plus its PostgreSQL backend, as a Docker
+# Compose stack (issue #12). See the role README for the licence background.
+
+# Same preflight pattern as common's SSH role and monitoring's Grafana password: refuse to
+# run rather than deploy with empty or guessable credentials.
+- name: Preflight - abort if required secrets are unset
+  ansible.builtin.assert:
+    that:
+      - bridgelink_db_password | length > 0
+      - bridgelink_keystore_storepass | length > 0
+      - bridgelink_keystore_keypass | length > 0
+      - bridgelink_server_id | length > 0
+    fail_msg: >-
+      bridgelink_db_password, bridgelink_keystore_storepass, bridgelink_keystore_keypass
+      and bridgelink_server_id must all be set - refusing to deploy with empty
+      credentials. Supply them via Ansible Vault. Generate the server ID once with
+      `uuidgen` and keep it stable; changing it later makes BridgeLink consider itself a
+      different server.
+
+- name: Ensure deploy directory exists
+  ansible.builtin.file:
+    path: "{{ bridgelink_deploy_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+
+# 0700: the files inside hold the database and keystore passwords in plain text (that is
+# how Docker secrets from files work). Nothing but root has any business reading them.
+- name: Ensure secrets directory exists
+  ansible.builtin.file:
+    path: "{{ bridgelink_deploy_dir }}/secrets"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+  become: true
+
+# Owned by the container's UID, not root: Compose bind-mounts a file-based secret into
+# the container with the host's ownership intact, and the -dhi image runs as an
+# unprivileged 65532 - a root-owned 0600 file makes the bootstrap die with
+# AccessDeniedException on /run/secrets/mirth_properties in a restart loop. The
+# enclosing secrets/ directory is 0700 root-only, so this is not readable by other
+# users on the host either way.
+- name: Deploy the mirth.properties secret
+  ansible.builtin.template:
+    src: mirth.properties.j2
+    dest: "{{ bridgelink_deploy_dir }}/secrets/mirth.properties"
+    owner: "{{ bridgelink_uid }}"
+    group: "{{ bridgelink_gid }}"
+    mode: "0400"
+  become: true
+  no_log: true
+  notify: Restart bridgelink
+
+- name: Deploy the database password secret
+  ansible.builtin.copy:
+    content: "{{ bridgelink_db_password }}"
+    dest: "{{ bridgelink_deploy_dir }}/secrets/db_password"
+    owner: root
+    group: root
+    mode: "0600"
+  become: true
+  no_log: true
+  notify: Restart bridgelink
+
+- name: Deploy docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ bridgelink_deploy_dir }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+  register: bridgelink_compose_file
+  become: true
+
+# There is no config linter for mirth.properties, but the Compose file itself can be
+# checked before anything is applied - same validate-before-activate idea as the caddy and
+# monitoring roles, just with the tool that actually exists here.
+- name: Validate the Compose file
+  ansible.builtin.command:
+    cmd: docker compose -f docker-compose.yml config --quiet
+    chdir: "{{ bridgelink_deploy_dir }}"
+  register: bridgelink_compose_validate
+  changed_when: false
+  failed_when: false
+  become: true
+
+- name: Roll back Compose file if validation failed and a previous version existed
+  ansible.builtin.copy:
+    src: "{{ bridgelink_compose_file.backup_file }}"
+    dest: "{{ bridgelink_deploy_dir }}/docker-compose.yml"
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  when:
+    - bridgelink_compose_validate.rc != 0
+    - bridgelink_compose_file.backup_file is defined
+
+- name: Remove Compose file if validation failed and no previous version existed
+  ansible.builtin.file:
+    path: "{{ bridgelink_deploy_dir }}/docker-compose.yml"
+    state: absent
+  become: true
+  when:
+    - bridgelink_compose_validate.rc != 0
+    - bridgelink_compose_file.backup_file is not defined
+
+- name: Fail if the Compose file is invalid
+  ansible.builtin.fail:
+    msg: "docker compose config failed: {{ bridgelink_compose_validate.stderr }}"
+  when: bridgelink_compose_validate.rc != 0
+
+# Pulled explicitly ahead of the apply, for the same reason as in the monitoring role:
+# for services without an explicit `command:`, Compose folds the image's own default
+# command into the container config-hash, and an image that is not fully local yet at
+# first apply produces a different hash than the second run computes - a spurious
+# recreate that breaks idempotency.
+- name: Pull BridgeLink images ahead of the compose apply
+  community.docker.docker_image:
+    name: "{{ item }}"
+    source: pull
+  become: true
+  loop:
+    - "{{ bridgelink_image }}"
+    - "{{ bridgelink_postgres_image }}"
+
+- name: Deploy the BridgeLink stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ bridgelink_deploy_dir }}"
+    state: present
+    pull: missing
+    wait: true
+    wait_timeout: 180
+  become: true
+
+# `wait: true` above is NOT sufficient on its own: for a container without a HEALTHCHECK -
+# and the hardened image cannot have one, it has no shell - Compose treats "running" as
+# ready. A BridgeLink that starts, fails on its config and enters a restart loop is
+# reported as a successful deploy (observed exactly that way on 2026-08-10, when the
+# secret file was unreadable for UID 65532). So the engine gets asked whether it is
+# actually serving, rather than inferring it from container state.
+#
+# validate_certs: false - BridgeLink generates its own self-signed keystore on first
+# start; this is a loopback call to the host's own container, not a trust decision.
+# The X-Requested-With header is mandatory: the API rejects requests without it (HTTP
+# 400, CSRF protection), which would otherwise look like a broken server.
+- name: Verify BridgeLink is actually serving
+  ansible.builtin.uri:
+    url: "https://127.0.0.1:{{ bridgelink_admin_port }}/api/server/version"
+    method: GET
+    headers:
+      X-Requested-With: "ansible-linumed-os"
+    validate_certs: false
+    return_content: true
+  register: bridgelink_version_check
+  until: bridgelink_version_check.status == 200
+  retries: 30
+  delay: 10
+  changed_when: false
+
+- name: Report the running BridgeLink version
+  ansible.builtin.debug:
+    msg: "BridgeLink is serving, version {{ bridgelink_version_check.content | trim }}"

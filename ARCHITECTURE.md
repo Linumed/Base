@@ -52,9 +52,9 @@ Für CI/CD werden EU-nahe Alternativen bevorzugt.
 │  │  Caddy   │   │              Docker Engine             │ │
 │  │ (Proxy,  │   │                                         │ │
 │  │  Container)  │  ┌─────────────┐  ┌───────────────────┐│ │
-│  │  Port    │──▶│  │    Mirth    │  │ Prometheus         ││ │
-│  │  80/443  │   │  │  Connect   │  │ Grafana (loopback) ││ │
-│  └──────────┘   │  │ Port 8080  │  │ Loki, Alertmanager ││ │
+│  │  Port    │──▶│  │ BridgeLink  │  │ Prometheus         ││ │
+│  │  80/443  │   │  │ + Postgres  │  │ Grafana (loopback) ││ │
+│  └──────────┘   │  │  (loopback) │  │ Loki, Alertmanager ││ │
 │                 │  └─────────────┘  │ Alloy, cAdvisor    ││ │
 │  ┌──────────┐   │                   └───────────────────┘│ │
 │  │  ufw     │   │                                         │ │
@@ -97,8 +97,8 @@ Designentscheidung - Caddy als Container, nicht nativ auf dem Host:
 Ursprünglich war geplant, Caddy nativ zu betreiben, damit TLS-Termination
 einen Docker-Neustart übersteht. Geprüft (Stand 2026-08-10): Debian 13
 liefert `caddy` in Version 2.6.2 mit 11 offenen Sicherheitsproblemen im
-Debian-Security-Tracker; der aktuelle Container-Pin liegt bei 2.9.x,
-upstream bei 2.11.x. Für die am stärksten exponierte Komponente des
+Debian-Security-Tracker, während der Container auf dem aktuellen
+Upstream-Stand 2.11.x läuft. Für die am stärksten exponierte Komponente des
 gesamten Stacks wäre "nativ" damit nicht sicherer, sondern messbar
 unsicherer - der Patch-Kadenz-Vorteil, der nativ sonst rechtfertigen würde,
 kehrt sich hier um. Das ursprüngliche Verfügbarkeitsargument trägt zudem
@@ -114,18 +114,37 @@ unten) - bei Caddy ist das für 80/443 gewollt, da der Proxy von außen
 erreichbar sein muss. Jeder *weitere* `ports:`-Eintrag in diesem
 Compose-Stack muss diese Falle bewusst berücksichtigen.
 
-### mirth-connect (Ansible Role)
+### bridgelink (Ansible Role)
 
-Mirth Connect als HL7/FHIR-Integrationsengine, betrieben als Docker
-Compose Stack. Mirth Connect ist der De-facto-Standard für Healthcare-
-Datenintegration in DACH-Einrichtungen.
+HL7/FHIR-Integrationsengine, betrieben als Docker Compose Stack. Mirth
+Connect ist der De-facto-Standard für Healthcare-Datenintegration in
+DACH-Einrichtungen — eingesetzt wird hier aber **BridgeLink**, ein
+MPL-2.0-Fork davon.
+
+Designentscheidung — BridgeLink statt Mirth Connect:
+NextGen Healthcare hat Mirth Connect im März 2025 auf eine rein
+kommerzielle, proprietäre Lizenz umgestellt; ab 4.6 ist der Quellcode
+geschlossen. Das ist mit der FOSS-only-Vorgabe dieses Repos unvereinbar.
+Die letzte MPL-2.0-Version (4.5.2) ist eingefroren und bekommt keine
+Sicherheitsfixes mehr — sie einzusetzen wäre derselbe Fehler wie
+Promtail im Monitoring-Stack. BridgeLink führt den letzten quelloffenen
+Stand unter MPL 2.0 weiter. Die herstellerneutrale Alternative Open
+Integration Engine (OIE) wurde geprüft und wegen fehlender
+Container-Images für ihre aktuelle Version zurückgestellt; ausführliche
+Abwägung in `ansible/roles/bridgelink/README.md`. Beide Forks stammen
+vom selben Codestand, Kanäle sind portabel — ein späterer Wechsel ist
+kein Neubau.
 
 Unterstützte Protokolle out-of-the-box: HL7 v2.x, FHIR R4, DICOM, CSV,
 XML, Datenbank-Connectoren.
 
 Docker Compose Stack:
-- mirth-connect (NextGen Connect, aktueller Stable-Tag)
-- PostgreSQL (Konfigurationsdatenbank für Mirth)
+- BridgeLink (gehärtetes Image: Debian 13, keine Shell, non-root)
+- PostgreSQL (Konfigurations- und Nachrichtendatenbank)
+
+Nur der Admin-/API-Port ist veröffentlicht, ausschließlich auf
+`127.0.0.1`. Kanal-Ports (HL7-MLLP o. ä.) veröffentlicht die Rolle
+bewusst nicht — das ist eine Entscheidung pro Standort.
 
 ### monitoring (Ansible Role)
 
@@ -136,8 +155,9 @@ Komponenten:
 - Prometheus - Metriken-Scraping und -Speicherung (Container)
 - Grafana - Dashboards, drei vendorte Standard-Dashboards inklusive (Host-Übersicht,
   Container-Übersicht, Log-Explorer) - bewusst generisch für die Infrastruktur, nicht
-  klinisch/patientenbezogen, da Linumed OS keine Patientendaten verarbeitet; per
-  Default nur auf `127.0.0.1` gebunden, Zugriff via SSH-Tunnel (Container)
+  klinisch/patientenbezogen: der Monitoring-Stack sieht Metriken und Logs, keine
+  Nachrichteninhalte der Integrationsengine; per Default nur auf `127.0.0.1` gebunden,
+  Zugriff via SSH-Tunnel (Container)
 - Loki - Log-Aggregation (Container)
 - **Grafana Alloy** - Log-Shipping von Host und Containern nach Loki
   (Container). Ersetzt Promtail, das am 02.03.2026 End-of-Life ging und
@@ -183,13 +203,13 @@ Nutzer-Zugriff und bindet ausschließlich an `127.0.0.1` (Zugriff via
 SSH-Tunnel), Prometheus/Loki/Alertmanager/cAdvisor erreichen sich intern
 über Servicenamen und veröffentlichen keinen Host-Port. Eine
 Caddy-Anbindung für monitoring folgt, sobald ein Dienst sie tatsächlich
-braucht (z. B. mirth-connect, #12).
+braucht (z. B. bridgelink, #12).
 
 ```
 Internet
    │
    ├── :80  ──▶ Caddy ──▶ redirect to HTTPS
-   └── :443 ──▶ Caddy ──▶ /mirth ──▶ mirth-connect:8080   (geplant, #12)
+   └── :443 ──▶ Caddy ──▶ /bridgelink ──▶ bridgelink:8443  (geplant)
 
 SSH-Tunnel (nicht öffentlich)
    └── 127.0.0.1:3000 ──▶ Grafana
@@ -207,8 +227,8 @@ keine Bind-Mounts auf Host-Pfade außer explizit dokumentierten Ausnahmen.
 
 | Service | Volume | Inhalt |
 |---|---|---|
-| mirth-connect | mirth-appdata | Kanal-Konfiguration, Logs |
-| postgresql (Mirth) | mirth-postgres-data | Mirth-Konfigurationsdatenbank |
+| bridgelink | bridgelink_appdata | Keystore, server.id, Laufzeitdaten |
+| postgresql (BridgeLink) | bridgelink_db_data | Kanal-Konfiguration und Nachrichten |
 | prometheus | prometheus-data | Metriken (Retention: 90 Tage default) |
 | grafana | grafana-data | Dashboards, Nutzereinstellungen |
 | loki | loki-data | Log-Daten (Retention: 30 Tage default, kürzer als Metriken - siehe monitoring-Rolle) |
@@ -253,7 +273,18 @@ außerhalb des Repos an und referenziert die Roles.
   Caddy auf 80/443, das ist gewollt) - alles andere entweder gar keinen
   Host-Port oder explizit auf `127.0.0.1` gebunden.
 - Docker-Container ohne Privilegien, kein `--privileged`
-- Secrets via Ansible Vault oder externe .env-Datei (nie im Repo)
+- Secrets via Ansible Vault oder externe .env-Datei (nie im Repo). Passwörter,
+  die ein Container zur Laufzeit braucht, gehen als Docker-Secret aus einer
+  Datei hinein, nicht als Umgebungsvariable - Env-Variablen sind für jeden
+  lesbar, der `docker inspect` ausführen darf, und landen in der
+  Container-Config auf der Platte.
+- **Ab der bridgelink-Rolle verarbeitet der Stack echte Patientendaten.**
+  Bis dahin enthält er nur Betriebsdaten (Metriken, Logs); eine
+  Integrationsengine bewegt dagegen HL7-Nachrichten mit Namen, Geburtsdaten
+  und Diagnosen, und ihre Datenbank speichert sie je nach Kanal-Einstellung.
+  Das verschiebt die Anforderungen an Backup (Rolle `backup`), Aufbewahrung
+  und Zugriffskontrolle von "Infrastruktur sichern" zu "Gesundheitsdaten
+  verarbeiten" - siehe `docs/roles/bridgelink.md`, Abschnitt DSGVO.
 - Backup-Daten verschlüsselt (restic + Passwort via Vault)
 - Automatische Sicherheitsupdates für das Host-System (unattended-upgrades
   deckt auch nativ installierte Pakete wie Node Exporter ab, nicht nur
@@ -279,7 +310,7 @@ dokumentiert.
 
 ## Versionsstrategie
 
-- v0.1: common + caddy + monitoring + mirth-connect + backup
+- v0.1: common + docker + caddy + monitoring + bridgelink + backup
 - v0.2: SSO-Integration via Authentik (optionale Role) - Übergangslösung bis
   Linumed Passpin produktionsreif ist; Authentik deckt OIDC, SAML, LDAP-Sync
 - v0.3: DICOM-Stack (Orthanc)
