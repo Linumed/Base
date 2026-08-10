@@ -45,27 +45,29 @@ Für CI/CD werden EU-nahe Alternativen bevorzugt.
 ## Zielarchitektur (v0.1)
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                  Debian 13 (Bare Metal / VM)         │
-│                                                     │
-│  ┌──────────┐   ┌─────────────────────────────────┐ │
-│  │  Caddy   │   │        Docker Engine             │ │
-│  │ (Proxy)  │   │                                  │ │
-│  │  Port    │   │  ┌─────────────┐  ┌───────────┐  │ │
-│  │  80/443  │──▶│  │    Mirth    │  │ Prometheus │  │ │
-│  └──────────┘   │  │  Connect   │  │  Grafana   │  │ │
-│                 │  │ Port 8080  │  │    Loki    │  │ │
-│  ┌──────────┐   │  └─────────────┘  └───────────┘  │ │
-│  │  ufw     │   │                                  │ │
-│  │ fail2ban │   │  ┌─────────────────────────────┐  │ │
-│  │  SSH     │   │  │      Node Exporter           │  │ │
-│  └──────────┘   │  └─────────────────────────────┘  │ │
-│                 └─────────────────────────────────┘ │
-│                                                     │
-│  ┌──────────────────────────────────────────────┐   │
-│  │  restic (Backup - encrypted, scheduled)      │   │
-│  └──────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────┘
+┌───────────────────────────────────────────────────────────┐
+│                  Debian 13 (Bare Metal / VM)               │
+│                                                             │
+│  ┌──────────┐   ┌───────────────────────────────────────┐ │
+│  │  Caddy   │   │              Docker Engine             │ │
+│  │ (Proxy,  │   │                                         │ │
+│  │  Container)  │  ┌─────────────┐  ┌───────────────────┐│ │
+│  │  Port    │──▶│  │    Mirth    │  │ Prometheus         ││ │
+│  │  80/443  │   │  │  Connect   │  │ Grafana (loopback) ││ │
+│  └──────────┘   │  │ Port 8080  │  │ Loki, Alertmanager ││ │
+│                 │  └─────────────┘  │ Alloy, cAdvisor    ││ │
+│  ┌──────────┐   │                   └───────────────────┘│ │
+│  │  ufw     │   │                                         │ │
+│  │ fail2ban │   └───────────────────────────────────────┘ │
+│  │  SSH     │                                              │
+│  └──────────┘   ┌───────────────────────────────────────┐ │
+│                  │  Node Exporter (nativ, Debian-Paket)  │ │
+│                  └───────────────────────────────────────┘ │
+│                                                             │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │  restic (Backup - encrypted, scheduled)               │  │
+│  └──────────────────────────────────────────────────────┘  │
+└───────────────────────────────────────────────────────────┘
 ```
 
 ---
@@ -87,17 +89,30 @@ Umfasst:
 ### caddy (Ansible Role)
 
 Caddy als Reverse Proxy mit automatischem TLS über ACME (Let's Encrypt oder
-eigene CA). Läuft direkt auf dem Host, nicht in Docker, um TLS-Termination
-vor allen Services zu ermöglichen.
+eigene CA), betrieben als Docker-Compose-Stack.
 
 Konfiguration via Caddyfile, generiert aus Ansible-Templates.
 
-Designentscheidung - Caddy auf dem Host, nicht in Docker:
-Caddy läuft bewusst nativ auf dem Host und nicht als Container. Begründung:
-TLS-Termination erfolgt vor der Docker-Schicht - wenn Docker crasht oder
-neu gestartet wird, bleibt der Reverse Proxy erreichbar. Das ist eine
-bewusste Sicherheits- und Stabilitätsentscheidung, keine Inkonsistenz.
-Diese Entscheidung ist final und wird in zukünftigen Versionen nicht geändert.
+Designentscheidung - Caddy als Container, nicht nativ auf dem Host:
+Ursprünglich war geplant, Caddy nativ zu betreiben, damit TLS-Termination
+einen Docker-Neustart übersteht. Geprüft (Stand 2026-08-10): Debian 13
+liefert `caddy` in Version 2.6.2 mit 11 offenen Sicherheitsproblemen im
+Debian-Security-Tracker; der aktuelle Container-Pin liegt bei 2.9.x,
+upstream bei 2.11.x. Für die am stärksten exponierte Komponente des
+gesamten Stacks wäre "nativ" damit nicht sicherer, sondern messbar
+unsicherer - der Patch-Kadenz-Vorteil, der nativ sonst rechtfertigen würde,
+kehrt sich hier um. Das ursprüngliche Verfügbarkeitsargument trägt zudem
+kaum: sind alle Backends selbst Container, liefert ein überlebender Caddy
+ohne erreichbare Upstreams nur `502` statt `connection refused` - kein
+praktischer Gewinn. Ein echter Notaus (z. B. bei einem Sicherheitsvorfall)
+gehört als eigenes, dokumentiertes Verfahren auf Netzwerkebene (`ufw deny`,
+Interface down) ins Betriebs-Runbook, nicht als Nebeneffekt der
+Proxy-Platzierung.
+
+Docker veröffentlicht Container-Ports an ufw vorbei (siehe Sicherheitskonzept
+unten) - bei Caddy ist das für 80/443 gewollt, da der Proxy von außen
+erreichbar sein muss. Jeder *weitere* `ports:`-Eintrag in diesem
+Compose-Stack muss diese Falle bewusst berücksichtigen.
 
 ### mirth-connect (Ansible Role)
 
@@ -114,17 +129,31 @@ Docker Compose Stack:
 
 ### monitoring (Ansible Role)
 
-Vollständiger Observability-Stack, betrieben als Docker Compose Stack.
+Observability-Stack. Die meisten Komponenten laufen als Docker-Compose-Stack,
+Node Exporter läuft nativ.
 
 Komponenten:
-- Prometheus - Metriken-Scraping und -Speicherung
-- Grafana - Dashboards (vorbereitete Healthcare-Dashboards inklusive)
-- Loki - Log-Aggregation
-- Promtail - Log-Shipping von Host und Containern nach Loki
-- Node Exporter - Host-Metriken (CPU, RAM, Disk, Network)
-- cAdvisor - Container-Metriken
+- Prometheus - Metriken-Scraping und -Speicherung (Container)
+- Grafana - Dashboards, vorbereitete Healthcare-Dashboards inklusive; per
+  Default nur auf `127.0.0.1` gebunden, Zugriff via SSH-Tunnel (Container)
+- Loki - Log-Aggregation (Container)
+- **Grafana Alloy** - Log-Shipping von Host und Containern nach Loki
+  (Container). Ersetzt Promtail, das am 02.03.2026 End-of-Life ging und
+  keine Sicherheitsfixes mehr erhält - für ein DSGVO-Kit keine Option.
+- Alertmanager - Alert-Routing (Container)
+- Node Exporter - Host-Metriken (CPU, RAM, Disk, Network). **Natives
+  Debian-Paket** statt Container: bekommt Security-Updates automatisch über
+  die bestehende unattended-upgrades-Rolle, braucht keine
+  `--pid=host`-/rootfs-Mounts, und ufw kann den Port tatsächlich schützen -
+  bei einem veröffentlichten Container-Port wäre das wirkungslos (siehe
+  Sicherheitskonzept unten).
+- cAdvisor - Container-Metriken (Container)
 
-Retention konfigurierbar über Variable `monitoring_retention_days` (Default: 90).
+Retention ist nach Datenart getrennt, nicht ein einzelner globaler Wert:
+Metriken (`monitoring_metrics_retention_days`, Default 90) und Logs
+(`monitoring_logs_retention_days`, Default 30, kürzer) - Logs können
+personenbezogene Daten enthalten (IP-Adressen, Benutzernamen), kürzere
+Aufbewahrung ist hier Datenminimierung, keine Willkür.
 
 ### backup (Ansible Role)
 
@@ -140,22 +169,32 @@ restic-Ergebnisse werden als Metrics an Prometheus gepusht.
 
 ## Netzwerk-Design
 
-Alle Services laufen in einem internen Docker-Netzwerk (`linumed-net`).
-Von außen sind nur die Ports 80 und 443 (Caddy) erreichbar sowie der
-SSH-Port. Caddy routet anhand von Hostnamen oder Pfaden zu den jeweiligen
-Services.
+**Zielbild**, noch nicht vollständig umgesetzt: perspektivisch sollen Caddy
+und die Docker-Compose-Stacks ein gemeinsames Netzwerk (`linumed-net`)
+teilen, damit Caddy alle Services per Hostname/Pfad erreichen und
+routen kann. Von außen wären dann nur 80/443 (Caddy) und SSH erreichbar.
+
+**Stand v0.1:** jeder Compose-Stack hat sein eigenes, isoliertes
+Docker-Netzwerk; es gibt noch kein `linumed-net`. Die monitoring-Rolle
+braucht das für v0.1 auch nicht: Grafana ist die einzige Komponente mit
+Nutzer-Zugriff und bindet ausschließlich an `127.0.0.1` (Zugriff via
+SSH-Tunnel), Prometheus/Loki/Alertmanager/cAdvisor erreichen sich intern
+über Servicenamen und veröffentlichen keinen Host-Port. Eine
+Caddy-Anbindung für monitoring folgt, sobald ein Dienst sie tatsächlich
+braucht (z. B. mirth-connect, #12).
 
 ```
 Internet
    │
    ├── :80  ──▶ Caddy ──▶ redirect to HTTPS
-   └── :443 ──▶ Caddy ──▶ /mirth      ──▶ mirth-connect:8080
-                       ──▶ /grafana   ──▶ grafana:3000
-                       ──▶ /prometheus──▶ prometheus:9090 (intern only)
+   └── :443 ──▶ Caddy ──▶ /mirth ──▶ mirth-connect:8080   (geplant, #12)
+
+SSH-Tunnel (nicht öffentlich)
+   └── 127.0.0.1:3000 ──▶ Grafana
 ```
 
-Prometheus und interne Metrics-Endpoints sind nur über Caddy mit
-Authentifizierung erreichbar, nicht direkt.
+Prometheus und interne Metrics-Endpoints sind für v0.1 nur per SSH-Tunnel
+erreichbar, nicht über Caddy und nicht direkt von außen.
 
 ---
 
@@ -170,7 +209,10 @@ keine Bind-Mounts auf Host-Pfade außer explizit dokumentierten Ausnahmen.
 | postgresql (Mirth) | mirth-postgres-data | Mirth-Konfigurationsdatenbank |
 | prometheus | prometheus-data | Metriken (Retention: 90 Tage default) |
 | grafana | grafana-data | Dashboards, Nutzereinstellungen |
-| loki | loki-data | Log-Daten (Retention: 90 Tage default) |
+| loki | loki-data | Log-Daten (Retention: 30 Tage default, kürzer als Metriken - siehe monitoring-Rolle) |
+
+Node Exporter hat kein eigenes Volume - läuft nativ, Host-Metriken werden
+nicht persistiert (das übernimmt Prometheus).
 
 restic sichert die Volume-Daten via docker-volume-backup oder direktem
 Zugriff auf den Volume-Pfad unter /var/lib/docker/volumes/. Backup läuft
@@ -202,10 +244,18 @@ außerhalb des Repos an und referenziert die Roles.
 - Alle Verbindungen TLS-verschlüsselt (Caddy + ACME)
 - SSH-Key-only, kein Passwort-Login
 - Firewall default-deny, minimale Öffnung
+- **Docker umgeht ufw**: ein per `ports:` veröffentlichter Container-Port ist
+  trotz aktiver ufw-Regeln erreichbar (Dockers eigene iptables/nftables-Regeln
+  liegen vor den ufw-Regeln in der Chain). Deshalb der Default in diesem Kit:
+  nichts veröffentlichen, was nicht öffentlich erreichbar sein muss (Ausnahme
+  Caddy auf 80/443, das ist gewollt) - alles andere entweder gar keinen
+  Host-Port oder explizit auf `127.0.0.1` gebunden.
 - Docker-Container ohne Privilegien, kein `--privileged`
 - Secrets via Ansible Vault oder externe .env-Datei (nie im Repo)
 - Backup-Daten verschlüsselt (restic + Passwort via Vault)
-- Automatische Sicherheitsupdates für das Host-System
+- Automatische Sicherheitsupdates für das Host-System (unattended-upgrades
+  deckt auch nativ installierte Pakete wie Node Exporter ab, nicht nur
+  Container-Images)
 
 ---
 
