@@ -58,11 +58,11 @@ systemctl is-active docker
   veröffentlichte Container-Ports, unabhängig von ufw - ein per `ports:` freigegebener
   Port ist trotz `ufw deny incoming` von außen erreichbar, außer er ist explizit auf
   `127.0.0.1` gebunden. Siehe die `common`-Rolle für den generellen "Docker umgeht ufw"-Hinweis.
-- **Der D-Bus-Neustart von `docker.service` kann auf schwacher Hardware (z. B. der
-  1-2-vCPU-Testumgebung) mit "Connection timed out" fehlschlagen, obwohl der Dienst
-  tatsächlich neu gestartet ist** - direkt nach dem großen `docker-ce`-Paket-Install ist
-  der D-Bus kurzzeitig überlastet. Die Rolle fängt das ab: schlägt der Neustart fehl, wird
-  der tatsächliche Unit-Status per `service_facts` nachgeprüft, bevor die Rolle wirklich
-  fehlschlägt. Das ist bewusst so gebaut, statt der gemeldeten Fehlermeldung des Tools
-  blind zu vertrauen.
+- **`become: true` ist auf dem Restart-Task Pflicht, keine Ausnahme.** Fehlt es, läuft
+  der Aufruf unprivilegiert, systemd routet ihn über PolicyKit, und er scheitert mit
+  `Failed to restart docker.service: Connection timed out` - wartet auf eine
+  `pkttyagent`-Freigabe, die über SSH nie kommt. Sieht aus wie ein D-Bus-/Hardware-Problem,
+  ist aber deterministisch dasselbe fehlende `become: true` bei jedem Lauf. Siehe
+  `ansible/roles/common/README.md`, Abschnitt "become: true auf jedem privilegierten Task,
+  keine Ausnahmen" - dort zuerst gefunden und dokumentiert, hier zunächst übersehen.
 - **Rootless Mode und eigene Registries sind out of scope** für v0.1.
