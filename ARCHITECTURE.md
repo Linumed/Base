@@ -116,24 +116,24 @@ Compose-Stack muss diese Falle bewusst berücksichtigen.
 
 ### bridgelink (Ansible Role)
 
-HL7/FHIR-Integrationsengine, betrieben als Docker Compose Stack. Mirth
-Connect ist der De-facto-Standard für Healthcare-Datenintegration in
-DACH-Einrichtungen — eingesetzt wird hier aber **BridgeLink**, ein
-MPL-2.0-Fork davon.
+HL7/FHIR-Integrationsengine, betrieben als Docker Compose Stack.
+Eingesetzt wird **BridgeLink**.
 
-Designentscheidung — BridgeLink statt Mirth Connect:
-NextGen Healthcare hat Mirth Connect im März 2025 auf eine rein
-kommerzielle, proprietäre Lizenz umgestellt; ab 4.6 ist der Quellcode
-geschlossen. Das ist mit der FOSS-only-Vorgabe dieses Repos unvereinbar.
-Die letzte MPL-2.0-Version (4.5.2) ist eingefroren und bekommt keine
-Sicherheitsfixes mehr — sie einzusetzen wäre derselbe Fehler wie
-Promtail im Monitoring-Stack. BridgeLink führt den letzten quelloffenen
-Stand unter MPL 2.0 weiter. Die herstellerneutrale Alternative Open
-Integration Engine (OIE) wurde geprüft und wegen fehlender
-Container-Images für ihre aktuelle Version zurückgestellt; ausführliche
-Abwägung in `ansible/roles/bridgelink/README.md`. Beide Forks stammen
-vom selben Codestand, Kanäle sind portabel — ein späterer Wechsel ist
-kein Neubau.
+Das ist kein Ersatz für Mirth Connect, sondern **dieselbe Codebasis unter
+anderem Namen**: gleiches Kanal-XML, gleicher Administrator, gleiche
+Transformer und Connectoren, die Java-Pakete heißen weiterhin
+`com.mirth.connect`. NextGen Healthcare hat Mirth Connect im März 2025
+auf eine rein kommerzielle, proprietäre Lizenz umgestellt (ab 4.6
+Quellcode geschlossen); die Open-Source-Linie läuft seither unter neuen
+Namen weiter, und Linumed OS folgt der offenen Linie. Mirth Connect
+bleibt der De-facto-Standard der Branche — Kanäle sind zwischen allen
+Varianten portabel, eine Einrichtung nimmt ihre Integrationsarbeit also
+mit, falls sie später wechseln will.
+
+Vollständige Begründung samt geprüfter Alternativen (Open Integration
+Engine, lizenziertes Mirth 4.6+, eingefrorenes 4.5.2), eingehandelter
+Nachteile und Revisionsauslöser:
+[ADR 0001](docs/adr/0001-bridgelink-statt-mirth-connect.md).
 
 Unterstützte Protokolle out-of-the-box: HL7 v2.x, FHIR R4, DICOM, CSV,
 XML, Datenbank-Connectoren.

@@ -9,18 +9,39 @@ Diese Rolle stellt **BridgeLink** samt PostgreSQL-Backend als Docker-Compose-Sta
 
 ## Warum BridgeLink und nicht Mirth Connect
 
-Ursprünglich war Mirth Connect geplant. Das geht nicht mehr: NextGen Healthcare hat
-Mirth Connect im **März 2025 auf eine rein kommerzielle, proprietäre Lizenz umgestellt**,
-ab Version 4.6 ist der Quellcode geschlossen. Das kollidiert mit der FOSS-Vorgabe dieses
-Repos. Die letzte MPL-2.0-Version 4.5.2 ist eingefroren und bekommt keine
-Sicherheitsfixes mehr — sie einzusetzen wäre derselbe Fehler, für den Promtail aus der
-monitoring-Rolle geflogen ist.
+**BridgeLink ist kein Ersatzprodukt, sondern derselbe Codestand unter anderem Namen.**
+Gleiches Kanal-XML, gleicher Administrator, gleiche Transformer und Connectoren; die
+Java-Pakete heißen weiterhin `com.mirth.connect`. Wer Mirth kann, kann BridgeLink, und
+Kanäle sind zwischen allen Varianten exportierbar.
 
-BridgeLink ist ein **MPL-2.0-Fork** des letzten quelloffenen Mirth-Standes, gepflegt von
-Innovar Healthcare. Die Alternative Open Integration Engine (OIE) hat die bessere
-Governance (herstellerneutral, Non-Profit-Steering-Committee), veröffentlicht aber
-derzeit kein Container-Image für ihre aktuelle Version — ausführliche Abwägung in
-`ansible/roles/bridgelink/README.md`.
+Hintergrund: NextGen Healthcare hat Mirth Connect im **März 2025 auf eine rein
+kommerzielle, proprietäre Lizenz umgestellt**, ab 4.6 ist der Quellcode geschlossen. Die
+Open-Source-Linie läuft seither unter neuen Namen weiter — Linumed OS folgt der offenen
+Linie, weil das Kit FOSS-only ist und die letzte freie Mirth-Version (4.5.2) keine
+Sicherheitsfixes mehr bekommt.
+
+Die vollständige Begründung mit allen geprüften Alternativen, den Nachteilen, die man
+sich damit einhandelt (u. a. dass „Mirth Connect" in Ausschreibungen steht und
+„BridgeLink" nicht), und den Bedingungen für eine Neubewertung steht in
+**[ADR 0001](../adr/0001-bridgelink-statt-mirth-connect.md)** — dieses Dokument ist als
+Antwort auf die Frage „warum nicht Mirth?" gedacht und darf zitiert werden.
+
+## Wenn die Einrichtung lizenziertes Mirth Connect einsetzen will
+
+Linumed OS erzwingt keinen Fork — es liefert einen FOSS-Default. Zwei Wege:
+
+**Belastbar: Kanäle mitnehmen.** Kanäle, Code-Templates und Transformer lassen sich aus
+BridgeLink exportieren und in lizenziertes Mirth Connect (oder OIE) importieren, weil
+alle Varianten denselben Codestand teilen. Die eigentliche Integrationsarbeit einer
+Einrichtung ist damit nicht an diese Rolle gebunden. Das ist die verlässliche Zusage.
+
+**Nicht getestet: Image tauschen.** `bridgelink_image` ist eine Variable, und die
+Container-Konventionen dieser Rolle (`MP_*`-Variablen, `mirth_properties`-Secret) stammen
+ursprünglich aus NextGens eigenem `connect-docker`. Trotzdem ist ein Image-Tausch
+**weder getestet noch zugesichert**: die Installationspfade unterscheiden sich
+(`/opt/bridgelink` vs. `/opt/connect`), und für lizenzierte 4.6+-Images ist uns die
+Distributionsform nicht bekannt — auf Docker Hub endet `nextgenhealthcare/connect` bei
+4.5.2. Wer diesen Weg geht, muss ihn gegen seine eigene Lizenz-Distribution verifizieren.
 
 ## Variablen
 
