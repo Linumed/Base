@@ -33,8 +33,11 @@ repository.
 - No credentials, secrets, or real IP addresses in any committed file.
   Always use .env.example templates and Ansible Vault references.
 - Target host baseline is not assumed: `python3` and `sudo` are both `Priority: optional`
-  in Debian 13, so a minimal/netinst install has neither. `scripts/bootstrap.sh` (shell,
-  no Ansible dependency) exists to establish the baseline before any playbook runs.
+  in Debian 13, so a minimal/netinst install has neither. A `scripts/bootstrap.sh` (shell,
+  no Ansible dependency) is **planned but not written yet** (issue #13) to establish that
+  baseline before any playbook runs. Until it exists, the roles assume a target that
+  already has both - which the cloud image used by `test/vm-test.sh` does, so the gap is
+  invisible in CI (issue #14 tracks a netinst/preseed test path that would expose it).
 
 ---
 
@@ -58,7 +61,7 @@ linumed-os/
 │       └── example/         # Example inventory, never real hosts
 ├── docker/                  # Docker Compose files per service
 ├── docs/                    # Documentation source (MkDocs)
-├── scripts/                 # Bootstrap and utility scripts
+├── scripts/                 # Bootstrap and utility scripts (planned, issue #13 - does not exist yet)
 ├── test/                    # Local test environment (libvirt/KVM, see below)
 ├── ARCHITECTURE.md          # Architecture reference
 ├── CLAUDE.md                # This file
