@@ -1,0 +1,14 @@
+---
+- name: Reload systemd
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+  become: true
+
+# Only the timer, never the service - restarting linumed-os-backup.service would
+# interrupt a backup that happens to be running. The timer merely reschedules; restarting
+# it just re-reads OnCalendar, it never touches whether a backup is currently in progress.
+- name: Restart backup timer
+  ansible.builtin.systemd_service:
+    name: linumed-os-backup.timer
+    state: restarted
+  become: true

@@ -236,12 +236,17 @@ keine Bind-Mounts auf Host-Pfade außer explizit dokumentierten Ausnahmen.
 Node Exporter hat kein eigenes Volume - läuft nativ, Host-Metriken werden
 nicht persistiert (das übernimmt Prometheus).
 
-restic sichert die Volume-Daten via docker-volume-backup oder direktem
-Zugriff auf den Volume-Pfad unter /var/lib/docker/volumes/. Backup läuft
-täglich via systemd Timer, Ergebnis wird als Metrik an Prometheus gepusht.
+restic sichert `/var/lib/docker/volumes/` per direktem Dateizugriff sowie
+`/opt/linumed-os/` (Rollen-Konfiguration, Secrets). Backup läuft täglich
+via systemd Timer. Das Ergebnis wird nicht an Prometheus gepusht, sondern
+als Prometheus-Textfile-Metrik geschrieben (derselbe Mechanismus wie beim
+nativen Node Exporter) - Prometheus holt es sich beim regulären Scrape ab,
+kein Pushgateway nötig.
 
-Recovery-Tests sind als dokumentierter Prozess vorgeschrieben (DSGVO-Anforderung).
-Das Playbook backup-restore-test.yml stellt dafür eine Testumgebung bereit.
+Recovery-Tests sind als dokumentierter Prozess vorgeschrieben
+(DSGVO-Anforderung) - das manuelle Restore-Verfahren steht in
+`docs/roles/backup.md`. Ein automatisiertes Test-Playbook ist für v0.1
+nicht gebaut; das bleibt offen für eine spätere Version.
 
 ---
 
