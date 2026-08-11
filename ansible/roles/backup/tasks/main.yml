@@ -1,0 +1,123 @@
+---
+# restic backups with a systemd timer (issue #7). Same preflight pattern as the SSH,
+# Grafana, and BridgeLink roles: refuse to run with missing credentials rather than
+# deploy something broken or insecure.
+- name: Preflight - abort if repository or password are unset
+  ansible.builtin.assert:
+    that:
+      - backup_repository | length > 0
+      - backup_restic_password | length > 0
+    fail_msg: >-
+      backup_repository and backup_restic_password must both be set - refusing to deploy
+      backups with no destination or no password. Supply via Ansible Vault. Losing the
+      password later makes every snapshot permanently unreadable, restic has no recovery
+      mechanism for it - keep it somewhere outside this host too.
+
+- name: Install restic
+  ansible.builtin.apt:
+    name: restic
+    state: present
+    update_cache: true
+  become: true
+
+- name: Ensure the restic config directory exists
+  ansible.builtin.file:
+    path: "{{ backup_restic_password_file | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+  become: true
+
+- name: Deploy the restic password file
+  ansible.builtin.copy:
+    content: "{{ backup_restic_password }}"
+    dest: "{{ backup_restic_password_file }}"
+    owner: root
+    group: root
+    mode: "0600"
+  become: true
+  no_log: true
+
+# Same convention as monitoring_node_exporter_textfile_dir - created here too (not just
+# assumed present) so this role works whether or not the monitoring role is installed.
+# A fresh repository has to be initialized once before restic will back up into it -
+# "restic backup" against an uninitialized repo fails outright, it does not auto-create
+# one. Idempotent: checking first means a second run against an already-initialized
+# repository is a no-op, not an error.
+- name: Check whether the restic repository is already initialized
+  ansible.builtin.command: restic cat config
+  environment:
+    RESTIC_REPOSITORY: "{{ backup_repository }}"
+    RESTIC_PASSWORD_FILE: "{{ backup_restic_password_file }}"
+  register: backup_repo_check
+  changed_when: false
+  failed_when: false
+  become: true
+
+- name: Initialize the restic repository
+  ansible.builtin.command: restic init
+  environment:
+    RESTIC_REPOSITORY: "{{ backup_repository }}"
+    RESTIC_PASSWORD_FILE: "{{ backup_restic_password_file }}"
+  become: true
+  changed_when: true
+  when: backup_repo_check.rc != 0
+
+- name: Ensure the textfile-collector directory exists
+  ansible.builtin.file:
+    path: "{{ backup_textfile_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+
+- name: Deploy the backup script
+  ansible.builtin.template:
+    src: backup.sh.j2
+    dest: /usr/local/bin/linumed-os-backup.sh
+    owner: root
+    group: root
+    mode: "0700"
+  become: true
+  register: backup_script
+
+# Cheap but real: catches a broken template render (bad quoting, an unclosed heredoc)
+# before it becomes a 3am cron failure with a confusing error, same spirit as the
+# validate-before-activate pattern in caddy/monitoring/bridgelink - just with the tool
+# that actually applies to a shell script.
+- name: Validate the backup script's syntax
+  ansible.builtin.command: bash -n /usr/local/bin/linumed-os-backup.sh
+  changed_when: false
+  become: true
+
+- name: Deploy the systemd service unit
+  ansible.builtin.template:
+    src: backup.service.j2
+    dest: /etc/systemd/system/linumed-os-backup.service
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  notify: Reload systemd
+
+- name: Deploy the systemd timer unit
+  ansible.builtin.template:
+    src: backup.timer.j2
+    dest: /etc/systemd/system/linumed-os-backup.timer
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  notify:
+    - Reload systemd
+    - Restart backup timer
+
+- name: Ensure the backup timer is enabled and running
+  ansible.builtin.systemd_service:
+    name: linumed-os-backup.timer
+    enabled: true
+    state: started
+    daemon_reload: true
+  become: true

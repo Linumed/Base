@@ -1,0 +1,56 @@
+#!/bin/bash
+# Managed by Ansible (linumed-os, role: backup). Do not edit by hand, changes will be
+# overwritten.
+set -euo pipefail
+
+export RESTIC_REPOSITORY="{{ backup_repository }}"
+export RESTIC_PASSWORD_FILE="{{ backup_restic_password_file }}"
+
+METRICS_FILE="{{ backup_textfile_dir }}/backup.prom"
+METRICS_TMP="${METRICS_FILE}.$$.tmp"
+success=0
+
+# Runs no matter how the script exits - the exact bug fixed on linumed-dev itself in
+# Issue #18 (backup-linumed-dev.sh left the service down after a failed restic step,
+# because nothing ran on failure). Here the risk is smaller (nothing gets stopped), but
+# the same principle applies to observability: a failed run must be visible to
+# Prometheus, not silently missing. Atomic write (tmp file + mv) so node_exporter's
+# textfile collector never reads a half-written file mid-scrape.
+write_metrics() {
+  cat > "${METRICS_TMP}" <<-EOF
+	# HELP backup_last_run_timestamp_seconds Unix time of the last backup attempt, regardless of outcome.
+	# TYPE backup_last_run_timestamp_seconds gauge
+	backup_last_run_timestamp_seconds $(date +%s)
+	# HELP backup_success Whether the last backup attempt succeeded (1) or not (0).
+	# TYPE backup_success gauge
+	backup_success ${success}
+	EOF
+  if [ "${success}" -eq 1 ]; then
+    cat >> "${METRICS_TMP}" <<-EOF
+	# HELP backup_last_success_timestamp_seconds Unix time of the last successful backup.
+	# TYPE backup_last_success_timestamp_seconds gauge
+	backup_last_success_timestamp_seconds $(date +%s)
+	EOF
+  fi
+  mv "${METRICS_TMP}" "${METRICS_FILE}"
+}
+trap write_metrics EXIT
+
+restic backup \
+{% for path in backup_paths %}
+  "{{ path }}" \
+{% endfor %}
+{% for pattern in backup_exclude %}
+  --exclude "{{ pattern }}" \
+{% endfor %}
+  --tag auto
+
+restic forget \
+  --keep-daily {{ backup_retention_keep_daily }} \
+  --keep-weekly {{ backup_retention_keep_weekly }} \
+  --keep-monthly {{ backup_retention_keep_monthly }} \
+  --prune
+
+restic check
+
+success=1

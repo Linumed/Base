@@ -1,0 +1,10 @@
+[Unit]
+Description=Daily Linumed OS backup
+
+[Timer]
+OnCalendar={{ backup_schedule }}
+Persistent=true
+RandomizedDelaySec=5m
+
+[Install]
+WantedBy=timers.target
