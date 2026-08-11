@@ -16,7 +16,14 @@ set -euo pipefail
 export LIBVIRT_DEFAULT_URI="qemu:///system"
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-WORK_DIR="$(mktemp -d /tmp/linumed-os-vmtest.XXXXXX)"
+# /var/tmp, not /tmp - on this dev server /tmp is a tmpfs (RAM-backed), and a Debian
+# genericcloud qcow2 plus the disk this VM grows into during a full-stack deploy is easily
+# several GB. A tmpfs work dir competes with the VM's own guest RAM for the same physical
+# memory and can fill the host's /tmp entirely (confirmed 2026-08-11: it paused a running
+# VM and briefly left the host without a working /tmp). /var/tmp is disk-backed on a
+# standard Debian install; if that assumption doesn't hold on some other host, override
+# TMPDIR before running this script.
+WORK_DIR="$(mktemp -d "${TMPDIR:-/var/tmp}/linumed-os-vmtest.XXXXXX")"
 # The libvirt-qemu user (not root/the invoking user) needs to reach the disk images.
 chmod 711 "${WORK_DIR}"
 VM_NAME="linumed-os-vmtest-$$"
