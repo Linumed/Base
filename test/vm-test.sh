@@ -115,6 +115,10 @@ all:
           bridgelink_keystore_storepass: "throwaway-test-storepass"
           bridgelink_keystore_keypass: "throwaway-test-keypass"
           bridgelink_server_id: "$(cat /proc/sys/kernel/random/uuid)"
+          # Local-path restic repository inside the VM - no real backend needed to
+          # verify the role's own logic (init, backup, forget, check, metrics).
+          backup_repository: "/var/backups/restic-test"
+          backup_restic_password: "throwaway-test-restic-password"
 EOF
 
 cd "${REPO_ROOT}/ansible"

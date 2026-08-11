@@ -1,0 +1,44 @@
+---
+# restic repository URI - any backend restic supports (local path, sftp:, s3:, ...).
+# No default: the preflight refuses to run without one. See docs/roles/backup.md for
+# examples of each backend.
+backup_repository: ""
+
+# No default either - written to a root-only file, never passed as a CLI arg or logged.
+# Supply via Ansible Vault. Losing this password makes every snapshot permanently
+# unreadable - restic does not have a recovery mechanism for it.
+backup_restic_password: ""
+
+# What gets backed up. Defaults to this host's own deployed state: role config/secrets
+# directories plus the Docker volumes directory (covers Prometheus/Loki/Grafana data,
+# BridgeLink appdata, and its Postgres data - anything Docker manages as a named volume).
+# Not role-specific on purpose, so this role has no hard dependency on caddy/monitoring/
+# bridgelink being installed - back up whatever is actually present.
+backup_paths:
+  - /opt/linumed-os
+  - /var/lib/docker/volumes
+
+# Nothing here is backed up consistently in the database sense - see "Stolperfallen" in
+# docs/roles/backup.md for why that is an accepted, documented trade-off for v0.1, not an
+# oversight.
+backup_exclude: []
+
+backup_retention_keep_daily: 7
+backup_retention_keep_weekly: 4
+backup_retention_keep_monthly: 6
+
+# systemd OnCalendar expression, not cron - matches the rest of this repo's convention
+# (unattended-upgrades, fstrim, ...) and gets proper systemd logging/status for free.
+backup_schedule: "*-*-* 03:00:00"
+
+# Native Debian package, not a binary download - same reasoning as node_exporter in the
+# monitoring role: automatic security updates via the common role's unattended-upgrades,
+# no separate update mechanism to maintain.
+backup_restic_password_file: "/etc/restic/password"
+
+# Prometheus textfile-collector metrics, read by the native node_exporter from the
+# monitoring role if it is installed - this role does not depend on it being installed,
+# it just writes the file. Matches monitoring_node_exporter_textfile_dir's default so the
+# already-dormant BackupStale alert rule lights up with zero extra configuration once
+# both roles are present.
+backup_textfile_dir: "/var/lib/prometheus/node-exporter"

@@ -1,0 +1,10 @@
+[Unit]
+Description=Linumed OS backup (restic)
+
+[Service]
+Type=oneshot
+# Without this, restic in a systemd context finds no $XDG_CACHE_HOME or $HOME and rebuilds
+# its local metadata cache from scratch on every single run instead of reusing it -
+# harmless but slow, confirmed on linumed-dev's own hand-rolled backup service.
+Environment=HOME=/root
+ExecStart=/usr/local/bin/linumed-os-backup.sh
