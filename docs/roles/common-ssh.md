@@ -68,5 +68,5 @@ Zusätzlich: ein Passwort-Login muss fehlschlagen, ein Key-Login muss funktionie
   statt einen wirkungslosen Port zu setzen.
 - **Root-Login-Sperre ohne Rettungsanker**: die Rolle bricht von sich aus ab, wenn kein
   Nicht-Root-Nutzer mit Sudo-Rechten und hinterlegtem SSH-Key existiert — das ist Absicht,
-  nicht ein Bug. Vor dem ersten Lauf also erst einen Admin-Nutzer mit Key anlegen (siehe
-  geplantes `scripts/bootstrap.sh`).
+  nicht ein Bug. Vor dem ersten Lauf also erst einen Admin-Nutzer mit Key anlegen — auf
+  einem frischen Minimal-Install übernimmt das `scripts/bootstrap.sh`.
