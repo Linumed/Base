@@ -66,12 +66,23 @@ A few things worth knowing before sizing a real host:
 
 ## Quick start
 
+On a **freshly installed Debian 13 minimal/netinst** target, `python3` and `sudo` aren't
+guaranteed to be present - run `scripts/bootstrap.sh` from the target itself first (see
+`scripts/README.md`). Skip this if the target already has a working sudo user (e.g. any
+cloud image, or a host you've set up before).
+
+```bash
+# On the target host, as root, only if it's a fresh minimal install:
+./scripts/bootstrap.sh --user linumed --key "ssh-ed25519 AAAA... you@host"
+```
+
 ```bash
 git clone https://github.com/linumed/linumed-os.git
 cd linumed-os
 cp ansible/inventory/example ansible/inventory/myhospital
 # edit inventory/myhospital/hosts.yml
 ansible-playbook ansible/playbooks/site.yml -i ansible/inventory/myhospital
+# add --ask-become-pass unless bootstrap.sh was run with --nopasswd
 ```
 
 ## Documentation
