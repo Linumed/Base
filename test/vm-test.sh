@@ -29,6 +29,10 @@ chmod 711 "${WORK_DIR}"
 VM_NAME="linumed-os-vmtest-$$"
 IMAGE_URL="https://cloud.debian.org/images/cloud/trixie/latest/debian-13-genericcloud-amd64.qcow2"
 SSH_KEY="${WORK_DIR}/id_ed25519"
+ANSIBLE_USER="vmtest"
+
+# shellcheck source=lib/site-idempotency.sh
+source "${REPO_ROOT}/test/lib/site-idempotency.sh"
 
 cleanup() {
   virsh destroy "${VM_NAME}" >/dev/null 2>&1 || true
@@ -88,7 +92,14 @@ virt-install \
 echo "==> Waiting for SSH"
 VM_IP=""
 for _ in $(seq 1 60); do
-  VM_IP="$(virsh domifaddr "${VM_NAME}" 2>/dev/null | awk '/ipv4/{print $4}' | cut -d/ -f1 || true)"
+  # tail -n1: a stale + fresh DHCP lease for the same MAC can make domifaddr print two
+  # ipv4 lines - the installer/boot client and the installed system's dhcp client use
+  # different DHCP client-IDs for the same MAC, so dnsmasq hands out two leases and
+  # domifaddr lists them oldest-first. head -n1 picked the dead, already-expired one and
+  # made every retry probe an address the host had already marked FAILED in ARP - the
+  # real, current lease is always the last line (confirmed against actual `ip neigh` /
+  # `virsh net-dhcp-leases` output while debugging issue #14/#25).
+  VM_IP="$(virsh domifaddr "${VM_NAME}" 2>/dev/null | awk '/ipv4/{print $4}' | cut -d/ -f1 | tail -n1 || true)"
   [ -n "${VM_IP}" ] && ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
     -o ConnectTimeout=3 -i "${SSH_KEY}" vmtest@"${VM_IP}" true 2>/dev/null && break
   sleep 5
@@ -103,42 +114,4 @@ echo "==> Waiting for cloud-init to finish"
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "${SSH_KEY}" \
   vmtest@"${VM_IP}" 'sudo cloud-init status --wait'
 
-INVENTORY="${WORK_DIR}/inventory.yml"
-cat > "${INVENTORY}" <<EOF
-all:
-  children:
-    linumed:
-      hosts:
-        ${VM_NAME}:
-          ansible_host: ${VM_IP}
-          ansible_user: vmtest
-          ansible_ssh_private_key_file: ${SSH_KEY}
-          ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
-          # Test-only credentials for a throwaway VM - real deployments set these via
-          # Ansible Vault, never in plain text. The monitoring and bridgelink roles have
-          # preflight checks that refuse to run without them set at all.
-          monitoring_grafana_admin_password: "throwaway-test-password"
-          bridgelink_db_password: "throwaway-test-password"
-          bridgelink_keystore_storepass: "throwaway-test-storepass"
-          bridgelink_keystore_keypass: "throwaway-test-keypass"
-          bridgelink_server_id: "$(cat /proc/sys/kernel/random/uuid)"
-          # Local-path restic repository inside the VM - no real backend needed to
-          # verify the role's own logic (init, backup, forget, check, metrics).
-          backup_repository: "/var/backups/restic-test"
-          backup_restic_password: "throwaway-test-restic-password"
-EOF
-
-cd "${REPO_ROOT}/ansible"
-
-echo "==> First run"
-ansible-playbook -i "${INVENTORY}" playbooks/site.yml
-
-echo "==> Second run (must report changed=0)"
-OUTPUT="$(ansible-playbook -i "${INVENTORY}" playbooks/site.yml)"
-echo "${OUTPUT}"
-if echo "${OUTPUT}" | grep -qE 'changed=[1-9]'; then
-  echo "FAIL: second run was not idempotent" >&2
-  exit 1
-fi
-
-echo "==> PASS: site.yml is idempotent"
+run_site_idempotency_check
