@@ -9,6 +9,13 @@
       - ca-certificates
       - curl
       - gnupg
+      # community.docker's API-based modules (docker_image, docker_container,
+      # docker_container_exec - all used by later roles) import `requests` on the
+      # target. On the genericcloud image used by test/vm-test.sh it's present only
+      # as a transitive dependency of cloud-init, which masked its absence on a real
+      # minimal install (issue #13/#14) until requests was found missing after
+      # Docker installed fine and the first community.docker task failed.
+      - python3-requests
     state: present
     update_cache: true
   become: true

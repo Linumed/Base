@@ -9,6 +9,16 @@ message instead of installing it.
 
 See `defaults/main.yml`, all prefixed `docker_*`.
 
+## `python3-requests`
+
+Installed alongside the apt-repo prerequisites (`ca-certificates`, `curl`, `gnupg`), not
+because Docker needs it, but because `community.docker`'s API-based modules
+(`docker_image`, `docker_container`, `docker_container_exec` - used by caddy, monitoring,
+bridgelink) import `requests` on the *target* host. It was missing here until issue #24:
+the genericcloud image `test/vm-test.sh` uses has it anyway, as a transitive dependency
+of cloud-init, which hid the gap from CI. `test/vm-test-netinst.sh` (issue #14) runs
+against a real minimal install without that crutch and would have caught it.
+
 ## Why the official Docker repo, not Debian's own `docker.io` package
 
 Debian's `docker.io` package trails upstream Docker releases and, more importantly,
