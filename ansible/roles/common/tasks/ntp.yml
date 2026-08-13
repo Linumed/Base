@@ -4,9 +4,19 @@
     name: "{{ common_timezone }}"
   become: true
 
-# Debian ships systemd-timesyncd active by default - no extra package needed. A drop-in
-# under timesyncd.conf.d/ is used instead of templating timesyncd.conf itself, for the same
+# Debian's genericcloud image ships systemd-timesyncd active by default, which masked
+# that a real minimal/netinst install (tasksel without "standard system utilities") does
+# not have the package at all - "Could not find the requested service" from the enable
+# task below, found only via test/vm-test-netinst.sh (issue #14). A drop-in under
+# timesyncd.conf.d/ is used instead of templating timesyncd.conf itself, for the same
 # reason as the sshd and fail2ban drop-ins: it survives package upgrades cleanly.
+- name: Install systemd-timesyncd
+  ansible.builtin.apt:
+    name: systemd-timesyncd
+    state: present
+  become: true
+  when: common_ntp_enabled | bool
+
 - name: Ensure timesyncd drop-in directory exists
   ansible.builtin.file:
     path: /etc/systemd/timesyncd.conf.d
