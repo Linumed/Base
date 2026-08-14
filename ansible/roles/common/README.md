@@ -29,8 +29,15 @@ See `defaults/main.yml`. All variables are prefixed `common_ssh_*`.
   unless it finds a non-root, sudo-capable user with a populated
   `~/.ssh/authorized_keys`. Disable via `common_ssh_preflight_enabled: false` only for
   deliberately root-only hosts (e.g. throwaway CI images).
-- **Socket guard**: aborts if `ssh.socket` is enabled/active and `common_ssh_port` is not
-  `22` — socket activation ignores the `Port` directive in `sshd_config`.
+- **Socket guard**: if `ssh.socket` is enabled/active, socket activation ignores the
+  `Port` directive in `sshd_config` - the role templates its own
+  `/etc/systemd/system/ssh.socket.d/listen.conf` override (blanking the unit's baked-in
+  `ListenStream=22` before setting `common_ssh_port`) and reloads the socket unit, rather
+  than aborting (#15). `ssh.service` is stopped first: with `Accept=no` it's started
+  eagerly alongside the socket and holds the listening fd, so restarting `ssh.socket`
+  while it's still running fails with "Socket service ssh.service already active,
+  refusing." (confirmed in an isolated test container). Setting `common_ssh_port` back to
+  `22` removes the override again on the next run.
 - **Validation**: `sshd -t` is run after deploying the drop-in; on failure the previous
   drop-in (or no file, if none existed) is restored and the play fails before reloading
   `ssh.service`.

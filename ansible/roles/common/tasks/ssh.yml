@@ -32,8 +32,10 @@
   when: common_ssh_preflight_enabled | bool and common_ssh_permit_root_login == "no"
 
 # Socket guard: with ssh.socket active, sshd ignores its own Port directive - the port comes
-# from the socket unit's ListenStream=. Silently deploying a mismatched port would be the
-# worst failure mode here, so this aborts loudly instead.
+# from the socket unit's ListenStream=, which the shipped unit hardcodes to 22. Rather than
+# aborting and pointing the operator at a manual edit (the v0.1 behaviour, #15), the role
+# templates its own override and reloads the socket unit so common_ssh_port takes effect
+# either way.
 - name: Socket guard - read ssh.socket unit state
   ansible.builtin.systemd_service:
     name: ssh.socket
@@ -41,17 +43,77 @@
   changed_when: false
   become: true
 
-- name: Socket guard - abort if socket activation is in use with a non-default port
-  ansible.builtin.assert:
-    that:
-      - >-
-        common_ssh_port == 22 or
-        (common_ssh_socket_status.status.ActiveState != 'active' and
-         common_ssh_socket_status.status.UnitFileState not in ('enabled', 'enabled-runtime'))
-    fail_msg: >-
-      ssh.socket is enabled/active and common_ssh_port is not 22. Socket activation ignores
-      the sshd Port directive (the port comes from ssh.socket's ListenStream=). Adjust
-      /etc/systemd/system/ssh.socket.d/listen.conf yourself, or keep common_ssh_port: 22.
+- name: Socket guard - determine whether ssh.socket is in use
+  ansible.builtin.set_fact:
+    common_ssh_socket_in_use: >-
+      {{ common_ssh_socket_status.status.ActiveState == 'active' or
+         common_ssh_socket_status.status.UnitFileState in ('enabled', 'enabled-runtime') }}
+
+- name: Socket guard - ensure ssh.socket.d drop-in directory exists
+  ansible.builtin.file:
+    path: /etc/systemd/system/ssh.socket.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+  when: common_ssh_socket_in_use
+
+# Blanks the override away again if common_ssh_port is reverted to 22 - otherwise a stale
+# drop-in from an earlier non-default port would survive the revert.
+- name: Socket guard - remove ListenStream override when port is the default
+  ansible.builtin.file:
+    path: /etc/systemd/system/ssh.socket.d/listen.conf
+    state: absent
+  become: true
+  register: common_ssh_socket_dropin_removed
+  when:
+    - common_ssh_socket_in_use
+    - common_ssh_port == 22
+
+- name: Socket guard - template ListenStream override
+  ansible.builtin.template:
+    src: ssh_socket_listen.conf.j2
+    dest: /etc/systemd/system/ssh.socket.d/listen.conf
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  register: common_ssh_socket_dropin
+  when:
+    - common_ssh_socket_in_use
+    - common_ssh_port != 22
+
+- name: Socket guard - reload systemd units after a drop-in change
+  ansible.builtin.systemd_service:
+    daemon_reload: true
+  become: true
+  when: >-
+    common_ssh_socket_in_use and
+    (common_ssh_socket_dropin is changed or common_ssh_socket_dropin_removed is changed)
+
+# With Accept=no (this unit's mode), ssh.service is started eagerly alongside ssh.socket
+# and holds the listening fd for as long as it runs - restarting ssh.socket while it's
+# still active fails with "Socket service ssh.service already active, refusing." (confirmed
+# in an isolated test container). Stopping it first lets the socket restart cleanly;
+# ssh.socket starts a fresh ssh.service on the next connection either way.
+- name: Socket guard - stop ssh.service before rebinding the socket
+  ansible.builtin.systemd_service:
+    name: ssh.service
+    state: stopped
+  become: true
+  when: >-
+    common_ssh_socket_in_use and
+    (common_ssh_socket_dropin is changed or common_ssh_socket_dropin_removed is changed)
+
+- name: Socket guard - restart ssh.socket to bind the new port
+  ansible.builtin.systemd_service:
+    name: ssh.socket
+    state: restarted
+  become: true
+  when: >-
+    common_ssh_socket_in_use and
+    (common_ssh_socket_dropin is changed or common_ssh_socket_dropin_removed is changed)
 
 # Config is written as a drop-in rather than templating /etc/ssh/sshd_config itself, because
 # that file is ucf-managed on Debian - a full-file template would fight ucf on every
