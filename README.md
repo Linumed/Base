@@ -30,20 +30,12 @@ double-run against a throwaway VM (idempotent - `changed=0` on the second run) a
 separately, against a real Debian 13 netinst/preseed install via `scripts/bootstrap.sh`
 and `test/vm-test-netinst.sh` (issues #13/#14). No open bugs block a v0.1 release.
 
-Open follow-up work, by priority:
+The three follow-up hardening items tracked here previously (`ssh.socket` override
+instead of abort, `docker-socket-proxy` in front of Alloy, Alertmanager SMTP delivery)
+are closed as of 2026-08-14 (#15, #21, #22). No open issues remain.
 
-1. **[#15](../../issues/15)** - `common` role aborts with a clear error instead of
-   templating an `ssh.socket` override when `ssh.socket` is active and
-   `common_ssh_port != 22`. Not v0.1/v0.2-scoped, no severity tag - a polish item for
-   whenever someone hits the current abort message and wants the role to just handle it.
-2. **[#21](../../issues/21)** (v0.2) - Grafana Alloy currently mounts the Docker socket
-   directly for container log discovery; replace with `docker-socket-proxy` to scope
-   what it can reach.
-3. **[#22](../../issues/22)** (v0.2) - Alertmanager is deployed but not wired to a real
-   delivery channel (SMTP/recipients) - alerts fire but nobody gets them yet.
-
-v0.2 scope beyond these two (Authentik SSO) and v0.3 (Orthanc DICOM) are tracked in
-`CLAUDE.md`, not as issues yet - no work has started on either.
+v0.2 scope (Authentik SSO) and v0.3 (Orthanc DICOM) are tracked in `CLAUDE.md`, not as
+issues yet - no work has started on either.
 
 ## Requirements
 
