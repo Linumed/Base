@@ -25,21 +25,13 @@ HL7/FHIR integration, monitoring, reverse proxy, and encrypted backups.
 
 ## Status
 
-**The roles are complete and verified; the onboarding path is not.** Every role above
-passed a full `site.yml` double-run against a throwaway VM (idempotent - `changed=0` on
-the second run) and, separately, against a real Debian 13 netinst/preseed install via
-`scripts/bootstrap.sh` and `test/vm-test-netinst.sh` (issues #13/#14). There are no open
-bugs in the roles themselves.
-
-What is *not* yet true is that a newcomer can deploy this from the documentation alone:
-the example inventory does not carry the seven variables `site.yml` requires, so the
-quick start below currently ends in a preflight abort ([#27](../../issues/27)), and the
-Ansible Vault workflow the roles refer to is not documented anywhere
-([#28](../../issues/28)). Fixing that is the current priority, ahead of any new feature,
-and the `v0.1.0` tag follows it rather than preceding it ([#29](../../issues/29)).
-
-**Until then, expect to read `ansible/roles/*/defaults/main.yml` to find out what you
-need to set.**
+**`v0.1.0` is tagged.** Every role passed a full `site.yml` double-run against a
+throwaway VM (idempotent - `changed=0` on the second run) and, separately, against a real
+Debian 13 netinst/preseed install via `scripts/bootstrap.sh` and `test/vm-test-netinst.sh`
+(issues #13/#14). The onboarding path itself is verified too, not just the roles: a full
+double-run following this README's own quick start verbatim - clone, copy the example
+inventory, fill in the vault, deploy - with no repository knowledge beyond what's written
+below (issues #27/#28/#29).
 
 The full plan, in order, with the reasoning behind the sequencing:
 [`docs/ROADMAP.md`](docs/ROADMAP.md).
