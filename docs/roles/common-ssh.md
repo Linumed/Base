@@ -1,51 +1,50 @@
-# common: SSH-Härtung
+# common: SSH hardening
 
 ## Problem
 
-Ein frisch installiertes Debian erlaubt standardmäßig Passwort-Login per SSH und (je nach
-Installationsweg) teils auch Root-Login. Für einen Server, der aus dem Internet oder auch
-nur aus dem Klinik-LAN erreichbar ist, ist das ein Einfallstor für Brute-Force-Angriffe.
-Diese Rolle härtet SSH auf einen Key-only-Zugang mit eingeschränktem Root-Login, ohne dass
-man jede Zeile von Hand in `/etc/ssh/sshd_config` pflegen muss.
+A freshly installed Debian allows password login over SSH by default, and depending on
+the install path, sometimes root login too. For a server reachable from the internet, or
+even just from the clinic LAN, that's an open door for brute-force attacks. This role
+hardens SSH to key-only access with restricted root login, without hand-maintaining
+every line of `/etc/ssh/sshd_config`.
 
-## Variablen
+## Variables
 
-Alle Variablen haben den Präfix `common_ssh_*` und stehen mit sinnvollen Defaults in
+All variables are prefixed `common_ssh_*` and have sensible defaults in
 `ansible/roles/common/defaults/main.yml`.
 
-| Variable | Default | Bedeutung |
+| Variable | Default | Meaning |
 |---|---|---|
-| `common_ssh_port` | `22` | SSH-Port. Die ufw-Rolle öffnet diesen Port automatisch (siehe `common-ufw.md`) - beim Ändern reicht es, `common_ssh_port` einmal zentral zu setzen |
-| `common_ssh_permit_root_login` | `"no"` | Root-Login komplett aus |
-| `common_ssh_password_authentication` | `"no"` | Passwort-Login aus, nur noch Key |
-| `common_ssh_pubkey_authentication` | `"yes"` | Key-Login an |
-| `common_ssh_kbd_interactive_authentication` | `"no"` | Interaktive Auth-Verfahren aus |
-| `common_ssh_x11_forwarding` | `"no"` | Kein X11-Forwarding |
-| `common_ssh_max_auth_tries` | `3` | Max. Auth-Versuche pro Verbindung |
-| `common_ssh_login_grace_time` | `30` | Sekunden bis Verbindungsabbruch ohne erfolgreiche Auth |
-| `common_ssh_allow_users` | `[]` | Leer = keine Einschränkung. Nur setzen, wenn sicher ist, dass der eigene Nutzer drinsteht |
-| `common_ssh_allow_groups` | `[]` | Wie oben, gruppenbasiert |
-| `common_ssh_preflight_enabled` | `true` | Sicherheitscheck vor dem Abschalten von Root-Login (siehe unten). Nur für bewusst root-only-Hosts (z.B. Wegwerf-CI-Images) auf `false` setzen |
+| `common_ssh_port` | `22` | SSH port. The ufw role opens this port automatically (see `common-ufw.md`) - changing it only needs `common_ssh_port` set once, centrally |
+| `common_ssh_permit_root_login` | `"no"` | Root login off entirely |
+| `common_ssh_password_authentication` | `"no"` | Password login off, key only |
+| `common_ssh_pubkey_authentication` | `"yes"` | Key login on |
+| `common_ssh_kbd_interactive_authentication` | `"no"` | Interactive auth methods off |
+| `common_ssh_x11_forwarding` | `"no"` | No X11 forwarding |
+| `common_ssh_max_auth_tries` | `3` | Max. auth attempts per connection |
+| `common_ssh_login_grace_time` | `30` | Seconds until the connection drops without successful auth |
+| `common_ssh_allow_users` | `[]` | Empty = no restriction. Only set once you're sure your own user is in the list |
+| `common_ssh_allow_groups` | `[]` | Same as above, group-based |
+| `common_ssh_preflight_enabled` | `true` | Safety check before disabling root login (see below). Only set to `false` for deliberately root-only hosts (e.g. throwaway CI images) |
 
-## Was wird verändert
+## What gets changed
 
-- **Datei**: `/etc/ssh/sshd_config.d/10-linumed-hardening.conf` (neu angelegt). Die
-  Hauptdatei `/etc/ssh/sshd_config` wird **nicht** angefasst — sie ist auf Debian
-  ucf-verwaltet, ein Voll-Template würde bei jedem `openssh-server`-Upgrade gegen ucf
-  verlieren.
-- **Dienst**: `ssh.service` wird bei Änderung neu geladen (`systemctl reload ssh`), nicht
-  neu gestartet — bestehende Verbindungen bleiben offen.
-- **Port**: standardmäßig unverändert (22).
+- **File**: `/etc/ssh/sshd_config.d/10-linumed-hardening.conf` (newly created). The main
+  file `/etc/ssh/sshd_config` is **not** touched - it's ucf-managed on Debian, and a
+  full-file template would lose against ucf on every `openssh-server` upgrade.
+- **Service**: `ssh.service` is reloaded on change (`systemctl reload ssh`), not
+  restarted - existing connections stay open.
+- **Port**: unchanged by default (22).
 
-## Verifikation
+## Verification
 
-Nach einem Playbook-Lauf selbst nachprüfen, nicht dem Playbook-Output vertrauen:
+Check for yourself after a playbook run, don't trust the playbook's own output:
 
 ```bash
 sudo /usr/sbin/sshd -T | grep -E '^(permitrootlogin|passwordauthentication|port|maxauthtries)'
 ```
 
-Erwartete Ausgabe (mit Default-Werten):
+Expected output (with default values):
 
 ```
 permitrootlogin no
@@ -54,26 +53,26 @@ port 22
 maxauthtries 3
 ```
 
-Zusätzlich: ein Passwort-Login muss fehlschlagen, ein Key-Login muss funktionieren.
+Additionally: a password login must fail, a key login must succeed.
 
-## Stolperfallen
+## Pitfalls
 
-- **Reihenfolge der Drop-ins**: sshd nimmt für jede Direktive den *ersten* gefundenen Wert.
-  Cloud-Images liefern oft ein `50-cloud-init.conf` mit — unser `10-linumed-hardening.conf`
-  gewinnt nur, weil `10` vor `50` kommt. Eigene zusätzliche Drop-ins mit höherer Nummer
-  anlegen, niemals mit niedrigerer.
-- **Socket-Aktivierung**: falls `ssh.socket` aktiv ist (Debian bietet das optional an, siehe
-  `README.Debian` von `openssh-server`), ignoriert `sshd` seine eigene `Port`-Direktive — der
-  Port kommt dann aus `ListenStream=` der Socket-Unit. Die Rolle erkennt das und templatet
-  seit #15 selbst einen Drop-in (`/etc/systemd/system/ssh.socket.d/listen.conf`), statt
-  abzubrechen — die Unit bringt `ListenStream=22` fest verdrahtet mit, der Drop-in muss das
-  erst leeren, bevor der eigentliche Port gesetzt wird, sonst lauscht `sshd` auf beiden
-  Ports gleichzeitig. Vor dem Neustart der Socket-Unit wird `ssh.service` gestoppt: bei
-  `Accept=no` läuft der Dienst dauerhaft mit der Listening-Fd der Socket-Unit, ein
-  Neustart der Socket-Unit dagegen schlägt fehl, solange der Dienst noch aktiv ist
-  ("Socket service ssh.service already active, refusing."). Wird `common_ssh_port` wieder
-  auf `22` gesetzt, entfernt die Rolle den Drop-in beim nächsten Lauf wieder.
-- **Root-Login-Sperre ohne Rettungsanker**: die Rolle bricht von sich aus ab, wenn kein
-  Nicht-Root-Nutzer mit Sudo-Rechten und hinterlegtem SSH-Key existiert — das ist Absicht,
-  nicht ein Bug. Vor dem ersten Lauf also erst einen Admin-Nutzer mit Key anlegen — auf
-  einem frischen Minimal-Install übernimmt das `scripts/bootstrap.sh`.
+- **Drop-in order**: sshd uses the *first* value it finds for each directive. Cloud
+  images often ship a `50-cloud-init.conf` - our `10-linumed-hardening.conf` only wins
+  because `10` sorts before `50`. Any additional drop-ins of your own need a higher
+  number, never a lower one.
+- **Socket activation**: if `ssh.socket` is active (Debian offers this optionally, see
+  `openssh-server`'s `README.Debian`), `sshd` ignores its own `Port` directive - the port
+  then comes from the socket unit's `ListenStream=`. The role detects this and, since
+  #15, templates its own drop-in (`/etc/systemd/system/ssh.socket.d/listen.conf`) instead
+  of aborting - the unit ships with `ListenStream=22` hardwired, so the drop-in has to
+  blank that out before setting the actual port, or `sshd` ends up listening on both
+  ports at once. `ssh.service` is stopped before the socket unit restarts: with
+  `Accept=no`, the service runs continuously holding the socket unit's listening fd, and
+  restarting the socket unit fails while the service is still active ("Socket service
+  ssh.service already active, refusing."). If `common_ssh_port` is set back to `22`, the
+  role removes the drop-in again on the next run.
+- **Root login lockout without a safety net**: the role aborts on its own if no
+  non-root user with sudo rights and a deployed SSH key exists - that's intentional, not
+  a bug. So create an admin user with a key before the first run - on a fresh minimal
+  install, `scripts/bootstrap.sh` takes care of that.

@@ -1,107 +1,105 @@
-# backup: Verschlüsselte Backups
+# backup: Encrypted backups
 
 ## Problem
 
-Ein Server ohne Backup ist ein Server, dessen Datenverlust nur eine Frage der Zeit ist -
-Festplattenausfall, ein Fehlbedienung, ein fehlgeschlagenes Update. Diese Rolle richtet
-verschlüsselte, automatisierte Backups mit [restic](https://restic.net/) ein, geplant über
-einen systemd-Timer, mit Ergebnis-Metriken für Prometheus.
+A server without a backup is a server whose data loss is only a matter of time - disk
+failure, an operator mistake, a failed update. This role sets up encrypted, automated
+backups with [restic](https://restic.net/), scheduled via a systemd timer, with result
+metrics for Prometheus.
 
-## Variablen
+## Variables
 
-Alle Variablen haben den Präfix `backup_*` und stehen in
+All variables are prefixed `backup_*` and live in
 `ansible/roles/backup/defaults/main.yml`.
 
-| Variable | Default | Bedeutung |
+| Variable | Default | Meaning |
 |---|---|---|
-| `backup_repository` | `""` (Pflicht) | restic-Repository-URI, jedes von restic unterstützte Backend |
-| `backup_restic_password` | `""` (Pflicht) | Verschlüsselungspasswort - **ohne dieses Passwort sind alle Backups unwiederbringlich verloren** |
-| `backup_paths` | `/opt/linumed-os`, `/var/lib/docker/volumes` | Was gesichert wird |
-| `backup_retention_keep_daily/weekly/monthly` | `7`/`4`/`6` | Aufbewahrung nach `restic forget` |
-| `backup_schedule` | `*-*-* 03:00:00` | systemd-`OnCalendar`-Ausdruck |
+| `backup_repository` | `""` (required) | restic repository URI, any backend restic supports |
+| `backup_restic_password` | `""` (required) | Encryption password - **without this password, all backups are unrecoverable, permanently** |
+| `backup_paths` | `/opt/linumed-os`, `/var/lib/docker/volumes` | What gets backed up |
+| `backup_retention_keep_daily/weekly/monthly` | `7`/`4`/`6` | Retention after `restic forget` |
+| `backup_schedule` | `*-*-* 03:00:00` | systemd `OnCalendar` expression |
 
-Ohne `backup_repository` und `backup_restic_password` bricht die Rolle im Preflight ab.
-Beide gehören in Ansible Vault.
+Without `backup_repository` and `backup_restic_password`, the role aborts in its
+preflight. Both belong in Ansible Vault.
 
-## Backend-Beispiele
+## Backend examples
 
 ```yaml
-# Lokal / externe Platte
+# Local / external drive
 backup_repository: "/mnt/backup-disk/linumed-os"
 
 # SFTP
 backup_repository: "sftp:user@backup-host:/srv/restic/linumed-os"
 
-# S3-kompatibel (z. B. Hetzner Object Storage) - Zugangsdaten separat
-# als AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY setzen, nicht Teil dieser Rolle
+# S3-compatible (e.g. Hetzner Object Storage) - credentials set separately
+# as AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY, not part of this role
 backup_repository: "s3:https://fsn1.your-objectstorage.com/linumed-os-backup"
 ```
 
-Diese Rolle richtet das Backend selbst nicht ein - SSH-Keys, S3-Buckets oder
-IAM-Policies müssen vorher existieren.
+This role doesn't set up the backend itself - SSH keys, S3 buckets or IAM policies must
+already exist.
 
-## Was gesichert wird
+## What gets backed up
 
-Standardmäßig `/opt/linumed-os` (Konfiguration und Secrets aller Rollen) und
-`/var/lib/docker/volumes` (alle benannten Docker-Volumes: Prometheus-, Loki-,
-Grafana-Daten, BridgeLinks Appdata und dessen PostgreSQL-Datenbank). Direkter
-Dateizugriff, kein `docker-volume-backup`, kein datenbankeigenes Dump-Werkzeug.
+By default, `/opt/linumed-os` (configuration and secrets for every role) and
+`/var/lib/docker/volumes` (every named Docker volume: Prometheus, Loki and Grafana data,
+BridgeLink's app data and its PostgreSQL database). Direct file access, no
+`docker-volume-backup`, no database-native dump tool.
 
-## Verifikation
+## Verification
 
 ```bash
-# Timer aktiv?
+# Is the timer active?
 systemctl status linumed-os-backup.timer
 
-# Letzter Lauf
+# Last run
 systemctl status linumed-os-backup.service
 journalctl -u linumed-os-backup.service -n 50
 
-# Metrik wirklich geschrieben?
+# Was the metric actually written?
 cat /var/lib/prometheus/node-exporter/backup.prom
 
-# Snapshots wirklich im Repository?
+# Are snapshots actually in the repository?
 restic snapshots
 ```
 
-Ein manueller Testlauf: `sudo systemctl start linumed-os-backup.service`.
+A manual test run: `sudo systemctl start linumed-os-backup.service`.
 
-## Restore-Test (Pflicht, keine Kür)
+## Restore test (mandatory, not optional)
 
-Ein Backup, das nie zurückgespielt wurde, ist kein verifiziertes Backup - das gilt
-generell, nicht nur für dieses Repo. Manuelles Vorgehen, regelmäßig wiederholen:
+A backup that has never been restored is not a verified backup - that holds generally,
+not just for this repo. Manual procedure, repeat regularly:
 
 ```bash
-export RESTIC_REPOSITORY="<dasselbe Repository wie backup_repository>"
+export RESTIC_REPOSITORY="<same repository as backup_repository>"
 export RESTIC_PASSWORD_FILE=/etc/restic/password
 
-restic snapshots                                    # welche Stände gibt es
-restic restore latest --target /tmp/restore-test     # in ein Testverzeichnis zurückspielen
-diff -rq /tmp/restore-test/opt/linumed-os /opt/linumed-os   # Stichprobe
+restic snapshots                                    # which snapshots exist
+restic restore latest --target /tmp/restore-test     # restore into a scratch directory
+diff -rq /tmp/restore-test/opt/linumed-os /opt/linumed-os   # spot check
 rm -rf /tmp/restore-test
 ```
 
-Diese Rolle automatisiert das nicht (kein `backup-restore-test.yml`) - das ist ein
-bewusst offener Punkt für eine spätere Version, nicht ein Versehen.
+This role doesn't automate that (no `backup-restore-test.yml`) - that's a deliberately
+open item for a later version, not an oversight.
 
-## Stolperfallen
+## Pitfalls
 
-- **Kein Datenbank-konsistentes Backup.** `/var/lib/docker/volumes` wird als normales
-  Dateisystem gesichert, während PostgreSQL (BridgeLink) währenddessen läuft und
-  schreibt - das ist nicht dieselbe Garantie wie `pg_dump` oder ein atomarer
-  Filesystem-Snapshot. Für v0.1 ein bewusster Trade-off: die Alternative (Datenbank vor
-  jedem Backup stoppen) hätte für ein System mit Integrationsengine echte
-  Verfügbarkeitskosten. Wer das nicht akzeptieren kann, sollte zusätzlich einen
-  regelmäßigen `pg_dump` in `backup_paths` aufnehmen.
-- **Ohne das restic-Passwort ist alles verloren.** Es gibt keinen
-  Wiederherstellungsmechanismus. Das Passwort gehört zusätzlich zum lokalen Vault an
-  einen zweiten, physisch getrennten Ort (siehe `~/.claude/CLAUDE.md` der Dev-Maschine,
-  Abschnitt zu Totalverlust am Standort - dieselbe Logik gilt für jede damit gebaute
-  Installation).
-- **Trap sorgt dafür, dass ein Fehlschlag sichtbar bleibt**, nicht dass er verschwindet.
-  Schlägt `restic backup`, `forget` oder `check` fehl, wird trotzdem eine Metrik
-  geschrieben (`backup_success 0`) - ein stiller Fehlschlag, der erst auffällt, wenn ein
-  Restore gebraucht wird, ist der eigentliche Albtraum bei Backups.
-- **`restic forget --prune` löscht alte Snapshots** gemäß der Retention-Policy - das ist
-  beabsichtigt, aber wer die Werte in `backup_retention_keep_*` nach unten setzt, verliert
-  entsprechend frühere Wiederherstellungspunkte.
+- **Not a database-consistent backup.** `/var/lib/docker/volumes` is backed up as a
+  plain filesystem while PostgreSQL (BridgeLink) keeps running and writing - that's not
+  the same guarantee as `pg_dump` or an atomic filesystem snapshot. A deliberate
+  trade-off for v0.1: the alternative (stopping the database before every backup) would
+  have real availability costs for a system running an integration engine. Anyone who
+  can't accept that should add a regular `pg_dump` to `backup_paths` as well.
+- **Without the restic password, everything is lost.** There is no recovery mechanism.
+  Keep the password at a second, physically separate location in addition to the local
+  vault (see the dev machine's own `~/.claude/CLAUDE.md`, the section on total loss at
+  the site - the same logic applies to any installation built with this kit).
+- **The trap makes sure a failure stays visible**, not that it disappears. If `restic
+  backup`, `forget` or `check` fails, a metric is still written (`backup_success 0`) - a
+  silent failure that only surfaces once a restore is needed is the real nightmare with
+  backups.
+- **`restic forget --prune` deletes old snapshots** per the retention policy - that's
+  intentional, but lowering the values in `backup_retention_keep_*` loses the
+  corresponding earlier restore points.

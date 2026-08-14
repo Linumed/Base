@@ -2,67 +2,66 @@
 
 ## Problem
 
-Jede Docker-basierte Rolle in diesem Repo (caddy, monitoring, bridgelink)
-braucht Docker Engine und das Compose-Plugin (`docker compose`) auf dem Zielhost. Ohne
-eine gemeinsame Rolle würde jede von ihnen entweder Docker selbst installieren
-(Code-Duplikation) oder mit einer unklaren Fehlermeldung abbrechen, wenn es fehlt - genau
-das war bei `caddy` zunächst der Fall (Issue #17). Diese Rolle installiert Docker aus dem
-offiziellen Docker-Apt-Repository und läuft in `playbooks/site.yml` vor jeder Rolle, die
-Docker Compose braucht.
+Every Docker-based role in this repo (caddy, monitoring, bridgelink) needs Docker Engine
+and the Compose plugin (`docker compose`) on the target host. Without a shared role,
+each of them would either install Docker itself (code duplication) or abort with an
+unclear error message when it's missing - that was exactly what happened with `caddy`
+initially (issue #17). This role installs Docker from the official Docker apt repository
+and runs in `playbooks/site.yml` before any role that needs Docker Compose.
 
-## Variablen
+## Variables
 
-Alle Variablen haben den Präfix `docker_*` und stehen mit sinnvollen Defaults in
+All variables are prefixed `docker_*` and have sensible defaults in
 `ansible/roles/docker/defaults/main.yml`.
 
-| Variable | Default | Bedeutung |
+| Variable | Default | Meaning |
 |---|---|---|
-| `docker_apt_release` | `{{ ansible_distribution_release }}` | Codename der Debian-Version für die Docker-Repo-Zeile |
-| `docker_apt_release_fallback` | `"bookworm"` | Fallback, falls Docker noch kein Repo für `docker_apt_release` veröffentlicht hat (siehe unten) |
-| `docker_packages` | docker-ce, docker-ce-cli, containerd.io, docker-buildx-plugin, docker-compose-plugin | Installierte Pakete |
-| `docker_users` | `[]` | Benutzer, die der `docker`-Gruppe hinzugefügt werden (Root-äquivalenter Zugriff auf den Docker-Socket - bewusst leer per Default) |
-| `docker_log_max_size` / `docker_log_max_file` | `"10m"` / `"3"` | Log-Rotation für Container-Logs über `/etc/docker/daemon.json` |
+| `docker_apt_release` | `{{ ansible_distribution_release }}` | Debian version codename for the Docker repo line |
+| `docker_apt_release_fallback` | `"bookworm"` | Fallback if Docker hasn't published a repo for `docker_apt_release` yet (see below) |
+| `docker_packages` | docker-ce, docker-ce-cli, containerd.io, docker-buildx-plugin, docker-compose-plugin | Packages installed |
+| `docker_users` | `[]` | Users added to the `docker` group (root-equivalent access to the Docker socket - deliberately empty by default) |
+| `docker_log_max_size` / `docker_log_max_file` | `"10m"` / `"3"` | Log rotation for container logs via `/etc/docker/daemon.json` |
 
-## Warum das offizielle Docker-Repo, nicht `docker.io`
+## Why the official Docker repo, not `docker.io`
 
-Debians eigenes `docker.io`-Paket hinkt Docker-Releases hinterher und liefert auf manchen
-Releases kein Compose v2 (`docker compose`, das dieses Repo als Standard voraussetzt),
-sondern nur das veraltete Python-basierte `docker-compose` v1 oder gar nichts.
+Debian's own `docker.io` package lags behind Docker releases and on some releases ships
+no Compose v2 (`docker compose`, which this repo assumes as the standard) at all - only
+the deprecated Python-based `docker-compose` v1, or nothing.
 
-## Trixie-Fallback
+## Trixie fallback
 
-Docker veröffentlicht sein Apt-Repo für eine neue Debian-Stable-Version oft erst Wochen
-bis Monate nach deren Release. Die Rolle prüft per HTTP, ob
-`https://download.docker.com/linux/debian/dists/trixie/Release` existiert, und weicht
-sonst auf die `bookworm`-Zeile aus (`docker_apt_release_fallback`) - Docker-Pakete für
-Debian sind in der Praxis release-übergreifend kompatibel genug dafür. Sobald ein
-natives Trixie-Repo existiert, greift `docker_apt_release` automatisch darauf zu.
+Docker often doesn't publish its apt repo for a new Debian stable release until weeks or
+months after it ships. The role checks over HTTP whether
+`https://download.docker.com/linux/debian/dists/trixie/Release` exists, and falls back
+to the `bookworm` line otherwise (`docker_apt_release_fallback`) - Docker's packages for
+Debian are in practice compatible enough across releases for that to work. As soon as a
+native Trixie repo exists, `docker_apt_release` picks it up automatically.
 
-## Was wird verändert
+## What gets changed
 
-- `/etc/apt/keyrings/docker.asc` (GPG-Schlüssel)
-- `/etc/apt/sources.list.d/docker.list` (Repo-Zeile)
-- `/etc/docker/daemon.json` (Log-Rotation)
-- Docker-Pakete via apt, Dienst `docker.service` aktiviert und gestartet
+- `/etc/apt/keyrings/docker.asc` (GPG key)
+- `/etc/apt/sources.list.d/docker.list` (repo line)
+- `/etc/docker/daemon.json` (log rotation)
+- Docker packages via apt, the `docker.service` enabled and started
 
-## Verifikation
+## Verification
 
 ```bash
 docker compose version
 systemctl is-active docker
 ```
 
-## Stolperfallen
+## Pitfalls
 
-- **Öffnet keine ufw-Regeln.** Docker verwaltet seine eigenen iptables/nftables-Regeln für
-  veröffentlichte Container-Ports, unabhängig von ufw - ein per `ports:` freigegebener
-  Port ist trotz `ufw deny incoming` von außen erreichbar, außer er ist explizit auf
-  `127.0.0.1` gebunden. Siehe die `common`-Rolle für den generellen "Docker umgeht ufw"-Hinweis.
-- **`become: true` ist auf dem Restart-Task Pflicht, keine Ausnahme.** Fehlt es, läuft
-  der Aufruf unprivilegiert, systemd routet ihn über PolicyKit, und er scheitert mit
-  `Failed to restart docker.service: Connection timed out` - wartet auf eine
-  `pkttyagent`-Freigabe, die über SSH nie kommt. Sieht aus wie ein D-Bus-/Hardware-Problem,
-  ist aber deterministisch dasselbe fehlende `become: true` bei jedem Lauf. Siehe
-  `ansible/roles/common/README.md`, Abschnitt "become: true auf jedem privilegierten Task,
-  keine Ausnahmen" - dort zuerst gefunden und dokumentiert, hier zunächst übersehen.
-- **Rootless Mode und eigene Registries sind out of scope** für v0.1.
+- **Doesn't open any ufw rules.** Docker manages its own iptables/nftables rules for
+  published container ports, independent of ufw - a port opened via `ports:` is
+  reachable from outside despite `ufw deny incoming`, unless it's explicitly bound to
+  `127.0.0.1`. See the `common` role for the general "Docker bypasses ufw" note.
+- **`become: true` on the restart task is mandatory, not optional.** Without it, the call
+  runs unprivileged, systemd routes it through PolicyKit, and it fails with `Failed to
+  restart docker.service: Connection timed out` - waiting for a `pkttyagent` prompt that
+  never comes over SSH. It looks like a D-Bus or hardware problem, but it's the same
+  missing `become: true`, deterministically, every time. See
+  `ansible/roles/common/README.md`, "become: true on every privileged task, no
+  exceptions" - found and documented there first, initially missed here.
+- **Rootless mode and private registries are out of scope** for v0.1.

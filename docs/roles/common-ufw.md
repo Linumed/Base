@@ -1,65 +1,64 @@
-# common: ufw-Firewall
+# common: ufw firewall
 
 ## Problem
 
-Ein frisch installiertes Debian hat keine aktive Firewall - jeder Dienst, der später einen
-Port öffnet (Docker-Container eingeschlossen, siehe Falle dazu in `CLAUDE.md` bzw.
-`~/.claude/CLAUDE.md` der Dev-Maschine), ist damit sofort im gesamten erreichbaren Netz
-sichtbar. Diese Rolle setzt `ufw` mit Default-Deny für eingehenden Verkehr auf und öffnet
-nur explizit benötigte Ports.
+A freshly installed Debian has no active firewall - any service that later opens a port
+(Docker containers included, see the trap for that in `CLAUDE.md` and the dev machine's
+own `~/.claude/CLAUDE.md`) is immediately visible across the whole reachable network.
+This role sets up `ufw` with default-deny for incoming traffic and opens only the ports
+actually needed.
 
-## Variablen
+## Variables
 
-Alle Variablen haben den Präfix `common_ufw_*` und stehen mit sinnvollen Defaults in
+All variables are prefixed `common_ufw_*` and have sensible defaults in
 `ansible/roles/common/defaults/main.yml`.
 
-| Variable | Default | Bedeutung |
+| Variable | Default | Meaning |
 |---|---|---|
-| `common_ufw_enabled` | `true` | Aktiviert ufw am Ende des Rollenlaufs |
-| `common_ufw_default_incoming` | `"deny"` | Default-Policy für eingehenden Verkehr |
-| `common_ufw_default_outgoing` | `"allow"` | Default-Policy für ausgehenden Verkehr |
-| `common_ufw_allow_ssh` | `true` | Öffnet `common_ssh_port`/tcp automatisch. Nur auf `false` setzen, wenn SSH-Zugriff über einen anderen Mechanismus abgesichert ist |
-| `common_ufw_extra_rules` | `[]` | Liste weiterer Regeln, z.B. `- {port: 443, proto: tcp, comment: "HTTPS"}` |
+| `common_ufw_enabled` | `true` | Enables ufw at the end of the role run |
+| `common_ufw_default_incoming` | `"deny"` | Default policy for incoming traffic |
+| `common_ufw_default_outgoing` | `"allow"` | Default policy for outgoing traffic |
+| `common_ufw_allow_ssh` | `true` | Opens `common_ssh_port`/tcp automatically. Only set to `false` if SSH access is secured through some other mechanism |
+| `common_ufw_extra_rules` | `[]` | List of further rules, e.g. `- {port: 443, proto: tcp, comment: "HTTPS"}` |
 
-## Was wird verändert
+## What gets changed
 
-- Paket `ufw` wird installiert.
-- Default-Policies (`ufw default deny incoming` / `allow outgoing`).
-- Erlaubt-Regel für `common_ssh_port`/tcp, danach für jeden Eintrag in
+- The `ufw` package is installed.
+- Default policies (`ufw default deny incoming` / `allow outgoing`).
+- Allow rule for `common_ssh_port`/tcp, then one for each entry in
   `common_ufw_extra_rules`.
-- `ufw enable` läuft als letzter Schritt - erst wenn die SSH-Regel steht.
+- `ufw enable` runs as the last step - only once the SSH rule is in place.
 
-## Voraussetzung: Collection
+## Prerequisite: collection
 
-Nutzt `community.general.ufw`, nicht `ansible.builtin`. Vor dem ersten Lauf:
+Uses `community.general.ufw`, not `ansible.builtin`. Before the first run:
 
 ```bash
 ansible-galaxy collection install -r ansible/requirements.yml
 ```
 
-## Verifikation
+## Verification
 
 ```bash
 sudo ufw status verbose
 ```
 
-Erwartete Ausgabe (mit Default-Werten): Status `active`, `Default: deny (incoming), allow
-(outgoing)`, eine Regel für Port 22/tcp (oder den konfigurierten `common_ssh_port`).
+Expected output (with default values): status `active`, `Default: deny (incoming), allow
+(outgoing)`, a rule for port 22/tcp (or the configured `common_ssh_port`).
 
-Zusätzlich von einem zweiten Rechner aus prüfen: Verbindung auf einen nicht freigegebenen
-Port muss hängen bleiben/timeout, nicht "connection refused" liefern (das wäre ein
-geschlossener, aber nicht gefilterter Port - ein Zeichen, dass ufw nicht wie erwartet vor
-dem Dienst sitzt).
+Also check from a second machine: a connection to a port that isn't opened must hang or
+time out, not return "connection refused" (that would mean a closed but unfiltered
+port - a sign that ufw isn't actually sitting in front of the service as expected).
 
-## Stolperfallen
+## Pitfalls
 
-- **Reihenfolge**: ufw erst aktivieren, nachdem die SSH-Regel gesetzt ist - sonst kappt der
-  Default-Deny die laufende Ansible-Verbindung. Die Rolle hält diese Reihenfolge ein
-  (`tasks/ufw.yml`), von Hand nachgebaute Playbooks müssen selbst darauf achten.
-- **Docker umgeht ufw**: ein Container-Port, der per `ports:` veröffentlicht wird, ist trotz
-  aktiver ufw-Regeln im LAN erreichbar (`iptables`-Regeln von Docker liegen vor den
-  ufw-Regeln in der Chain). Diese Rolle ändert daran nichts - Container-Ports gehören an
-  `127.0.0.1` gebunden, öffentlicher Zugriff läuft über einen Reverse Proxy oder Tailscale.
-- **Port-Wechsel bei SSH**: wird `common_ssh_port` geändert, öffnet diese Rolle automatisch
-  den neuen Port mit - trotzdem beide Rollen (SSH und ufw) im selben Lauf anwenden, nie den
-  Port manuell in `sshd_config` ändern und ufw separat/später laufen lassen.
+- **Order**: only enable ufw after the SSH rule is in place - otherwise the
+  default-deny cuts the running Ansible connection. The role preserves this order
+  (`tasks/ufw.yml`); a hand-rolled playbook has to enforce it itself.
+- **Docker bypasses ufw**: a container port published via `ports:` is reachable on the
+  LAN despite active ufw rules (Docker's own `iptables` rules sit ahead of ufw's rules
+  in the chain). This role doesn't change that - container ports belong bound to
+  `127.0.0.1`, with public access going through a reverse proxy or Tailscale.
+- **Changing the SSH port**: if `common_ssh_port` changes, this role automatically opens
+  the new port along with it - still apply both roles (SSH and ufw) in the same run,
+  never change the port manually in `sshd_config` and run ufw separately or later.
