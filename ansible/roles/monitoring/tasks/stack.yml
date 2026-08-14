@@ -356,7 +356,16 @@
 # later apply computes once the image is fully local - causing a one-time spurious
 # recreate on the second run and breaking idempotency. Confirmed by reproducing with
 # pre-pulled images: zero recreates. Services with an explicit `command:` (prometheus,
-# loki, alloy) were never affected, since their hash doesn't depend on image introspection.
+# loki, alloy, alertmanager) were never affected, since their hash doesn't depend on
+# image introspection.
+#
+# docker-socket-proxy (added in cb68e1b, #21) missed this list on the day it was added -
+# it has no `command:` override either, and the same second-run recreate reproduced
+# against a real VM on 2026-08-14 while verifying an unrelated fix (issue #40). Confirmed
+# fixed by adding it here: this is exactly the class of bug this comment already
+# describes, so if a future service without an explicit `command:` is added, it needs a
+# line here too - ansible-lint and a syntax check will not catch a missing entry, only an
+# actual two-run idempotency check against a real VM will.
 - name: Pull monitoring images ahead of the compose apply
   community.docker.docker_image:
     name: "{{ item }}"
@@ -369,6 +378,7 @@
     - "{{ monitoring_alloy_image }}"
     - "{{ monitoring_alertmanager_image }}"
     - "{{ monitoring_cadvisor_image }}"
+    - "{{ monitoring_docker_socket_proxy_image }}"
 
 - name: Deploy the monitoring stack
   community.docker.docker_compose_v2:
