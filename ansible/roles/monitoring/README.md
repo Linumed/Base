@@ -61,12 +61,26 @@ the host even read-only) accepted for v0.1; a `docker-socket-proxy` in front of 
 only exposes the read endpoints Alloy actually needs is tracked as a v0.2 hardening issue
 (#21).
 
+**Alertmanager delivery is opt-in and all-or-nothing (#22).** Leaving
+`monitoring_alertmanager_smtp_smarthost` empty (the default) deploys the same
+receiver-less config as before - alerts stay visible only via the Alertmanager API/UI.
+Setting it switches the role into "delivery configured" mode, which requires
+`monitoring_alertmanager_smtp_from` and at least one address in
+`monitoring_alertmanager_receivers` (and a password if
+`monitoring_alertmanager_smtp_auth_username` is set) - a preflight refuses to deploy a
+half-configured delivery path rather than silently dropping alerts. Recipient policy
+(who gets what, escalation stages, quiet hours) is a per-site decision this role does not
+make; it only wires up a single `default` receiver that mails every alert to every
+configured address. `monitoring_alertmanager_group_wait`/`_group_interval`/
+`_repeat_interval` default to values sane for a clinic on-call context (batch a burst,
+re-page every 4h) but can be overridden.
+
 ## What this role does not do
 
 - Does not install Docker itself - see the `docker` role, which runs before this one in
   `playbooks/site.yml`.
 - Does not open a Caddy route to Grafana - out of scope for v0.1 (see
   `ARCHITECTURE.md`, "Netzwerk-Design"). Comes when a service actually needs it.
-- Does not configure Alertmanager delivery (SMTP, recipients) - routing and alert rules
-  ship configured, but nobody receives anything yet in v0.1 (#22).
+- Does not model receiver groups, escalation stages, or quiet hours for Alertmanager -
+  only a single `default` receiver mailing every configured address (#22).
 - Does not harden the Docker-socket access for Alloy beyond a read-only mount (#21).

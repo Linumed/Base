@@ -25,6 +25,12 @@ Alle Variablen haben den Präfix `monitoring_*` und stehen mit sinnvollen Defaul
 | `monitoring_retention_days` | `~` (leer) | Überschreibt, falls gesetzt, beide Retention-Werte gleichzeitig |
 | `monitoring_node_exporter_port` | `9100` | Muss auf allen Interfaces lauschen (siehe Stolperfallen), ufw blockt von außen |
 | `monitoring_node_exporter_deny_external` | `true` | Explizite ufw-Deny-Regel für den Node-Exporter-Port |
+| `monitoring_alertmanager_smtp_smarthost` | `""` | Leer = keine Zustellung (v0.1-Verhalten). Gesetzt = SMTP-Relay `host:port`, schaltet den Preflight scharf |
+| `monitoring_alertmanager_smtp_from` | `""` | Pflicht, sobald der Smarthost gesetzt ist |
+| `monitoring_alertmanager_smtp_auth_username` / `_password` | `""` | Optional; wenn Username gesetzt ist, ist das Passwort Pflicht |
+| `monitoring_alertmanager_smtp_require_tls` | `true` | STARTTLS - nur ohne Verschlüsselung lassen, wenn der Smarthost lokal/getunnelt ist |
+| `monitoring_alertmanager_receivers` | `[]` | Liste von E-Mail-Adressen, die den `default`-Receiver bekommen; Pflicht (mind. ein Eintrag), sobald der Smarthost gesetzt ist |
+| `monitoring_alertmanager_group_wait` / `_group_interval` / `_repeat_interval` | `30s` / `5m` / `4h` | Sinnvolle Defaults für einen Klinik-Betriebskontext, überschreibbar |
 
 ## Was wird verändert
 
@@ -99,9 +105,15 @@ docker run --rm --network container:linumed-os-loki curlimages/curl:latest -s -G
 - **`monitoring_retention_days` überschreibt beide Werte gleichzeitig**, nicht nur einen -
   wer nur die Metriken-Retention ändern will, setzt `monitoring_metrics_retention_days`
   direkt, nicht die gemeinsame Variable.
-- **Alertmanager hat noch keinen Zustellweg** (kein SMTP, keine Empfänger) - Alerts landen
-  in Alertmanager und sind über dessen API sichtbar, aber niemand wird benachrichtigt. Das
-  ist v0.1-Scope, produktive Zustellung folgt in #22.
+- **Alertmanager-Zustellung ist opt-in und alles-oder-nichts** (#22). Ohne gesetztes
+  `monitoring_alertmanager_smtp_smarthost` landen Alerts weiterhin nur in Alertmanager und
+  sind über dessen API sichtbar, niemand wird benachrichtigt. Wird der Smarthost gesetzt,
+  verlangt ein Preflight zusätzlich `monitoring_alertmanager_smtp_from` und mindestens eine
+  Adresse in `monitoring_alertmanager_receivers` (und ein Passwort, falls
+  `monitoring_alertmanager_smtp_auth_username` gesetzt ist) - eine halb konfigurierte
+  Zustellung wird abgelehnt statt Alerts still zu verschlucken. Empfängergruppen,
+  Eskalationsstufen und Ruhezeiten pro Standort sind bewusst nicht Teil dieser Rolle: es
+  gibt nur einen `default`-Receiver, der an alle konfigurierten Adressen mailt.
 
 ## DSGVO: was in Loki landet
 

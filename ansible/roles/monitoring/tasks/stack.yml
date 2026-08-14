@@ -11,6 +11,24 @@
       monitoring_grafana_admin_password is not set - refusing to deploy Grafana with no
       admin password. Set it via Ansible Vault, never committed in plain text.
 
+# Half-configured delivery (e.g. a smarthost set but no receivers) would deploy silently
+# and nobody would notice nothing arrives - same "refuse rather than half-deploy" pattern
+# as the Grafana admin password preflight above.
+- name: Preflight - abort on half-configured Alertmanager SMTP delivery
+  ansible.builtin.assert:
+    that:
+      - monitoring_alertmanager_smtp_from | length > 0
+      - monitoring_alertmanager_receivers | length > 0
+      - (monitoring_alertmanager_smtp_auth_username | length == 0) or
+        (monitoring_alertmanager_smtp_auth_password | length > 0)
+    fail_msg: >-
+      monitoring_alertmanager_smtp_smarthost is set but delivery is not fully configured -
+      need at least monitoring_alertmanager_smtp_from and one entry in
+      monitoring_alertmanager_receivers, and a password if
+      monitoring_alertmanager_smtp_auth_username is set. Refusing to deploy a config that
+      would silently drop alerts.
+  when: monitoring_alertmanager_smtp_smarthost | length > 0
+
 - name: Ensure deploy directory exists
   ansible.builtin.file:
     path: "{{ monitoring_deploy_dir }}"

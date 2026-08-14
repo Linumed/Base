@@ -1,15 +1,36 @@
 # Managed by Ansible (linumed-os, role: monitoring). Do not edit by hand, changes will be
 # overwritten.
 #
-# No delivery is configured yet (no SMTP, no receiver integrations) - routing and rules
-# ship in v0.1, but nobody actually gets notified until #22 (v0.2) adds a real receiver.
-# Alerts are still visible via the Alertmanager API/UI in the meantime.
+{% if monitoring_alertmanager_smtp_smarthost %}
+# SMTP delivery configured (#22) - alerts are mailed to the receivers below.
+{% else %}
+# No delivery configured (#22 not set for this host) - routing and rules are in place, but
+# nobody is notified. Alerts are still visible via the Alertmanager API/UI in the meantime.
+{% endif %}
 route:
   receiver: default
   group_by: ["alertname"]
-  group_wait: 30s
-  group_interval: 5m
-  repeat_interval: 4h
+  group_wait: {{ monitoring_alertmanager_group_wait }}
+  group_interval: {{ monitoring_alertmanager_group_interval }}
+  repeat_interval: {{ monitoring_alertmanager_repeat_interval }}
+
+{% if monitoring_alertmanager_smtp_smarthost %}
+global:
+  smtp_smarthost: "{{ monitoring_alertmanager_smtp_smarthost }}"
+  smtp_from: "{{ monitoring_alertmanager_smtp_from }}"
+{% if monitoring_alertmanager_smtp_auth_username %}
+  smtp_auth_username: "{{ monitoring_alertmanager_smtp_auth_username }}"
+  smtp_auth_password: "{{ monitoring_alertmanager_smtp_auth_password }}"
+{% endif %}
+  smtp_require_tls: {{ monitoring_alertmanager_smtp_require_tls | lower }}
 
 receivers:
   - name: default
+    email_configs:
+{% for address in monitoring_alertmanager_receivers %}
+      - to: "{{ address }}"
+{% endfor %}
+{% else %}
+receivers:
+  - name: default
+{% endif %}
