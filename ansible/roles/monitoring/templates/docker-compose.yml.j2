@@ -19,6 +19,23 @@ services:
     # run. Functional health is verified externally instead (see docs/roles/monitoring.md
     # verification section: a real query against /loki/api/v1/query_range).
 
+  # Sits between Alloy and the real Docker socket (#21). Mounts the socket read-only and
+  # only forwards GET /containers* (container list + log streaming) and GET /networks
+  # (discovery.docker also queries network labels per container, confirmed against a real
+  # Alloy - without NETWORKS it 403s) - no exec, no build, no volumes/secrets, no POST at
+  # all. No published port, reached by Alloy only via the service name inside this
+  # stack's Compose network.
+  docker-socket-proxy:
+    image: {{ monitoring_docker_socket_proxy_image }}
+    container_name: linumed-os-docker-socket-proxy
+    restart: unless-stopped
+    environment:
+      CONTAINERS: "1"
+      NETWORKS: "1"
+      POST: "0"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
   alloy:
     image: {{ monitoring_alloy_image }}
     container_name: linumed-os-alloy
@@ -27,21 +44,20 @@ services:
       - run
       - --stability.level=generally-available
       - /etc/alloy/config.alloy
-    # Read-only Docker socket for discovery.docker container labels - a real privilege
-    # trade-off (socket access is close to root-equivalent even read-only), tracked for
-    # hardening via docker-socket-proxy in #21. group_add is the journal group's GID on
-    # THIS host (looked up at play time, not hardcoded - it varies per machine, same
-    # caveat as the docker group GID in the Forgejo runner setup) so Alloy can read
-    # /var/log/journal without running as root.
+    # No Docker socket here at all - Alloy only ever talks to docker-socket-proxy over the
+    # Compose network. group_add is the journal group's GID on THIS host (looked up at
+    # play time, not hardcoded - it varies per machine, same caveat as the docker group
+    # GID in the Forgejo runner setup) so Alloy can read /var/log/journal without running
+    # as root.
     group_add:
       - "{{ monitoring_journal_gid }}"
     volumes:
       - ./alloy-config.alloy:/etc/alloy/config.alloy:ro
-      - /var/run/docker.sock:/var/run/docker.sock{{ ':ro' if monitoring_alloy_docker_socket_ro else '' }}
       - /var/log/journal:/var/log/journal:ro
       - /etc/machine-id:/etc/machine-id:ro
     depends_on:
       - loki
+      - docker-socket-proxy
 
   alertmanager:
     image: {{ monitoring_alertmanager_image }}
