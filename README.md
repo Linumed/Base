@@ -25,17 +25,24 @@ HL7/FHIR integration, monitoring, reverse proxy, and encrypted backups.
 
 ## Status
 
-**v0.1 is feature-complete and verified**: every role above passed a full `site.yml`
-double-run against a throwaway VM (idempotent - `changed=0` on the second run) and,
-separately, against a real Debian 13 netinst/preseed install via `scripts/bootstrap.sh`
-and `test/vm-test-netinst.sh` (issues #13/#14). No open bugs block a v0.1 release.
+**The roles are complete and verified; the onboarding path is not.** Every role above
+passed a full `site.yml` double-run against a throwaway VM (idempotent - `changed=0` on
+the second run) and, separately, against a real Debian 13 netinst/preseed install via
+`scripts/bootstrap.sh` and `test/vm-test-netinst.sh` (issues #13/#14). There are no open
+bugs in the roles themselves.
 
-The three follow-up hardening items tracked here previously (`ssh.socket` override
-instead of abort, `docker-socket-proxy` in front of Alloy, Alertmanager SMTP delivery)
-are closed as of 2026-08-14 (#15, #21, #22). No open issues remain.
+What is *not* yet true is that a newcomer can deploy this from the documentation alone:
+the example inventory does not carry the seven variables `site.yml` requires, so the
+quick start below currently ends in a preflight abort ([#27](../../issues/27)), and the
+Ansible Vault workflow the roles refer to is not documented anywhere
+([#28](../../issues/28)). Fixing that is the current priority, ahead of any new feature,
+and the `v0.1.0` tag follows it rather than preceding it ([#29](../../issues/29)).
 
-v0.2 scope (Authentik SSO) and v0.3 (Orthanc DICOM) are tracked in `CLAUDE.md`, not as
-issues yet - no work has started on either.
+**Until then, expect to read `ansible/roles/*/defaults/main.yml` to find out what you
+need to set.**
+
+The full plan, in order, with the reasoning behind the sequencing:
+[`docs/ROADMAP.md`](docs/ROADMAP.md).
 
 ## Requirements
 
