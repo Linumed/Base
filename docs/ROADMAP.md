@@ -56,31 +56,39 @@ The language question was settled first, deliberately: writing the operations ha
 German and then internationalising would mean writing it twice. See
 [ADR 0002](adr/0002-english-as-documentation-language.md).
 
-## Stage 3 - Network architecture, the SSO prerequisite
+## Stage 3 - The access model, which is a decision and not a task
 
-`ARCHITECTURE.md` describes a shared `linumed-net` as the target picture. It does not
-exist; every Compose stack has its own isolated network, and the `caddy` role's defaults
-say so explicitly ("not automated by this role yet").
+`ARCHITECTURE.md` describes a shared `linumed-net` as the target picture, and it does not
+exist. That much is fact. But calling it an unfinished task would misrepresent the
+history.
+
+**On 2026-08-10 the opposite was decided, deliberately.** Asked how Grafana should be
+reachable, the choice was "loopback only, access via SSH tunnel". The alternative on the
+table was "via Caddy, with a subdomain", described at the time as requiring a shared
+Docker network, making Grafana's own auth the single protective layer, and needing a
+ufw/GDPR trade-off because Loki logs can contain personal data. A configurable middle
+ground (`monitoring_expose_via_caddy`) was rejected as well. BridgeLink then followed the
+same pattern: admin port on loopback, channel ports not published at all.
+
+So `linumed-net` was never rejected as a technique - the use case that would have needed
+it was. Today every component of Linumed OS is reachable only through an SSH tunnel into a
+hardened host, and Caddy proxies nothing by default (`caddy_sites: []`); it is there for
+the operator's own applications.
 
 | | Issue |
 |---|---|
-| Introduce `linumed-net`, refactor caddy/monitoring/bridgelink onto it | [#31](../../issues/31) |
+| Revisit the access decision, then either build `linumed-net` or delete it from the docs | [#31](../../issues/31) |
 | Caddy route to BridgeLink - or delete it from the diagram | [#32](../../issues/32) |
 | CI: run the VM provisioning and idempotency checks, not just lint | [#33](../../issues/33) |
 
-**This is the actual blocker for v0.2.** Authentik integration - whether native OIDC or
-`forward_auth` - requires Caddy to reach both the identity provider and the protected
-service. Neither is possible while the stacks are isolated from each other. Building the
-SSO role first would mean building it against a topology that does not exist yet.
+The open question is therefore not "when do we build the shared network" but **whether the
+v0.1 access decision still holds**. If it does, `linumed-net` and the planned Caddy route
+should be struck from `ARCHITECTURE.md` rather than implemented, so the target picture
+stops promising something that was consciously not wanted. If it does not hold, the reason
+belongs on record first - and that reason is a requirement about multi-user access for
+service providers, not a networking detail.
 
-[#31](../../issues/31) needs an ADR before implementation: today's "publish nothing, bind
-everything to `127.0.0.1`" default is what defuses the Docker-bypasses-ufw trap, and a
-shared network changes reachability between stacks. That trade-off gets written down, not
-decided in passing.
-
-[#33](../../issues/33) belongs here rather than in Stage 1 because Stage 3 is the first
-change that touches every Docker role at once - exactly the kind of refactor where a
-manual test run is the wrong safety net.
+[#33](../../issues/33) is independent of that and can proceed either way.
 
 ## Stage 4 - v0.2, SSO via Authentik
 
@@ -90,7 +98,16 @@ manual test run is the wrong safety net.
 | Re-measure the system requirements table | [#35](../../issues/35) |
 | Automate the restore test | [#36](../../issues/36) |
 
-Two things to settle before any code is written:
+**This stage is conditional on Stage 3, and may not survive it.** If everything stays
+behind the SSH tunnel, SSO protects services that nobody can reach without an SSH key on a
+hardened host in the first place - four additional containers for no security gain. SSO
+only becomes meaningful if the services are meant to be reachable without a tunnel, which
+is precisely the decision taken the other way on 2026-08-10. Deciding that consciously is
+the prerequisite; if it stays as it is, v0.2 needs different content and the strongest
+candidates are already filed ([#36](../../issues/36), [#33](../../issues/33),
+[#26](../../issues/26)).
+
+Two further things to settle before any code is written:
 
 **Licensing.** FOSS-only is a hard constraint. Authentik has enterprise features behind a
 commercial licence, and it has to be established - not assumed - that everything needed
