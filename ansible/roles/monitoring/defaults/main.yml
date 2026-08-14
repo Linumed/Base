@@ -50,9 +50,17 @@ monitoring_node_exporter_port: 9100
 # Debian's own convention for the package - the backup role (#7) can drop a .prom file
 # here later without this role needing to change.
 monitoring_node_exporter_textfile_dir: "/var/lib/prometheus/node-exporter"
-# Denies monitoring_node_exporter_port from every interface except loopback/Docker so the
-# intent is explicit and can't be silently widened later by an unrelated allow rule.
+# Denies monitoring_node_exporter_port from every interface except the Docker bridge
+# range below, so the intent is explicit and can't be silently widened later by an
+# unrelated allow rule.
 monitoring_node_exporter_deny_external: true
+# The allow rule Prometheus's own scrape needs to get through the deny rule above -
+# without it the "node" target is DOWN on every fresh install (issue #40). Covers all of
+# Docker's default address-pool range, not one project's specific /16: `docker compose`
+# hands out sequential /16s from this pool per project, so the exact subnet depends on
+# how many other Compose projects already exist on the host and isn't stable to pin
+# narrower.
+monitoring_node_exporter_allow_from: "172.16.0.0/12"
 
 # Alloy needs Docker API access for discovery.docker container labels, but never touches
 # the raw socket itself (#21) - a docker-socket-proxy sits in between, mounts the socket
