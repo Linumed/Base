@@ -10,6 +10,43 @@
 # Not meant to be executed directly. Expects these variables to already be set by the
 # caller: REPO_ROOT, WORK_DIR, VM_NAME, VM_IP, SSH_KEY, ANSIBLE_USER.
 
+# A green ansible-playbook run only proves the config was applied, not that the result
+# does anything - issue #40 found this the hard way: node_exporter was DOWN in Prometheus
+# on every fresh install (ufw blocked the scrape) while both vm-test.sh and
+# vm-test-netinst.sh stayed green, because neither ever asked Prometheus whether its
+# targets were actually reachable. Fetches the raw JSON over SSH and parses it locally on
+# the control node - a Python one-liner embedded inside the SSH command string is a
+# quoting trap (confirmed while building this check: an f-string with an escaped quote
+# inside an already-quoted ssh argument produced "unexpected character after line
+# continuation character", not a Python error worth debugging twice).
+check_prometheus_targets_healthy() {
+  local targets_json
+  targets_json="$(ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
+    -i "${SSH_KEY}" "${ANSIBLE_USER}@${VM_IP}" 'curl -s localhost:9090/api/v1/targets')"
+
+  echo "${targets_json}" | python3 -c "
+import json, sys
+
+d = json.load(sys.stdin)
+targets = d['data']['activeTargets']
+down = [t for t in targets if t['health'] != 'up']
+
+if not targets:
+    print('FAIL: Prometheus reported zero active targets')
+    sys.exit(1)
+
+for t in down:
+    job = t['labels'].get('job', '?')
+    err = t.get('lastError', '')
+    print(f'FAIL: target job={job} health={t[\"health\"]} lastError={err!r}')
+
+if down:
+    sys.exit(1)
+
+print(f'PASS: all {len(targets)} Prometheus targets healthy')
+"
+}
+
 run_site_idempotency_check() {
   local inventory="${WORK_DIR}/inventory.yml"
   cat > "${inventory}" <<EOF
@@ -52,4 +89,16 @@ EOF
   )
 
   echo "==> PASS: site.yml is idempotent"
+
+  # 20s, not the bare 15s scrape_interval - the first scrape after a container (re)start
+  # is not pinned to that interval's phase, so a check made the instant the second run
+  # exits can still catch Prometheus between scrapes.
+  echo "==> Waiting for Prometheus's first scrape cycle"
+  sleep 20
+
+  echo "==> Checking Prometheus targets are actually healthy, not just configured"
+  if ! check_prometheus_targets_healthy; then
+    echo "FAIL: at least one Prometheus target is not up - the playbook applied cleanly but the resulting stack does not work (see issue #40)" >&2
+    exit 1
+  fi
 }
