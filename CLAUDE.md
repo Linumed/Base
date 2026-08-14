@@ -168,9 +168,9 @@ Forgejo Actions workflow.
 - Every role has its own doc page under `docs/roles/`
 - Language: **English**, for both end-user and developer documentation - see
   `docs/adr/0002-english-as-documentation-language.md`. Commit messages stay German.
-  Existing German docs (`ARCHITECTURE.md`, `docs/roles/*.md`) are migration debt,
-  translated when next substantially edited, not in one campaign. ADR 0001 stays German
-  on purpose: it records a decision as it was made, backdating it would be dishonest.
+  `ARCHITECTURE.md` and `docs/roles/*.md` were translated 2026-08-14 (#30). ADR 0001
+  stays German on purpose: it records a decision as it was made, backdating it would be
+  dishonest.
 - Do not document things that are already obvious from the code
 - Decisions that someone will predictably challenge from the outside ("why not X?")
   go into `docs/adr/` as a numbered ADR - context, evaluated alternatives, the

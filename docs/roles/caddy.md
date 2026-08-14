@@ -2,86 +2,86 @@
 
 ## Problem
 
-Dienste hinter einem Reverse Proxy zu betreiben, der TLS-Zertifikate automatisch besorgt
-und erneuert (ACME/Let's Encrypt), erspart manuelles Zertifikatsmanagement - ein häufiger
-Grund für abgelaufene Zertifikate und damit Ausfälle. Diese Rolle stellt Caddy als
-Docker-Compose-Stack bereit und generiert die Konfiguration (Caddyfile) aus Ansible-Variablen.
+Running services behind a reverse proxy that fetches and renews TLS certificates
+automatically (ACME/Let's Encrypt) saves manual certificate management - a common cause
+of expired certificates and the outages that follow. This role deploys Caddy as a Docker
+Compose stack and generates its configuration (Caddyfile) from Ansible variables.
 
-## Variablen
+## Variables
 
-Alle Variablen haben den Präfix `caddy_*` und stehen mit sinnvollen Defaults in
+All variables are prefixed `caddy_*` and have sensible defaults in
 `ansible/roles/caddy/defaults/main.yml`.
 
-| Variable | Default | Bedeutung |
+| Variable | Default | Meaning |
 |---|---|---|
-| `caddy_image` | `"caddy:2.9.1-alpine"` | Gepinntes Image, kein `latest` |
-| `caddy_deploy_dir` | `/opt/linumed-os/caddy` | Zielverzeichnis auf dem Host für Caddyfile und docker-compose.yml |
-| `caddy_http_port` / `caddy_https_port` | `80` / `443` | Host-Ports. Caddy braucht beide für ACME HTTP-01 und normalen Traffic - **nicht** auf `127.0.0.1` einschränken, wie es sonst bei rein internen Diensten auf dieser Maschine üblich ist |
-| `caddy_email` | `""` (aus) | ACME-Account-E-Mail für Let's-Encrypt-Benachrichtigungen. Leer ist gültig, aber nicht empfohlen |
-| `caddy_sites` | `[]` | Liste von `{domain, reverse_proxy, extra}` - siehe Beispiel unten. Leer = Caddy läuft, tut aber nichts |
+| `caddy_image` | `"caddy:2.11.4-alpine"` | Pinned image, never `latest` |
+| `caddy_deploy_dir` | `/opt/linumed-os/caddy` | Target directory on the host for the Caddyfile and docker-compose.yml |
+| `caddy_http_port` / `caddy_https_port` | `80` / `443` | Host ports. Caddy needs both for ACME HTTP-01 and normal traffic - **do not** restrict them to `127.0.0.1`, unlike the usual convention for purely internal services on this machine |
+| `caddy_email` | `""` (off) | ACME account email for Let's Encrypt notifications. Empty is valid, but not recommended |
+| `caddy_sites` | `[]` | List of `{domain, reverse_proxy, extra}` - see the example below. Empty = Caddy runs but does nothing |
 
-Beispiel für einen Dienst, der nativ auf dem Host läuft (nicht in Docker):
+Example for a service running natively on the host (not in Docker):
 
 ```yaml
-caddy_email: "admin@klinik-beispiel.de"
+caddy_email: "admin@example-clinic.org"
 caddy_sites:
-  - domain: "shifts.klinik-beispiel.de"
+  - domain: "shifts.example-clinic.org"
     reverse_proxy: "host.docker.internal:8080"
 ```
 
-**Nicht `127.0.0.1:8080`** - Caddy läuft selbst als Container, `127.0.0.1` wäre darin
-Caddy selbst, nicht der Docker-Host (Issue #23). `host.docker.internal` funktioniert,
-weil die Rolle `extra_hosts: host-gateway` für den Caddy-Container setzt. Für einen Dienst
-in einem anderen Compose-Stack braucht es stattdessen ein gemeinsames Docker-Netzwerk und
-den Servicenamen als Hostnamen - das automatisiert diese Rolle noch nicht.
+**Not `127.0.0.1:8080`** - Caddy itself runs as a container, so `127.0.0.1` inside it
+would mean Caddy itself, not the Docker host (issue #23). `host.docker.internal` works
+because the role sets `extra_hosts: host-gateway` on the Caddy container. For a service
+in another Compose stack, you instead need a shared Docker network and the service name
+as the hostname - this role doesn't automate that yet.
 
-## Was wird verändert
+## What gets changed
 
-- `{{ caddy_deploy_dir }}/Caddyfile` (Template, mit Backup und Validierung vor dem
-  Deployment - siehe unten).
-- `{{ caddy_deploy_dir }}/docker-compose.yml` (Template).
-- Der Compose-Stack wird über `community.docker.docker_compose_v2` hochgefahren.
+- `{{ caddy_deploy_dir }}/Caddyfile` (template, with backup and validation before
+  deployment - see below).
+- `{{ caddy_deploy_dir }}/docker-compose.yml` (template).
+- The Compose stack is brought up via `community.docker.docker_compose_v2`.
 
-## Voraussetzungen
+## Prerequisites
 
-- Docker Engine und Compose-Plugin - bereitgestellt durch die `docker`-Rolle (siehe
-  [docker: Docker Engine](docker.md)), die in `playbooks/site.yml` vor `caddy` läuft.
-  `caddy` prüft das per Preflight (`docker compose version`) und bricht mit einer klaren
-  Meldung ab, falls die Voraussetzung fehlt - z. B. beim eigenständigen Ausführen ohne die
-  `docker`-Rolle.
-- Collection `community.docker` (siehe `ansible/requirements.yml`):
+- Docker Engine and the Compose plugin - provided by the `docker` role (see
+  [docker: Docker Engine](docker.md)), which runs before `caddy` in `playbooks/site.yml`.
+  `caddy` checks this via a preflight (`docker compose version`) and aborts with a clear
+  message if the prerequisite is missing - e.g. when run standalone without the `docker`
+  role.
+- The `community.docker` collection (see `ansible/requirements.yml`):
   `ansible-galaxy collection install -r ansible/requirements.yml`
-- ufw-Regeln für Port 80/tcp und 443/tcp selbst setzen (`common_ufw_extra_rules` in der
-  `common`-Rolle) - Caddy öffnet ufw nicht selbst.
+- Set the ufw rules for ports 80/tcp and 443/tcp yourself (`common_ufw_extra_rules` in
+  the `common` role) - Caddy doesn't open ufw itself.
 
-## Verifikation
+## Verification
 
 ```bash
 docker compose -f /opt/linumed-os/caddy/docker-compose.yml ps
 ```
 
-Erwartete Ausgabe: Container `linumed-os-caddy` mit Status `healthy`.
+Expected output: container `linumed-os-caddy` with status `healthy`.
 
 ```bash
 docker exec linumed-os-caddy caddy validate --config /etc/caddy/Caddyfile
 ```
 
-Zusätzlich von außen: `curl -I https://<domain>` muss ein gültiges Zertifikat liefern
-(kein `-k`/`--insecure` nötig), sobald DNS auf den Host zeigt und Port 80/443 erreichbar
-sind - ACME HTTP-01 scheitert sonst stumm im Hintergrund.
+Also from outside: `curl -I https://<domain>` must return a valid certificate (no
+`-k`/`--insecure` needed) once DNS points at the host and ports 80/443 are reachable -
+otherwise ACME HTTP-01 fails silently in the background.
 
-## Stolperfallen
+## Pitfalls
 
-- **HTTP-01-Challenge scheitert lautlos**, wenn Port 80 nicht von außen erreichbar ist
-  (ufw-Regel vergessen, oder der Host sitzt hinter einem NAT ohne Portweiterleitung). Caddy
-  versucht es automatisch erneut, aber ohne erreichbaren Port 80 nie erfolgreich - im
-  Zweifel `docker logs linumed-os-caddy` auf ACME-Fehler prüfen.
-- **Caddyfile-Änderung löst keinen Container-Neustart aus**, sondern ein `caddy reload`
-  im laufenden Container (zero-downtime). Das ist beabsichtigt: `docker_compose_v2`
-  erkennt reine Datei-Änderungen im Bind-Mount nicht als Service-Änderung. Ein Wechsel von
-  `caddy_image` oder den Ports läuft dagegen über den normalen Compose-Apply und kann den
-  Container neu erstellen.
-- **Nicht auf `127.0.0.1` binden**: anders als bei rein internen Diensten auf der
-  Linumed-Dev-Maschine (siehe deren eigene `CLAUDE.md`) ist der ganze Zweck von Caddy hier,
-  von außen erreichbar zu sein. `caddy_http_port`/`caddy_https_port` binden bewusst auf
-  alle Interfaces.
+- **The HTTP-01 challenge fails silently** if port 80 isn't reachable from outside (a
+  forgotten ufw rule, or the host sits behind NAT without port forwarding). Caddy retries
+  automatically, but never succeeds without a reachable port 80 - when in doubt, check
+  `docker logs linumed-os-caddy` for ACME errors.
+- **A Caddyfile change doesn't trigger a container restart**, but a `caddy reload` inside
+  the running container (zero downtime). That's intentional: `docker_compose_v2` doesn't
+  detect a plain file change in the bind mount as a service change. Changing
+  `caddy_image` or the ports, by contrast, goes through the normal Compose apply and can
+  recreate the container.
+- **Don't bind to `127.0.0.1`**: unlike purely internal services on the Linumed dev
+  machine (see that machine's own `CLAUDE.md`), the whole point of Caddy here is to be
+  reachable from outside. `caddy_http_port`/`caddy_https_port` deliberately bind to all
+  interfaces.
