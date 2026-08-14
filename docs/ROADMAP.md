@@ -22,25 +22,32 @@ The audit found it by measurement rather than assumption:
 - No git tag exists, although `ARCHITECTURE.md` requires releases to be tagged
   ([#29](../../issues/29)).
 
-So the honest description is: **the roles work, the product does not yet onboard anyone.**
-That is what Stage 1 fixes, and it is why SSO is not next despite `ARCHITECTURE.md` naming
+So the honest description was: **the roles work, the product does not yet onboard anyone.**
+That is what Stage 1 fixed, and it is why SSO was not next despite `ARCHITECTURE.md` naming
 it as v0.2.
 
-## Stage 1 - Operability, ending in the v0.1.0 tag
+## Stage 1 - Operability, ending in the v0.1.0 tag (done, 2026-08-14)
 
-Nothing here is a new feature. This stage makes the claim already published in the README
+Nothing here was a new feature. This stage made the claim already published in the README
 ("feature-complete and verified") true from an operator's point of view.
 
 | | Issue |
 |---|---|
-| Complete the example inventory, fix the quick start | [#27](../../issues/27) |
-| Document the Ansible Vault workflow, add an example vault | [#28](../../issues/28) |
-| Tag `v0.1.0` | [#29](../../issues/29) |
+| Complete the example inventory, fix the quick start | [#27](../../issues/27) closed |
+| Document the Ansible Vault workflow, add an example vault | [#28](../../issues/28) closed |
+| Tag `v0.1.0` | [#29](../../issues/29) closed, tagged |
 
-**Acceptance for the stage, not just the issues:** one deployment against a fresh VM
-performed strictly from the README, without repository knowledge. Not a code review, an
-actual run. Only then does the tag get set - a tag someone can check out and not put into
-service is worse than no tag.
+**The acceptance run found two more bugs than the audit had - both from actually
+following the README, not from reading it.** `.gitignore` had kept the entire example
+inventory untracked since the initial commit (a directory negation that didn't reach the
+files inside it - every clone of this repository got an empty `ansible/inventory/`, not
+an incomplete one). And the quick start's own commands ran from the repo root, where
+`ansible.cfg` (which sets `roles_path`) is never picked up - the very first task failed
+with "the role 'common' was not found". Neither had ever surfaced before because every
+automated test in this repo already `cd`s into `ansible/` first; only the copy-pasteable
+instructions didn't. Both fixed, and the acceptance run repeated afterward: a full
+`site.yml` double-run against a fresh VM, following the README's own procedure verbatim -
+run 1 `ok=102 changed=62 failed=0`, run 2 `ok=88 changed=0 failed=0`.
 
 ## Stage 2 - Documentation foundation
 
