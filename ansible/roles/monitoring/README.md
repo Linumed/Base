@@ -55,11 +55,14 @@ via Ansible Vault; this role never generates or logs one.
 `analytics.enabled`) - matches CLAUDE.md's "no phone-home telemetry" principle; Grafana
 phones home by default otherwise.
 
-**Alloy needs the Docker socket, mounted read-only**, for `discovery.docker` container
-labels. This is a real privilege trade-off (socket access is close to root-equivalent on
-the host even read-only) accepted for v0.1; a `docker-socket-proxy` in front of it that
-only exposes the read endpoints Alloy actually needs is tracked as a v0.2 hardening issue
-(#21).
+**Alloy never touches the Docker socket directly (#21).** A `docker-socket-proxy`
+(`tecnativa/docker-socket-proxy`) sits in between: it mounts `/var/run/docker.sock`
+read-only and forwards only `GET /containers*` (container list for `discovery.docker`,
+log streaming for `loki.source.docker`) and `GET /networks` (`discovery.docker` also
+queries per-container network labels - confirmed against a real Alloy that it 403s
+without this). No `POST` at all, so no start/stop/restart/exec/build, no socket access
+from any other container. Alloy reaches it as `tcp://docker-socket-proxy:2375` by service
+name, no host port published.
 
 **Alertmanager delivery is opt-in and all-or-nothing (#22).** Leaving
 `monitoring_alertmanager_smtp_smarthost` empty (the default) deploys the same
@@ -83,4 +86,5 @@ re-page every 4h) but can be overridden.
   `ARCHITECTURE.md`, "Netzwerk-Design"). Comes when a service actually needs it.
 - Does not model receiver groups, escalation stages, or quiet hours for Alertmanager -
   only a single `default` receiver mailing every configured address (#22).
-- Does not harden the Docker-socket access for Alloy beyond a read-only mount (#21).
+- Does not need a socket proxy for cAdvisor - it reads container metrics via bind mounts
+  (`/rootfs`, `/var/lib/docker`), never touches `docker.sock` in the first place.

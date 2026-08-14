@@ -16,7 +16,7 @@ loki.source.journal "host" {
 }
 
 discovery.docker "containers" {
-	host = "unix:///var/run/docker.sock"
+	host = "tcp://docker-socket-proxy:2375"
 }
 
 // Without this, every container log line lands under service_name="unknown_service" -
@@ -33,7 +33,7 @@ discovery.relabel "containers" {
 }
 
 loki.source.docker "containers" {
-	host       = "unix:///var/run/docker.sock"
+	host       = "tcp://docker-socket-proxy:2375"
 	targets    = discovery.relabel.containers.output
 	forward_to = [loki.write.default.receiver]
 }

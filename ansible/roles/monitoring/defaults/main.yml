@@ -54,10 +54,12 @@ monitoring_node_exporter_textfile_dir: "/var/lib/prometheus/node-exporter"
 # intent is explicit and can't be silently widened later by an unrelated allow rule.
 monitoring_node_exporter_deny_external: true
 
-# Alloy needs the Docker socket (read-only) for discovery.docker container labels - a
-# real privilege trade-off, documented in the role README. A docker-socket-proxy in front
-# of it is tracked as a v0.2 hardening issue (#21), not part of v0.1.
-monitoring_alloy_docker_socket_ro: true
+# Alloy needs Docker API access for discovery.docker container labels, but never touches
+# the raw socket itself (#21) - a docker-socket-proxy sits in between, mounts the socket
+# read-only, and only forwards GET /containers* (container list + log streaming), nothing
+# else (no exec, no build, no networks, no POST at all). Pinned to a version tag, not
+# "latest" or "edge", per CLAUDE.md.
+monitoring_docker_socket_proxy_image: "tecnativa/docker-socket-proxy:0.3.0"
 
 # Alertmanager delivery (#22). Empty smarthost means "no delivery configured" - the role
 # deploys the same receiver-less config as before, alerts stay visible only via the
