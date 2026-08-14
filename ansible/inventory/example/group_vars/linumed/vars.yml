@@ -1,0 +1,17 @@
+---
+# Linumed OS specific defaults for the `linumed` group.
+#
+# This file holds plain configuration - values that are fine to read in a code review or
+# a backup of this repo. Actual secrets (passwords, keystore passphrases, the BridgeLink
+# server ID) live in the sibling vault.yml.example instead - see that file's header for
+# the full split and why it matters.
+
+# common_ssh_port: 22
+# common_ssh_allow_users: []
+
+# --- Required, no role default (site.yml aborts without these) ---
+
+# backup role (ansible/roles/backup): any restic-compatible backend - local path, sftp,
+# or s3://. Not a secret by itself, but pick a real path/URL before the first run, not
+# this placeholder.
+backup_repository: "/var/backups/restic"
