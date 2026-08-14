@@ -1,0 +1,69 @@
+site_name: Linumed OS
+site_description: >-
+  Ansible-based IaC kit that turns a standard Debian 13 installation into a hardened,
+  GDPR-compliant healthcare infrastructure platform.
+repo_url: https://github.com/linumed/linumed-os
+repo_name: linumed/linumed-os
+edit_uri: edit/main/docs/
+docs_dir: docs
+
+theme:
+  name: material
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: teal
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: teal
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - content.action.edit
+    - toc.follow
+    - search.suggest
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Architecture: architecture.md
+  - Roadmap: ROADMAP.md
+  - Operations:
+      - Deployment: operations/deployment.md
+      - Access: operations/access.md
+      - Updates: operations/updates.md
+      - Backup & Restore: operations/backup-restore.md
+      - Troubleshooting: operations/troubleshooting.md
+  - Roles:
+      - common:
+          - SSH hardening: roles/common-ssh.md
+          - ufw firewall: roles/common-ufw.md
+          - fail2ban: roles/common-fail2ban.md
+          - unattended-upgrades: roles/common-unattended-upgrades.md
+          - NTP & timezone: roles/common-ntp.md
+      - docker: roles/docker.md
+      - caddy: roles/caddy.md
+      - monitoring: roles/monitoring.md
+      - bridgelink: roles/bridgelink.md
+      - backup: roles/backup.md
+  - Architecture Decisions:
+      - Overview: adr/README.md
+      - "0001: BridgeLink instead of Mirth Connect": adr/0001-bridgelink-statt-mirth-connect.md
+      - "0002: English as the documentation language": adr/0002-english-as-documentation-language.md
+      - "0003: Loopback-only access, no bundled identity provider": adr/0003-loopback-only-access-no-bundled-identity-provider.md
+      - "0004: VM tests in CI via the host's libvirt socket": adr/0004-vm-tests-in-ci-via-host-libvirt-socket.md
