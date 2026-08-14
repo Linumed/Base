@@ -110,8 +110,16 @@ linumed-os/
 | Node Exporter | ansible/roles/monitoring | Host metrics - native Debian package, not a container |
 | restic | ansible/roles/backup | Encrypted backup |
 
-Services explicitly out of scope for v0.1: Authentik (SSO, v0.2), Orthanc (DICOM, v0.3), Linumed Passpin (separate product, long-term).
-These are planned for v0.2+.
+Out of scope for v0.1: Orthanc (DICOM, v0.3), Linumed Passpin (separate product, long-term).
+
+**No identity provider is bundled, ever** - Authentik was planned for v0.2 and is dropped,
+see `docs/adr/0003-loopback-only-access-no-bundled-identity-provider.md`. Every management
+interface binds to `127.0.0.1` and is reached through an SSH tunnel; Caddy serves the
+operator's own applications, not this kit's admin UIs. Do not propose a shared
+`linumed-net`, a reverse-proxy route to a Linumed OS service, or a mesh-VPN role without
+first reading that ADR - all three were evaluated and rejected on the grounds that the kit
+must work after the playbooks run, without the institution supplying a second subsystem.
+Connecting Grafana to an *existing* identity provider via OIDC is fine; shipping one is not.
 
 Application software (KIS, DMS, document management) is out of scope entirely.
 Clinics bring their own applications. Linumed OS provides the secure base.
