@@ -23,6 +23,28 @@ HL7/FHIR integration, monitoring, reverse proxy, and encrypted backups.
 | Prometheus + Grafana + Loki + Alertmanager | Observability stack (log shipping via Grafana Alloy, host metrics via native Node Exporter) |
 | restic | Encrypted backups |
 
+## Status
+
+**v0.1 is feature-complete and verified**: every role above passed a full `site.yml`
+double-run against a throwaway VM (idempotent - `changed=0` on the second run) and,
+separately, against a real Debian 13 netinst/preseed install via `scripts/bootstrap.sh`
+and `test/vm-test-netinst.sh` (issues #13/#14). No open bugs block a v0.1 release.
+
+Open follow-up work, by priority:
+
+1. **[#15](../../issues/15)** - `common` role aborts with a clear error instead of
+   templating an `ssh.socket` override when `ssh.socket` is active and
+   `common_ssh_port != 22`. Not v0.1/v0.2-scoped, no severity tag - a polish item for
+   whenever someone hits the current abort message and wants the role to just handle it.
+2. **[#21](../../issues/21)** (v0.2) - Grafana Alloy currently mounts the Docker socket
+   directly for container log discovery; replace with `docker-socket-proxy` to scope
+   what it can reach.
+3. **[#22](../../issues/22)** (v0.2) - Alertmanager is deployed but not wired to a real
+   delivery channel (SMTP/recipients) - alerts fire but nobody gets them yet.
+
+v0.2 scope beyond these two (Authentik SSO) and v0.3 (Orthanc DICOM) are tracked in
+`CLAUDE.md`, not as issues yet - no work has started on either.
+
 ## Requirements
 
 - Target: Debian 13 (Trixie), bare metal or VM
