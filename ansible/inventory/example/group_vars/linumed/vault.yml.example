@@ -1,0 +1,47 @@
+---
+# Template for an Ansible Vault file. Copy this to vault.yml (same directory) in your
+# real inventory, fill in real values, then encrypt it - never commit the plaintext:
+#
+#   cp ansible/inventory/example/group_vars/linumed/vault.yml.example \
+#      ansible/inventory/myhospital/group_vars/linumed/vault.yml
+#   # edit vault.yml, replace every CHANGEME
+#   ansible-vault encrypt ansible/inventory/myhospital/group_vars/linumed/vault.yml
+#
+# Ansible merges every file under group_vars/linumed/ automatically - vars.yml (plain
+# config) and vault.yml (encrypted secrets) both apply to the `linumed` group, no extra
+# include needed. Run the playbook with --ask-vault-pass, or keep the password in a file
+# outside the repo and pass --vault-password-file <path>.
+#
+# To edit an already-encrypted file: `ansible-vault edit vault.yml` (never open it in a
+# plain text editor - that writes the decrypted content back to disk on save).
+#
+# These six are the variables with no role default - site.yml's preflights abort
+# without them. Everything else that's merely configuration, not a secret (e.g.
+# backup_repository), lives in vars.yml instead.
+
+# monitoring role: Grafana admin login. The role refuses to deploy without this set -
+# same reasoning as every other value here, never "admin/admin" even for a first look.
+monitoring_grafana_admin_password: "CHANGEME-generate-your-own"
+
+# bridgelink role: PostgreSQL password for BridgeLink's config/message database.
+bridgelink_db_password: "CHANGEME-generate-your-own"
+
+# bridgelink role: Java keystore passphrases (TLS material for the admin interface).
+# storepass protects the keystore file itself, keypass protects the private key entry
+# inside it - they can be the same value or different, BridgeLink accepts both.
+bridgelink_keystore_storepass: "CHANGEME-generate-your-own"
+bridgelink_keystore_keypass: "CHANGEME-generate-your-own"
+
+# bridgelink role: not a password, but treated the same way on purpose - generate once
+# (uuidgen) and keep it stable for the life of the installation. A changed server ID
+# makes BridgeLink treat itself as a different server. See the role's defaults/main.yml
+# for why this has no safe default (a shared placeholder would let two installations
+# collide) and ansible/roles/bridgelink/README.md, "Secrets are files, not environment
+# variables" for the full reasoning.
+bridgelink_server_id: "CHANGEME-generate-with-uuidgen"
+
+# backup role: the restic repository's encryption password. Without this, all backups
+# are unrecoverable - the actual data at risk, not just this repo's convention. Store a
+# second copy of this value outside this machine before relying on the backup at all
+# (see the backup role's README, "Restore-Test").
+backup_restic_password: "CHANGEME-generate-your-own"

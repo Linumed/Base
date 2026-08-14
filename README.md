@@ -100,9 +100,18 @@ cloud image, or a host you've set up before).
 ```bash
 git clone https://github.com/linumed/linumed-os.git
 cd linumed-os
-cp ansible/inventory/example ansible/inventory/myhospital
-# edit inventory/myhospital/hosts.yml
-ansible-playbook ansible/playbooks/site.yml -i ansible/inventory/myhospital
+cp -r ansible/inventory/example ansible/inventory/myhospital
+# edit inventory/myhospital/hosts.yml: set ansible_host / ansible_user for your target
+
+# group_vars/linumed/vars.yml holds plain config (edit backup_repository at least).
+# group_vars/linumed/vault.yml.example lists the six variables with no safe default -
+# site.yml aborts without them. Turn it into a real, encrypted vault file:
+cp ansible/inventory/myhospital/group_vars/linumed/vault.yml.example \
+   ansible/inventory/myhospital/group_vars/linumed/vault.yml
+# edit vault.yml, replace every CHANGEME, then encrypt it:
+ansible-vault encrypt ansible/inventory/myhospital/group_vars/linumed/vault.yml
+
+ansible-playbook ansible/playbooks/site.yml -i ansible/inventory/myhospital --ask-vault-pass
 # add --ask-become-pass unless bootstrap.sh was run with --nopasswd
 ```
 
