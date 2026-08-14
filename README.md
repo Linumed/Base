@@ -99,19 +99,23 @@ cloud image, or a host you've set up before).
 
 ```bash
 git clone https://github.com/linumed/linumed-os.git
-cd linumed-os
-cp -r ansible/inventory/example ansible/inventory/myhospital
+cd linumed-os/ansible
+# Every ansible-playbook/ansible-vault/ansible-lint command in this repo runs from here,
+# not the repo root - ansible.cfg (roles_path, default inventory) lives in this
+# directory and Ansible only picks up an ansible.cfg from the current working directory.
+
+cp -r inventory/example inventory/myhospital
 # edit inventory/myhospital/hosts.yml: set ansible_host / ansible_user for your target
 
-# group_vars/linumed/vars.yml holds plain config (edit backup_repository at least).
-# group_vars/linumed/vault.yml.example lists the six variables with no safe default -
-# site.yml aborts without them. Turn it into a real, encrypted vault file:
-cp ansible/inventory/myhospital/group_vars/linumed/vault.yml.example \
-   ansible/inventory/myhospital/group_vars/linumed/vault.yml
+# inventory/myhospital/group_vars/linumed/vars.yml holds plain config (edit
+# backup_repository at least). .../vault.yml.example lists the six variables with no
+# safe default - site.yml aborts without them. Turn it into a real, encrypted vault file:
+cp inventory/myhospital/group_vars/linumed/vault.yml.example \
+   inventory/myhospital/group_vars/linumed/vault.yml
 # edit vault.yml, replace every CHANGEME, then encrypt it:
-ansible-vault encrypt ansible/inventory/myhospital/group_vars/linumed/vault.yml
+ansible-vault encrypt inventory/myhospital/group_vars/linumed/vault.yml
 
-ansible-playbook ansible/playbooks/site.yml -i ansible/inventory/myhospital --ask-vault-pass
+ansible-playbook playbooks/site.yml -i inventory/myhospital --ask-vault-pass
 # add --ask-become-pass unless bootstrap.sh was run with --nopasswd
 ```
 
