@@ -49,19 +49,33 @@ instructions didn't. Both fixed, and the acceptance run repeated afterward: a fu
 `site.yml` double-run against a fresh VM, following the README's own procedure verbatim -
 run 1 `ok=102 changed=62 failed=0`, run 2 `ok=88 changed=0 failed=0`.
 
-## Stage 2 - Documentation foundation
+## Stage 2 - Documentation foundation (done, 2026-08-14)
 
-`CLAUDE.md` has required MkDocs from the beginning; there is no `mkdocs.yml`. The
-documentation sources exist and are good, but nothing builds or navigates them.
+`CLAUDE.md` had required MkDocs from the beginning; there was no `mkdocs.yml`. The
+documentation sources existed and were good, but nothing built or navigated them.
 
 | | Issue |
 |---|---|
-| MkDocs setup and operations handbook | [#26](../../issues/26) |
-| Translate the existing German docs per ADR 0002 | [#30](../../issues/30) |
+| MkDocs setup and operations handbook | [#26](../../issues/26) closed |
+| Translate the existing German docs per ADR 0002 | [#30](../../issues/30) closed |
 
 The language question was settled first, deliberately: writing the operations handbook in
-German and then internationalising would mean writing it twice. See
+German and then internationalising would have meant writing it twice. See
 [ADR 0002](adr/0002-english-as-documentation-language.md).
+
+`mkdocs.yml` (Material theme) now navigates `ARCHITECTURE.md` (included via a symlink at
+`docs/architecture.md`, so it stays a single source of truth rendered by GitHub at the
+repo root), every role page, all four ADRs, and a new `docs/operations/` section - the
+actual gap the audit found: deployment order, an access reference covering every
+service in one place, an update workflow split by mechanism (host patches vs. pinned
+image versions vs. Ansible collections), a backup/restore walkthrough covering what a
+restore touches across roles, and a symptom-first troubleshooting index. Verified with
+`mkdocs build`: 24 pages, clean. All ten `docs/roles/*.md` pages, `ARCHITECTURE.md` and
+`docs/adr/README.md` are now English; ADR 0001 stays German on purpose (see ADR 0002).
+
+Not done as part of this stage, deliberately: no CI workflow builds or deploys the site
+yet. The scaffold exists and builds; where or whether it gets hosted is a separate
+decision.
 
 ## Stage 3 - Access model: decided, now closed
 
