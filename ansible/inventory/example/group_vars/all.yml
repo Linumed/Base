@@ -1,0 +1,5 @@
+---
+# Global variables, applied to all hosts. Empty by default - every role ships its own
+# sensible defaults (see ansible/roles/*/defaults/main.yml). Override here only what
+# you actually need to change, e.g.:
+# common_timezone: "Europe/Berlin"
