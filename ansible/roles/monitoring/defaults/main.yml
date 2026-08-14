@@ -58,3 +58,26 @@ monitoring_node_exporter_deny_external: true
 # real privilege trade-off, documented in the role README. A docker-socket-proxy in front
 # of it is tracked as a v0.2 hardening issue (#21), not part of v0.1.
 monitoring_alloy_docker_socket_ro: true
+
+# Alertmanager delivery (#22). Empty smarthost means "no delivery configured" - the role
+# deploys the same receiver-less config as before, alerts stay visible only via the
+# Alertmanager API/UI. Set all of smarthost/from/receivers via Ansible Vault to get real
+# notifications; the role refuses to deploy a half-configured delivery path (see the
+# preflight in tasks/stack.yml) rather than silently dropping alerts.
+monitoring_alertmanager_smtp_smarthost: ""
+monitoring_alertmanager_smtp_from: ""
+monitoring_alertmanager_smtp_auth_username: ""
+monitoring_alertmanager_smtp_auth_password: ""
+# STARTTLS by default - only relevant once smarthost is set. Turning this off ships alert
+# mails (which can contain host/service names) in the clear; only for a smarthost on
+# localhost/an already-encrypted tunnel.
+monitoring_alertmanager_smtp_require_tls: true
+monitoring_alertmanager_receivers: []
+
+# Klinik-Betriebskontext defaults: group_wait keeps the first notification from firing on
+# every single alert in a burst (e.g. host down triggers several rules at once),
+# repeat_interval of 4h avoids re-paging for a still-open, already-acknowledged alert
+# every few minutes without going so long a forgotten alert goes silent for a day.
+monitoring_alertmanager_group_wait: "30s"
+monitoring_alertmanager_group_interval: "5m"
+monitoring_alertmanager_repeat_interval: "4h"
