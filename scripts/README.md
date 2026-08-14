@@ -23,6 +23,16 @@ that's the `common` role's job, once Ansible can reach the host at all.
 See the script's own header comment for the full argument list and the
 `--nopasswd`/`--ask-become-pass` trade-off.
 
+**Known boundary case, unsolved on purpose:** `openssh-server` is `Priority: optional` on
+Debian 13 just like `python3` and `sudo` (issue #13), so a minimal/netinst install can
+lack it too. `bootstrap.sh` installs it as part of its own run, but that only helps if
+something can already reach the host to *run* the script - either a console (physical,
+IPMI/iDRAC, or the hypervisor's virtual console) or a working SSH daemon. If a host has
+neither - no console access and no SSH - there is no remote fix; this repo does not
+attempt one. Get console access first, or include `openssh-server` in the Debian
+installer's own package selection (`pkgsel/include` in a preseed, or the installer's task
+selection) so the host is reachable before `bootstrap.sh` ever needs to run.
+
 ## test/vm-test-netinst.sh
 
 Not in this directory (lives under `test/`) but exercises `bootstrap.sh` end-to-end
