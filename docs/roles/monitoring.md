@@ -130,5 +130,6 @@ Anwendungsdaten enthalten, je nachdem, was die jeweilige Anwendung protokolliert
   schreiben. Für die Verarbeitungsübersicht eines Kunden gehört dokumentiert, welche
   Anwendungen auf dem Host laufen und was sie loggen - das kann diese Rolle nicht
   pauschal beantworten.
-- Alloy braucht für Container-Log-Sammlung Lesezugriff auf den Docker-Socket (read-only) -
-  eine bewusste Privilegien-Abwägung, siehe `ansible/roles/monitoring/README.md`.
+- Alloy fasst den Docker-Socket seit #21 nicht mehr direkt an - ein
+  `docker-socket-proxy` davor gibt nur `GET /containers*` und `GET /networks` frei (kein
+  `POST`, kein Exec, kein Build), siehe `ansible/roles/monitoring/README.md`.
