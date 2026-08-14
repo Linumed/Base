@@ -76,7 +76,6 @@ What survives from this stage is smaller and unrelated to exposing anything:
 |---|---|
 | Caddy cannot reach the operator's own containers - no working path documented | [#39](../../issues/39) |
 | CI: run the VM provisioning and idempotency checks, not just lint | [#33](../../issues/33) |
-| Suspected: node_exporter scrape blocked by ufw on a fresh install | [#40](../../issues/40) |
 
 [#39](../../issues/39) is the second job `linumed-net` was quietly carrying. Caddy exists to
 reverse-proxy the *operator's* applications, and today an application published on
@@ -85,9 +84,17 @@ reverse-proxy the *operator's* applications, and today an application published 
 external network plus an example that actually works - not the shared network that was just
 rejected.
 
-[#40](../../issues/40) matters beyond the individual bug: `test/vm-test.sh` verifies that
-the playbook runs, not that Prometheus can reach its targets. A green run currently says
-nothing about a working scrape.
+[#33](../../issues/33) has its access mechanism decided -
+[ADR 0004](adr/0004-vm-tests-in-ci-via-host-libvirt-socket.md) - and needs the workflow
+built. Blocked on [#43](../../issues/43): two of four full-stack VM runs on 2026-08-14
+failed on Docker Hub pulls, not on the code, and a flaky CI job gets disabled rather than
+trusted.
+
+**Node_exporter's ufw-blocked scrape was confirmed and fixed on 2026-08-14 (#40, closed).**
+It mattered beyond the individual bug: `test/vm-test.sh` verified that the playbook ran,
+not that Prometheus could reach its targets, so the bug survived every green run until
+someone asked the question directly. `test/lib/site-idempotency.sh` now checks target
+health after every run for exactly that reason.
 
 ## Stage 4 - v0.2: access hardening and the operational gaps
 
