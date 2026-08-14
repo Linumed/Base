@@ -1,48 +1,48 @@
 # ARCHITECTURE.md - Linumed OS
 
-## Übersicht
+## Overview
 
-Linumed OS ist kein eigenes Betriebssystem und kein bootfähiges Image.
-Es ist ein Infrastructure-as-Code Kit auf Basis von Ansible, das ein
-Standard-Debian 13 (Trixie) in eine gehärtete, DSGVO-konforme
-Healthcare-Infrastruktur verwandelt.
+Linumed OS is not a custom operating system and not a bootable image.
+It is an Infrastructure-as-Code kit built on Ansible that turns a
+standard Debian 13 (Trixie) installation into a hardened, GDPR-compliant
+healthcare infrastructure platform.
 
-Zielgruppe sind IT-Abteilungen und Systemadministratoren in Kliniken und
-Pflegeeinrichtungen, die Open-Source-Software einsetzen wollen, aber keine
-Zeit oder Expertise haben, einen Healthcare-konformen Stack von Grund auf
-aufzubauen.
-
----
-
-## Designprinzipien
-
-**On-Premise by Design**
-Linumed OS ist für den Betrieb in der eigenen Infrastruktur der Einrichtung
-konzipiert. Es gibt keine Cloud-Abhängigkeit, kein Telemetrie-Callhome,
-keine SaaS-Komponente. Alle Daten bleiben im Haus.
-
-**DSGVO als Constraint, nicht als Feature**
-Datenschutzanforderungen sind in jede Designentscheidung eingebaut:
-Lokale Datenhaltung, verschlüsselte Backups, minimale Logging-Oberfläche,
-kein Transfer personenbezogener Daten an Dritte.
-
-**Idempotenz**
-Alle Ansible-Playbooks sind idempotent. Ein zweiter Durchlauf produziert
-keine Änderungen. Das ist eine harte Anforderung, keine Empfehlung.
-
-**FOSS-only im Core**
-Alle Komponenten von Linumed OS sind freie Open-Source-Software.
-Linumed Shifts (kommerzielles Produkt) ist nicht Teil dieses Repos und
-wird separat lizenziert.
-
-**EU-Infrastruktur**
-Keine Abhängigkeiten von US-only-Diensten. Image-Pulls von Docker Hub
-sind akzeptiert, aber Images werden auf EU-Infrastruktur betrieben.
-Für CI/CD werden EU-nahe Alternativen bevorzugt.
+The target audience is IT departments and system administrators at
+clinics and care facilities who want to run open-source software but
+don't have the time or expertise to build a healthcare-compliant stack
+from scratch.
 
 ---
 
-## Zielarchitektur (v0.1)
+## Design principles
+
+**On-premise by design**
+Linumed OS is built to run in the institution's own infrastructure.
+There is no cloud dependency, no telemetry call-home, no SaaS
+component. All data stays in-house.
+
+**GDPR as a constraint, not a feature**
+Data protection requirements are built into every design decision:
+local data storage, encrypted backups, a minimal logging surface, no
+transfer of personal data to third parties.
+
+**Idempotency**
+All Ansible playbooks are idempotent. A second run produces no
+changes. That is a hard requirement, not a recommendation.
+
+**FOSS-only in the core**
+Every component of Linumed OS is free open-source software.
+Linumed Shifts (the commercial product) is not part of this repository
+and is licensed separately.
+
+**EU infrastructure**
+No dependencies on US-only services. Pulling images from Docker Hub is
+accepted, but images run on EU infrastructure. EU-based alternatives
+are preferred for CI/CD.
+
+---
+
+## Target architecture (v0.1)
 
 ```
 ┌───────────────────────────────────────────────────────────┐
@@ -61,7 +61,7 @@ Für CI/CD werden EU-nahe Alternativen bevorzugt.
 │  │ fail2ban │   └───────────────────────────────────────┘ │
 │  │  SSH     │                                              │
 │  └──────────┘   ┌───────────────────────────────────────┐ │
-│                  │  Node Exporter (nativ, Debian-Paket)  │ │
+│                  │  Node Exporter (native, Debian package)│ │
 │                  └───────────────────────────────────────┘ │
 │                                                             │
 │  ┌──────────────────────────────────────────────────────┐  │
@@ -72,274 +72,282 @@ Für CI/CD werden EU-nahe Alternativen bevorzugt.
 
 ---
 
-## Komponenten
+## Components
 
-### common (Ansible Role)
+### common (Ansible role)
 
-Basis-Hardening des Debian-Systems. Wird immer als erstes ausgeführt.
+Base hardening of the Debian system. Always runs first.
 
-Umfasst:
-- SSH-Hardening (PasswordAuthentication off, Port konfigurierbar, AllowUsers)
-- ufw Firewall (default deny incoming, nur explizit freigegebene Ports)
-- fail2ban (SSH-Brute-Force-Schutz)
-- unattended-upgrades (automatische Sicherheitsupdates)
-- Zeitzone und NTP-Konfiguration
-- Grundlegende Systempakete
+Covers:
+- SSH hardening (PasswordAuthentication off, configurable port, AllowUsers)
+- ufw firewall (default deny incoming, only explicitly allowed ports)
+- fail2ban (SSH brute-force protection)
+- unattended-upgrades (automatic security updates)
+- timezone and NTP configuration
+- basic system packages
 
-### caddy (Ansible Role)
+### caddy (Ansible role)
 
-Caddy als Reverse Proxy mit automatischem TLS über ACME (Let's Encrypt oder
-eigene CA), betrieben als Docker-Compose-Stack.
+Caddy as a reverse proxy with automatic TLS via ACME (Let's Encrypt or
+a private CA), run as a Docker Compose stack.
 
-Konfiguration via Caddyfile, generiert aus Ansible-Templates.
+Configuration via a Caddyfile, generated from Ansible templates.
 
-Designentscheidung - Caddy als Container, nicht nativ auf dem Host:
-Ursprünglich war geplant, Caddy nativ zu betreiben, damit TLS-Termination
-einen Docker-Neustart übersteht. Geprüft (Stand 2026-08-10): Debian 13
-liefert `caddy` in Version 2.6.2 mit 11 offenen Sicherheitsproblemen im
-Debian-Security-Tracker, während der Container auf dem aktuellen
-Upstream-Stand 2.11.x läuft. Für die am stärksten exponierte Komponente des
-gesamten Stacks wäre "nativ" damit nicht sicherer, sondern messbar
-unsicherer - der Patch-Kadenz-Vorteil, der nativ sonst rechtfertigen würde,
-kehrt sich hier um. Das ursprüngliche Verfügbarkeitsargument trägt zudem
-kaum: sind alle Backends selbst Container, liefert ein überlebender Caddy
-ohne erreichbare Upstreams nur `502` statt `connection refused` - kein
-praktischer Gewinn. Ein echter Notaus (z. B. bei einem Sicherheitsvorfall)
-gehört als eigenes, dokumentiertes Verfahren auf Netzwerkebene (`ufw deny`,
-Interface down) ins Betriebs-Runbook, nicht als Nebeneffekt der
-Proxy-Platzierung.
+Design decision - Caddy as a container, not native on the host:
+the original plan was to run Caddy natively so TLS termination would
+survive a Docker restart. Checked (as of 2026-08-10): Debian 13 ships
+`caddy` at version 2.6.2 with 11 open security issues in the Debian
+security tracker, while the container runs current upstream 2.11.x.
+For the most exposed component in the whole stack, "native" would
+therefore not be safer but measurably less safe - the patch-cadence
+advantage that would otherwise justify running native works against it
+here. The original availability argument barely holds either: if every
+backend is itself a container, a surviving Caddy with no reachable
+upstream just returns `502` instead of `connection refused` - no
+practical gain. A real kill switch (e.g. during a security incident)
+belongs in its own documented network-level procedure (`ufw deny`,
+interface down) in the operations runbook, not as a side effect of
+where the proxy runs.
 
-Docker veröffentlicht Container-Ports an ufw vorbei (siehe Sicherheitskonzept
-unten) - bei Caddy ist das für 80/443 gewollt, da der Proxy von außen
-erreichbar sein muss. Jeder *weitere* `ports:`-Eintrag in diesem
-Compose-Stack muss diese Falle bewusst berücksichtigen.
+Docker publishes container ports past ufw (see the security model
+below) - for Caddy that's intentional on 80/443, since the proxy has to
+be reachable from outside. Any *further* `ports:` entry in this Compose
+stack has to account for that trap deliberately.
 
-### bridgelink (Ansible Role)
+### bridgelink (Ansible role)
 
-HL7/FHIR-Integrationsengine, betrieben als Docker Compose Stack.
-Eingesetzt wird **BridgeLink**.
+HL7/FHIR integration engine, run as a Docker Compose stack.
+The engine used is **BridgeLink**.
 
-Das ist kein Ersatz für Mirth Connect, sondern **dieselbe Codebasis unter
-anderem Namen**: gleiches Kanal-XML, gleicher Administrator, gleiche
-Transformer und Connectoren, die Java-Pakete heißen weiterhin
-`com.mirth.connect`. NextGen Healthcare hat Mirth Connect im März 2025
-auf eine rein kommerzielle, proprietäre Lizenz umgestellt (ab 4.6
-Quellcode geschlossen); die Open-Source-Linie läuft seither unter neuen
-Namen weiter, und Linumed OS folgt der offenen Linie. Mirth Connect
-bleibt der De-facto-Standard der Branche — Kanäle sind zwischen allen
-Varianten portabel, eine Einrichtung nimmt ihre Integrationsarbeit also
-mit, falls sie später wechseln will.
+This is not a replacement for Mirth Connect, but **the same codebase
+under a different name**: same channel XML, same administrator, same
+transformers and connectors - the Java packages are still called
+`com.mirth.connect`. NextGen Healthcare moved Mirth Connect to a purely
+commercial, proprietary license in March 2025 (source closed from 4.6
+onward); the open-source line has continued under new names since, and
+Linumed OS follows that open line. Mirth Connect remains the industry's
+de-facto standard - channels are portable between all variants, so an
+institution keeps its integration work if it ever wants to switch.
 
-Vollständige Begründung samt geprüfter Alternativen (Open Integration
-Engine, lizenziertes Mirth 4.6+, eingefrorenes 4.5.2), eingehandelter
-Nachteile und Revisionsauslöser:
+Full reasoning, including evaluated alternatives (Open Integration
+Engine, licensed Mirth 4.6+, frozen 4.5.2), accepted downsides and
+revision triggers:
 [ADR 0001](docs/adr/0001-bridgelink-statt-mirth-connect.md).
 
-Unterstützte Protokolle out-of-the-box: HL7 v2.x, FHIR R4, DICOM, CSV,
-XML, Datenbank-Connectoren.
+Protocols supported out of the box: HL7 v2.x, FHIR R4, DICOM, CSV, XML,
+database connectors.
 
-Docker Compose Stack:
-- BridgeLink (gehärtetes Image: Debian 13, keine Shell, non-root)
-- PostgreSQL (Konfigurations- und Nachrichtendatenbank)
+Docker Compose stack:
+- BridgeLink (hardened image: Debian 13, no shell, non-root)
+- PostgreSQL (configuration and message database)
 
-Nur der Admin-/API-Port ist veröffentlicht, ausschließlich auf
-`127.0.0.1`. Kanal-Ports (HL7-MLLP o. ä.) veröffentlicht die Rolle
-bewusst nicht — das ist eine Entscheidung pro Standort.
+Only the admin/API port is published, and only on `127.0.0.1`. Channel
+ports (HL7 MLLP or similar) are deliberately not published by the role
+- that's a per-site decision.
 
-### monitoring (Ansible Role)
+### monitoring (Ansible role)
 
-Observability-Stack. Die meisten Komponenten laufen als Docker-Compose-Stack,
-Node Exporter läuft nativ.
+Observability stack. Most components run as a Docker Compose stack;
+Node Exporter runs natively.
 
-Komponenten:
-- Prometheus - Metriken-Scraping und -Speicherung (Container)
-- Grafana - Dashboards, drei vendorte Standard-Dashboards inklusive (Host-Übersicht,
-  Container-Übersicht, Log-Explorer) - bewusst generisch für die Infrastruktur, nicht
-  klinisch/patientenbezogen: der Monitoring-Stack sieht Metriken und Logs, keine
-  Nachrichteninhalte der Integrationsengine; per Default nur auf `127.0.0.1` gebunden,
-  Zugriff via SSH-Tunnel (Container)
-- Loki - Log-Aggregation (Container)
-- **Grafana Alloy** - Log-Shipping von Host und Containern nach Loki
-  (Container). Ersetzt Promtail, das am 02.03.2026 End-of-Life ging und
-  keine Sicherheitsfixes mehr erhält - für ein DSGVO-Kit keine Option.
-- Alertmanager - Alert-Routing (Container)
-- Node Exporter - Host-Metriken (CPU, RAM, Disk, Network). **Natives
-  Debian-Paket** statt Container: bekommt Security-Updates automatisch über
-  die bestehende unattended-upgrades-Rolle, braucht keine
-  `--pid=host`-/rootfs-Mounts, und ufw kann den Port tatsächlich schützen -
-  bei einem veröffentlichten Container-Port wäre das wirkungslos (siehe
-  Sicherheitskonzept unten).
-- cAdvisor - Container-Metriken (Container)
+Components:
+- Prometheus - metrics scraping and storage (container)
+- Grafana - dashboards, three vendored default dashboards included
+  (host overview, container overview, log explorer) - deliberately
+  generic infrastructure dashboards, not clinical or patient-related:
+  the monitoring stack sees metrics and logs, not the integration
+  engine's message contents; bound to `127.0.0.1` only by default,
+  access via SSH tunnel (container)
+- Loki - log aggregation (container)
+- **Grafana Alloy** - ships host and container logs to Loki
+  (container). Replaces Promtail, which reached end-of-life on
+  2026-03-02 and gets no more security fixes - not an option for a
+  GDPR-focused kit.
+- Alertmanager - alert routing (container)
+- Node Exporter - host metrics (CPU, RAM, disk, network). **Native
+  Debian package** instead of a container: gets security updates
+  automatically through the existing unattended-upgrades role, needs
+  no `--pid=host`/rootfs mounts, and ufw can actually protect the port
+  - with a published container port that protection would be
+  ineffective (see the security model below).
+- cAdvisor - container metrics (container)
 
-Retention ist nach Datenart getrennt, nicht ein einzelner globaler Wert:
-Metriken (`monitoring_metrics_retention_days`, Default 90) und Logs
-(`monitoring_logs_retention_days`, Default 30, kürzer) - Logs können
-personenbezogene Daten enthalten (IP-Adressen, Benutzernamen), kürzere
-Aufbewahrung ist hier Datenminimierung, keine Willkür.
+Retention is split by data kind, not a single global value: metrics
+(`monitoring_metrics_retention_days`, default 90) and logs
+(`monitoring_logs_retention_days`, default 30, shorter) - logs can
+contain personal data (IP addresses, usernames), so the shorter
+retention here is data minimization, not an arbitrary choice.
 
-### backup (Ansible Role)
+### backup (Ansible role)
 
-Verschlüsselte Backups mit restic. Unterstützte Backends:
-- Lokal (anderes Verzeichnis / externe Platte)
-- SFTP (z.B. anderer Server im Netz)
-- S3-kompatibel (optional, z.B. Hetzner Object Storage)
+Encrypted backups with restic. Supported backends:
+- local (another directory / external drive)
+- SFTP (e.g. another server on the network)
+- S3-compatible (optional, e.g. Hetzner Object Storage)
 
-Backup-Schedule via systemd Timer (kein Cron). Monitoring-Integration:
-restic-Ergebnisse werden als Metrics an Prometheus gepusht.
+Backup schedule via a systemd timer (not cron). Monitoring integration:
+restic results are pushed to Prometheus as metrics.
 
 ---
 
-## Netzwerk-Design
+## Network design
 
-**Entschieden, nicht offen:** Kein Verwaltungsdienst von Linumed OS ist von
-außen erreichbar. Alle Komponenten binden an `127.0.0.1` oder veröffentlichen
-gar keinen Host-Port; der Zugang läuft über einen SSH-Tunnel. Jeder
-Compose-Stack hat sein eigenes, isoliertes Docker-Netzwerk.
+**Decided, not open:** no Linumed OS management interface is reachable
+from outside. Every component binds to `127.0.0.1` or publishes no
+host port at all; access goes through an SSH tunnel. Each Compose stack
+has its own, isolated Docker network.
 
-Ein gemeinsames Netzwerk (`linumed-net`), über das Caddy die eigenen Dienste
-routet, war ursprünglich als Zielbild vorgesehen und ist **bewusst verworfen**
-worden — zusammen mit der SSO-Anbindung, die darauf aufgebaut hätte.
-Begründung, geprüfte Alternativen (Reverse Proxy mit Identity Provider,
-Mesh-VPN) und die eingehandelten Nachteile:
+A shared network (`linumed-net`) through which Caddy would route the
+kit's own services was originally planned as the target picture and has
+been **deliberately dropped** - along with the SSO integration that
+would have been built on top of it. Reasoning, evaluated alternatives
+(reverse proxy with an identity provider, mesh VPN) and the accepted
+downsides:
 [ADR 0003](docs/adr/0003-loopback-only-access-no-bundled-identity-provider.md).
 
 ```
 Internet
    │
    ├── :80  ──▶ Caddy ──▶ redirect to HTTPS
-   └── :443 ──▶ Caddy ──▶ Anwendungen des Betreibers
-                          (Linumed OS selbst liegt nicht dahinter)
+   └── :443 ──▶ Caddy ──▶ the operator's own applications
+                          (Linumed OS itself is not behind it)
 
-SSH-Tunnel (nicht öffentlich)
+SSH tunnel (not public)
    ├── 127.0.0.1:3000 ──▶ Grafana
    ├── 127.0.0.1:9090 ──▶ Prometheus
-   └── 127.0.0.1:8443 ──▶ BridgeLink Admin
+   └── 127.0.0.1:8443 ──▶ BridgeLink admin
 ```
 
-Caddy ist der Reverse Proxy für die **Anwendungen der Einrichtung**, nicht für
-die Verwaltungsoberflächen dieses Kits. Dass Caddy dabei einen Container in
-einem anderen Compose-Stack heute noch nicht erreichen kann, ist eine offene
-Lücke (Issue #39) und unabhängig von der Zugriffsentscheidung.
+Caddy is the reverse proxy for the **institution's own applications**,
+not for this kit's management interfaces. That Caddy still can't reach
+a container in another Compose stack today is an open gap (issue #39),
+independent of the access decision above.
 
-Weil alles auf Loopback gebunden bleibt, funktioniert Linumed OS über jedes
-Netz, das der Betreiber ohnehin betreibt — Firmen-VPN, Mesh, Sprunghost oder
-Klinik-LAN — ohne davon etwas wissen zu müssen. Diese Kombinierbarkeit ist der
-Grund für die Entscheidung, nicht ihr Nebeneffekt.
+Because everything stays bound to loopback, Linumed OS works over
+whatever network the operator already runs - a corporate VPN, a mesh, a
+jump host, or the clinic LAN - without needing to know about any of it.
+That composability is the reason for the decision, not a side effect of
+it.
 
 ---
 
-## Storage-Strategie
+## Storage strategy
 
-Alle persistenten Daten liegen in benannten Docker Volumes (named volumes),
-keine Bind-Mounts auf Host-Pfade außer explizit dokumentierten Ausnahmen.
+All persistent data lives in named Docker volumes, no bind mounts to
+host paths except explicitly documented exceptions.
 
-| Service | Volume | Inhalt |
+| Service | Volume | Contents |
 |---|---|---|
-| bridgelink | bridgelink_appdata | Keystore, server.id, Laufzeitdaten |
-| postgresql (BridgeLink) | bridgelink_db_data | Kanal-Konfiguration und Nachrichten |
-| prometheus | prometheus-data | Metriken (Retention: 90 Tage default) |
-| grafana | grafana-data | Dashboards, Nutzereinstellungen |
-| loki | loki-data | Log-Daten (Retention: 30 Tage default, kürzer als Metriken - siehe monitoring-Rolle) |
+| bridgelink | bridgelink_appdata | keystore, server.id, runtime data |
+| postgresql (BridgeLink) | bridgelink_db_data | channel configuration and messages |
+| prometheus | prometheus-data | metrics (retention: 90 days default) |
+| grafana | grafana-data | dashboards, user settings |
+| loki | loki-data | log data (retention: 30 days default, shorter than metrics - see the monitoring role) |
 
-Node Exporter hat kein eigenes Volume - läuft nativ, Host-Metriken werden
-nicht persistiert (das übernimmt Prometheus).
+Node Exporter has no volume of its own - it runs natively, and host
+metrics aren't persisted there (Prometheus takes care of that).
 
-restic sichert `/var/lib/docker/volumes/` per direktem Dateizugriff sowie
-`/opt/linumed-os/` (Rollen-Konfiguration, Secrets). Backup läuft täglich
-via systemd Timer. Das Ergebnis wird nicht an Prometheus gepusht, sondern
-als Prometheus-Textfile-Metrik geschrieben (derselbe Mechanismus wie beim
-nativen Node Exporter) - Prometheus holt es sich beim regulären Scrape ab,
-kein Pushgateway nötig.
+restic backs up `/var/lib/docker/volumes/` via direct file access, plus
+`/opt/linumed-os/` (role configuration, secrets). Backups run daily via
+a systemd timer. The result isn't pushed to Prometheus; it's written as
+a Prometheus textfile metric (the same mechanism the native Node
+Exporter uses) - Prometheus picks it up on its regular scrape, no
+pushgateway needed.
 
-Recovery-Tests sind als dokumentierter Prozess vorgeschrieben
-(DSGVO-Anforderung) - das manuelle Restore-Verfahren steht in
-`docs/roles/backup.md`. Ein automatisiertes Test-Playbook ist für v0.1
-nicht gebaut; das bleibt offen für eine spätere Version.
+Recovery tests are mandated as a documented process (a GDPR
+requirement) - the manual restore procedure is in
+`docs/roles/backup.md`. An automated test playbook wasn't built for
+v0.1; that's tracked as open work for a later version.
 
 ---
 
-## Inventar-Struktur
+## Inventory structure
 
 ```
 ansible/inventory/
 └── example/
-    ├── hosts.yml          # Beispiel-Inventory (keine echten Hosts)
+    ├── hosts.yml            # Example inventory (no real hosts)
     └── group_vars/
-        ├── all.yml        # Globale Variablen (Zeitzone, NTP etc.)
-        └── linumed.yml    # Linumed-spezifische Defaults
+        ├── all.yml          # Global variables (timezone, NTP, etc.)
+        └── linumed/
+            ├── vars.yml            # Linumed-specific, non-secret defaults
+            └── vault.yml.example   # Template for the required secrets (Ansible Vault)
 ```
 
-Für echte Deployments legt der Administrator ein eigenes Inventory
-außerhalb des Repos an und referenziert die Roles.
+For a real deployment, the administrator creates their own inventory
+outside the repository and references the roles.
 
 ---
 
-## Sicherheitskonzept
+## Security model
 
-- Alle Verbindungen TLS-verschlüsselt (Caddy + ACME)
-- SSH-Key-only, kein Passwort-Login
-- Firewall default-deny, minimale Öffnung
-- **Docker umgeht ufw**: ein per `ports:` veröffentlichter Container-Port ist
-  trotz aktiver ufw-Regeln erreichbar (Dockers eigene iptables/nftables-Regeln
-  liegen vor den ufw-Regeln in der Chain). Deshalb der Default in diesem Kit:
-  nichts veröffentlichen, was nicht öffentlich erreichbar sein muss (Ausnahme
-  Caddy auf 80/443, das ist gewollt) - alles andere entweder gar keinen
-  Host-Port oder explizit auf `127.0.0.1` gebunden.
-- Docker-Container ohne Privilegien, kein `--privileged`
-- Secrets via Ansible Vault oder externe .env-Datei (nie im Repo). Passwörter,
-  die ein Container zur Laufzeit braucht, gehen als Docker-Secret aus einer
-  Datei hinein, nicht als Umgebungsvariable - Env-Variablen sind für jeden
-  lesbar, der `docker inspect` ausführen darf, und landen in der
-  Container-Config auf der Platte.
-- **Ab der bridgelink-Rolle verarbeitet der Stack echte Patientendaten.**
-  Bis dahin enthält er nur Betriebsdaten (Metriken, Logs); eine
-  Integrationsengine bewegt dagegen HL7-Nachrichten mit Namen, Geburtsdaten
-  und Diagnosen, und ihre Datenbank speichert sie je nach Kanal-Einstellung.
-  Das verschiebt die Anforderungen an Backup (Rolle `backup`), Aufbewahrung
-  und Zugriffskontrolle von "Infrastruktur sichern" zu "Gesundheitsdaten
-  verarbeiten" - siehe `docs/roles/bridgelink.md`, Abschnitt DSGVO.
-- Backup-Daten verschlüsselt (restic + Passwort via Vault)
-- Automatische Sicherheitsupdates für das Host-System (unattended-upgrades
-  deckt auch nativ installierte Pakete wie Node Exporter ab, nicht nur
-  Container-Images)
+- every connection TLS-encrypted (Caddy + ACME)
+- SSH key-only, no password login
+- firewall default-deny, minimal opening
+- **Docker bypasses ufw**: a container port published via `ports:` is
+  reachable despite active ufw rules (Docker's own iptables/nftables
+  rules sit ahead of ufw's rules in the chain). Hence this kit's
+  default: publish nothing that doesn't need to be publicly reachable
+  (the exception is Caddy on 80/443, which is intentional) - everything
+  else gets either no host port at all or an explicit `127.0.0.1`
+  binding.
+- Docker containers run unprivileged, no `--privileged`
+- secrets via Ansible Vault or an external `.env` file (never in the
+  repo). Passwords a container needs at runtime go in as a Docker
+  secret from a file, not as an environment variable - env vars are
+  readable by anyone allowed to run `docker inspect` and end up in the
+  container config on disk.
+- **From the bridgelink role onward, the stack processes real patient
+  data.** Up to that point it only holds operational data (metrics,
+  logs); an integration engine, by contrast, moves HL7 messages
+  carrying names, dates of birth and diagnoses, and its database stores
+  them depending on channel settings. That shifts the requirements for
+  backup (the `backup` role), retention and access control from
+  "securing infrastructure" to "processing health data" - see
+  `docs/roles/bridgelink.md`, the GDPR section.
+- backup data is encrypted (restic + password via Vault)
+- automatic security updates for the host system (unattended-upgrades
+  also covers natively installed packages like Node Exporter, not just
+  container images)
 
 ---
 
-## Abgrenzung: Linumed OS vs. Linumed Shifts
+## Scope: Linumed OS vs. Linumed Shifts
 
 | | Linumed OS | Linumed Shifts |
 |---|---|---|
-| Typ | Open Source IaC-Kit | Kommerzielle SaaS-Anwendung |
-| Lizenz | MIT | Proprietär |
-| Inhalt | Infra-Stack, Integrationsengine, Monitoring | Dienstplanung für Pflegestationen |
-| Repo | linumed/linumed-os | linumed/shifts (privat) |
-| Zielgruppe | IT-Admins, Systemintegratoren | PDL, Stationsleitung, Pflegekräfte |
-| Abhängigkeit | unabhängig | kann auf Linumed OS betrieben werden |
+| Type | open-source IaC kit | commercial SaaS application |
+| License | MIT | proprietary |
+| Content | infra stack, integration engine, monitoring | shift scheduling for care wards |
+| Repo | linumed/linumed-os | linumed/shifts (private) |
+| Audience | IT admins, system integrators | care management, ward leads, nursing staff |
+| Dependency | independent | can run on top of Linumed OS |
 
-Linumed Shifts ist nicht in diesem Repository und wird nicht hier
-dokumentiert.
+Linumed Shifts is not in this repository and is not documented here.
 
 ---
 
-## Versionsstrategie
+## Versioning strategy
 
 - v0.1: common + docker + caddy + monitoring + bridgelink + backup
-- v0.2: Betriebsreife — funktionierender Einstieg, Betriebshandbuch,
-  Zugriffshärtung (Tunnel-Nutzer ohne Shell, echte Grafana-Benutzer),
-  automatisierter Restore-Test. Siehe `docs/ROADMAP.md`.
-- v0.3: DICOM-Stack (Orthanc)
-- v1.0: Vollständige Dokumentation, CI-getestete Rollen, Zertifizierungsvorbereitung
+- v0.2: operational readiness - a working onboarding path, the
+  operations handbook, access hardening (shell-less tunnel users, real
+  Grafana users), an automated restore test. See `docs/ROADMAP.md`.
+- v0.3: DICOM stack (Orthanc)
+- v1.0: complete documentation, CI-tested roles, certification prep
 
-**Kein mitgelieferter Identity Provider.** Die ursprünglich für v0.2 geplante
-Authentik-Rolle ist verworfen ([ADR 0003](docs/adr/0003-loopback-only-access-no-bundled-identity-provider.md)):
-Sie hätte eine Öffnung nach außen vorausgesetzt, die dieses Kit bewusst
-vermeidet. Statt einen Identity Provider mitzuliefern, wird Grafana optional an
-einen **vorhandenen** angeschlossen (OIDC). Linumed Passpin bleibt davon
-unberührt — es ist ein eigenständiges Produkt und wird nicht in diesem
-Repository entwickelt.
+**No bundled identity provider.** The Authentik role originally planned
+for v0.2 has been dropped
+([ADR 0003](docs/adr/0003-loopback-only-access-no-bundled-identity-provider.md)):
+it would have required an outward-facing opening that this kit
+deliberately avoids. Instead of shipping an identity provider, Grafana
+gets an optional connection to an **existing** one (OIDC). Linumed
+Passpin is unaffected by this - it is a separate product and is not
+developed in this repository.
 
-Anwendungssoftware (KIS, DMS, Dokumentenablage) ist bewusst nicht Teil von
-Linumed OS. Die Klinik betreibt ihre eigenen Anwendungen. Linumed OS
-liefert den sicheren, DSGVO-konformen Unterbau.
+Application software (HIS, DMS, document management) is deliberately
+not part of Linumed OS. The clinic runs its own applications. Linumed
+OS provides the secure, GDPR-compliant base.
 
-Alle Releases werden als Git Tags gesetzt. Breaking Changes erst ab v1.0.
+Every release is tagged as a git tag. Breaking changes only from v1.0
+onward.

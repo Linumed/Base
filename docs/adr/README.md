@@ -1,20 +1,20 @@
 # Architecture Decision Records
 
-Entscheidungen, die den Aufbau von Linumed OS prägen und die man später plausibel in
-Frage stellen wird — festgehalten mit Kontext, geprüften Alternativen und den
-Konsequenzen, die man sich einhandelt.
+Decisions that shape how Linumed OS is built and that will plausibly be questioned
+later - recorded with context, evaluated alternatives, and the consequences accepted
+along the way.
 
-Zweck ist nicht Vollständigkeit. Hier landet, was folgende Kriterien erfüllt:
+The goal is not completeness. What lands here meets these criteria:
 
-- Die Entscheidung ist von außen erklärungsbedürftig (jemand fragt „warum nicht X?").
-- Sie wieder umzudrehen wäre teuer oder hätte Folgen für Betreiber.
-- Die Begründung ist nicht aus dem Code ablesbar.
+- The decision needs explaining from the outside (someone asks "why not X?").
+- Reversing it would be expensive or have consequences for operators.
+- The reasoning isn't readable from the code.
 
-Alles andere gehört als Kommentar an die betroffene Stelle, nicht hierher.
+Everything else belongs as a comment at the relevant spot, not here.
 
-| Nr. | Entscheidung | Status |
+| No. | Decision | Status |
 |---|---|---|
-| [0001](0001-bridgelink-statt-mirth-connect.md) | BridgeLink statt Mirth Connect als Integrationsengine | angenommen (2026-08-11) |
-| [0002](0002-english-as-documentation-language.md) | Englisch als Dokumentationssprache | angenommen (2026-08-14) |
-| [0003](0003-loopback-only-access-no-bundled-identity-provider.md) | Loopback-only-Zugriff, kein mitgelieferter Identity Provider | angenommen (2026-08-14) |
-| [0004](0004-vm-tests-in-ci-via-host-libvirt-socket.md) | VM-Tests in der CI über den libvirt-Socket des Hosts | angenommen (2026-08-14) |
+| [0001](0001-bridgelink-statt-mirth-connect.md) | BridgeLink instead of Mirth Connect as the integration engine | accepted (2026-08-11) |
+| [0002](0002-english-as-documentation-language.md) | English as the documentation language | accepted (2026-08-14) |
+| [0003](0003-loopback-only-access-no-bundled-identity-provider.md) | Loopback-only access, no bundled identity provider | accepted (2026-08-14) |
+| [0004](0004-vm-tests-in-ci-via-host-libvirt-socket.md) | VM tests in CI via the host's libvirt socket | accepted (2026-08-14) |

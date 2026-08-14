@@ -2,61 +2,60 @@
 
 ## Problem
 
-Auch mit Key-only-SSH (siehe `common-ssh.md`) sieht ein aus dem Internet erreichbarer
-Server dauerhaft automatisierte Login-Versuche in den Logs. Das ist zwar ungefährlich,
-solange Passwort-Auth aus ist, erzeugt aber Lograuschen und unnötige CPU-Last durch die
-Auth-Versuche selbst. fail2ban sperrt IPs nach wiederholten Fehlversuchen per Firewall-Regel
-zeitweise komplett aus.
+Even with key-only SSH (see `common-ssh.md`), a server reachable from the internet sees
+a constant stream of automated login attempts in the logs. That's harmless as long as
+password auth is off, but it creates log noise and unnecessary CPU load from the auth
+attempts themselves. fail2ban temporarily bans IPs entirely, via a firewall rule, after
+repeated failed attempts.
 
-## Variablen
+## Variables
 
-Alle Variablen haben den Präfix `common_fail2ban_*` und stehen mit sinnvollen Defaults in
+All variables are prefixed `common_fail2ban_*` and have sensible defaults in
 `ansible/roles/common/defaults/main.yml`.
 
-| Variable | Default | Bedeutung |
+| Variable | Default | Meaning |
 |---|---|---|
-| `common_fail2ban_enabled` | `true` | Installiert und aktiviert fail2ban. Bei `false` wird der Dienst gestoppt/deaktiviert (falls vorhanden), nicht deinstalliert |
-| `common_fail2ban_backend` | `"systemd"` | Liest den Journal-Log direkt, keine Abhängigkeit von `/var/log/auth.log`/rsyslog |
-| `common_fail2ban_maxretry` | `5` | Fehlversuche bis zum Ban |
-| `common_fail2ban_findtime` | `"10m"` | Zeitfenster, in dem `maxretry` erreicht werden muss |
-| `common_fail2ban_bantime` | `"1h"` | Dauer des Bans |
-| `common_fail2ban_ignoreip` | `["127.0.0.1/8", "::1"]` | Nie gesperrte Adressen. Eigene Management-IP/Tailscale-Range ergänzen, sonst kann man sich bei zu vielen Fehlversuchen selbst aussperren |
+| `common_fail2ban_enabled` | `true` | Installs and enables fail2ban. With `false`, the service is stopped/disabled (if present), not uninstalled |
+| `common_fail2ban_backend` | `"systemd"` | Reads the journal log directly, no dependency on `/var/log/auth.log`/rsyslog |
+| `common_fail2ban_maxretry` | `5` | Failed attempts before a ban |
+| `common_fail2ban_findtime` | `"10m"` | Time window in which `maxretry` must be reached |
+| `common_fail2ban_bantime` | `"1h"` | Ban duration |
+| `common_fail2ban_ignoreip` | `["127.0.0.1/8", "::1"]` | Addresses never banned. Add your own management IP/Tailscale range, or too many failed attempts can lock you out yourself |
 
-## Was wird verändert
+## What gets changed
 
-- Paket `fail2ban` wird installiert.
-- `/etc/fail2ban/jail.d/10-linumed-sshd.conf` (neu angelegt, Drop-in). `jail.local`/
-  `jail.conf` werden **nicht** angefasst - fail2ban dokumentiert `jail.d/` selbst als den
-  Ort für lokale Overrides, und `jail.conf` wird bei Paket-Upgrades ohnehin überschrieben.
-- Dienst `fail2ban` wird bei Änderung neu gestartet (nicht neu geladen - siehe
-  `handlers/main.yml`), aktiviert und gestartet.
+- The `fail2ban` package is installed.
+- `/etc/fail2ban/jail.d/10-linumed-sshd.conf` (newly created drop-in). `jail.local`/
+  `jail.conf` are **not** touched - fail2ban itself documents `jail.d/` as the place for
+  local overrides, and `jail.conf` gets overwritten on package upgrades anyway.
+- The `fail2ban` service is restarted on change (not reloaded - see
+  `handlers/main.yml`), enabled and started.
 
-## Verifikation
+## Verification
 
 ```bash
 sudo fail2ban-client status sshd
 ```
 
-Erwartete Ausgabe enthält u.a. `Currently banned` und `Total banned` (0 direkt nach dem
-Rollout ist normal) sowie die aus `common_ssh_port` übernommene Portnummer unter
-`Filter`/`Actions`.
+Expected output includes `Currently banned` and `Total banned` (0 right after rollout is
+normal) and the port number taken from `common_ssh_port` under `Filter`/`Actions`.
 
 ```bash
 sudo fail2ban-client status
 ```
 
-zeigt, ob der Jail `sshd` überhaupt aktiv ist.
+shows whether the `sshd` jail is active at all.
 
-## Stolperfallen
+## Pitfalls
 
-- **`common_fail2ban_ignoreip` vor dem ersten scharfen Test erweitern**: wer von einer IP
-  aus testet, die absichtlich Fehlversuche erzeugt (z.B. ein Passwort-Login-Test gegen
-  `common_ssh_password_authentication`), kann sich selbst aussperren. Die eigene
-  Tailscale-/Management-Range vorher eintragen.
-- **Zusammenspiel mit ufw**: fail2bans Standardaktion (`iptables-multiport`) setzt eigene
-  `iptables`-Regeln, unabhängig von den ufw-Regeln aus `common-ufw.md`. Beide koexistieren
-  in unterschiedlichen Chains - ein `ufw status` zeigt daher **keine** fail2ban-Bans an,
-  dafür ist `fail2ban-client status sshd` nötig.
-- **Backend `systemd`**: setzt voraus, dass sshd über den Journal-Log erreichbar ist (Debian
-  Default). Wurde `rsyslog` deinstalliert oder journald umkonfiguriert, greift das nicht -
-  in dem Fall `common_fail2ban_backend` explizit auf `"auto"` setzen.
+- **Extend `common_fail2ban_ignoreip` before the first real test**: testing from an IP
+  that deliberately triggers failed attempts (e.g. a password-login test against
+  `common_ssh_password_authentication`) can lock you out yourself. Add your own
+  Tailscale/management range first.
+- **Interaction with ufw**: fail2ban's default action (`iptables-multiport`) sets its own
+  `iptables` rules, independent of the ufw rules from `common-ufw.md`. Both coexist in
+  different chains - so `ufw status` shows **none** of fail2ban's bans; use
+  `fail2ban-client status sshd` for that.
+- **`systemd` backend**: assumes sshd is reachable through the journal log (the Debian
+  default). If `rsyslog` was removed or journald reconfigured, this doesn't work - in
+  that case, set `common_fail2ban_backend` explicitly to `"auto"`.

@@ -2,62 +2,62 @@
 
 ## Problem
 
-Sicherheitslücken in Paketen, die nicht zeitnah eingespielt werden, sind auf einem Server
-mit medizinischer Integrationssoftware ein direktes Risiko. Ein Mensch, der jede Nacht von
-Hand `apt upgrade` fährt, skaliert nicht - diese Rolle automatisiert das Einspielen von
-Sicherheitsupdates über den Standard-Mechanismus `unattended-upgrades`.
+Security vulnerabilities in packages that don't get patched promptly are a direct risk
+on a server running medical integration software. A human running `apt upgrade` by hand
+every night doesn't scale - this role automates installing security updates through the
+standard `unattended-upgrades` mechanism.
 
-## Variablen
+## Variables
 
-Alle Variablen haben den Präfix `common_unattended_upgrades_*` und stehen mit sinnvollen
-Defaults in `ansible/roles/common/defaults/main.yml`.
+All variables are prefixed `common_unattended_upgrades_*` and have sensible defaults in
+`ansible/roles/common/defaults/main.yml`.
 
-| Variable | Default | Bedeutung |
+| Variable | Default | Meaning |
 |---|---|---|
-| `common_unattended_upgrades_enabled` | `true` | Installiert und konfiguriert `unattended-upgrades` |
-| `common_unattended_upgrades_origins` | `["${distro_id}:${distro_codename}-security"]` | Nur Security-Updates. `-updates` ergänzen für volle unattended Updates - zieht dann auch Nicht-Security-Änderungen automatisch |
-| `common_unattended_upgrades_automatic_reboot` | `false` | **Bewusst aus.** Ein unangekündigter Reboot auf einer Maschine mit Mirth/PACS ist riskanter als ein wartendes Kernel-Update |
-| `common_unattended_upgrades_automatic_reboot_time` | `"02:00"` | Nur relevant, wenn Reboot oben auf `true` gesetzt wird |
-| `common_unattended_upgrades_remove_unused_deps` | `true` | Räumt verwaiste Abhängigkeiten nach Updates auf |
-| `common_unattended_upgrades_mail` | `""` (aus) | Leer = kein Mail-Report, da auf einem frischen Host kein MTA vorausgesetzt wird |
+| `common_unattended_upgrades_enabled` | `true` | Installs and configures `unattended-upgrades` |
+| `common_unattended_upgrades_origins` | `["${distro_id}:${distro_codename}-security"]` | Security updates only. Add `-updates` for full unattended updates - that then also pulls in non-security changes automatically |
+| `common_unattended_upgrades_automatic_reboot` | `false` | **Deliberately off.** An unannounced reboot on a machine running Mirth/PACS is riskier than a kernel update waiting |
+| `common_unattended_upgrades_automatic_reboot_time` | `"02:00"` | Only relevant if the reboot setting above is `true` |
+| `common_unattended_upgrades_remove_unused_deps` | `true` | Cleans up orphaned dependencies after updates |
+| `common_unattended_upgrades_mail` | `""` (off) | Empty = no mail report, since a fresh host isn't assumed to have an MTA |
 
-## Was wird verändert
+## What gets changed
 
-- Paket `unattended-upgrades` wird installiert.
-- `/etc/apt/apt.conf.d/20auto-upgrades` (neu angelegt): aktiviert die tägliche
-  Paketlisten-Aktualisierung und den Unattended-Upgrade-Lauf.
-- `/etc/apt/apt.conf.d/51-linumed-unattended-upgrades` (neu angelegt, eigene Datei statt
-  Bearbeitung von `50unattended-upgrades`): Origins-Pattern, Reboot-Verhalten,
-  Dependency-Cleanup, optionaler Mail-Report.
-- Auslösung läuft über den Standard-Timer `apt-daily-upgrade.timer` (systemd), kein
-  eigener Cronjob oder Timer wird angelegt.
+- The `unattended-upgrades` package is installed.
+- `/etc/apt/apt.conf.d/20auto-upgrades` (newly created): enables the daily package list
+  refresh and the unattended-upgrade run.
+- `/etc/apt/apt.conf.d/51-linumed-unattended-upgrades` (newly created, its own file
+  instead of editing `50unattended-upgrades`): origins pattern, reboot behavior,
+  dependency cleanup, optional mail report.
+- Triggering runs through the standard `apt-daily-upgrade.timer` (systemd); no separate
+  cron job or timer is created.
 
-## Verifikation
+## Verification
 
 ```bash
 sudo unattended-upgrade --dry-run --debug
 ```
 
-Zeigt, welche Pakete beim nächsten Lauf aktualisiert würden, ohne etwas zu verändern.
+Shows which packages would be updated on the next run, without changing anything.
 
 ```bash
 systemctl status apt-daily-upgrade.timer
 sudo apt-config dump | grep -A3 Unattended-Upgrade::Origins-Pattern
 ```
 
-Erster Befehl: Timer muss `active`/`waiting` sein. Zweiter: zeigt die tatsächlich
-gemergten Origins - nicht nur die eigene Drop-in-Datei prüfen, `apt.conf.d` merged alle
-Dateien im Verzeichnis.
+First command: the timer must be `active`/`waiting`. Second: shows the actually merged
+origins - don't just check the role's own drop-in file, `apt.conf.d` merges every file
+in the directory.
 
-## Stolperfallen
+## Pitfalls
 
-- **`apt.conf.d`-Dateien werden gemergt, nicht nach erstem Treffer gewählt** - anders als
-  bei den `sshd_config.d`-Drop-ins in `common-ssh.md`. Ein zusätzlicher eigener Drop-in mit
-  widersprüchlichem Inhalt in `/etc/apt/apt.conf.d/` überschreibt daher stillschweigend
-  Werte aus `51-linumed-unattended-upgrades`, je nach alphabetischer Reihenfolge.
-- **Automatischer Reboot ist bewusst aus.** Wer ihn aktiviert, sollte
-  `common_unattended_upgrades_automatic_reboot_time` auf ein Wartungsfenster legen, in dem
-  laufende Integrationen (Mirth-Nachrichtenverarbeitung) keinen Schaden nehmen.
-- **`-updates`-Origin zieht mehr als Security-Fixes.** Nur ergänzen, wenn bewusst mehr als
-  Sicherheitsupdates automatisiert werden sollen - das erhöht das Risiko einer
-  unerwarteten Verhaltensänderung durch ein reguläres Paket-Update.
+- **`apt.conf.d` files are merged, not selected on first match** - unlike the
+  `sshd_config.d` drop-ins in `common-ssh.md`. An extra, conflicting drop-in placed in
+  `/etc/apt/apt.conf.d/` therefore silently overrides values from
+  `51-linumed-unattended-upgrades`, depending on alphabetical order.
+- **Automatic reboot is deliberately off.** Anyone enabling it should set
+  `common_unattended_upgrades_automatic_reboot_time` to a maintenance window where
+  running integrations (Mirth message processing) won't be harmed.
+- **The `-updates` origin pulls in more than security fixes.** Only add it if you
+  deliberately want to automate more than security updates - that raises the risk of an
+  unexpected behavior change from a regular package update.
