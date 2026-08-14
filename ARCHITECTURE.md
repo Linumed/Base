@@ -191,32 +191,40 @@ restic-Ergebnisse werden als Metrics an Prometheus gepusht.
 
 ## Netzwerk-Design
 
-**Zielbild**, noch nicht vollständig umgesetzt: perspektivisch sollen Caddy
-und die Docker-Compose-Stacks ein gemeinsames Netzwerk (`linumed-net`)
-teilen, damit Caddy alle Services per Hostname/Pfad erreichen und
-routen kann. Von außen wären dann nur 80/443 (Caddy) und SSH erreichbar.
+**Entschieden, nicht offen:** Kein Verwaltungsdienst von Linumed OS ist von
+außen erreichbar. Alle Komponenten binden an `127.0.0.1` oder veröffentlichen
+gar keinen Host-Port; der Zugang läuft über einen SSH-Tunnel. Jeder
+Compose-Stack hat sein eigenes, isoliertes Docker-Netzwerk.
 
-**Stand v0.1:** jeder Compose-Stack hat sein eigenes, isoliertes
-Docker-Netzwerk; es gibt noch kein `linumed-net`. Die monitoring-Rolle
-braucht das für v0.1 auch nicht: Grafana ist die einzige Komponente mit
-Nutzer-Zugriff und bindet ausschließlich an `127.0.0.1` (Zugriff via
-SSH-Tunnel), Prometheus/Loki/Alertmanager/cAdvisor erreichen sich intern
-über Servicenamen und veröffentlichen keinen Host-Port. Eine
-Caddy-Anbindung für monitoring folgt, sobald ein Dienst sie tatsächlich
-braucht (z. B. bridgelink, #12).
+Ein gemeinsames Netzwerk (`linumed-net`), über das Caddy die eigenen Dienste
+routet, war ursprünglich als Zielbild vorgesehen und ist **bewusst verworfen**
+worden — zusammen mit der SSO-Anbindung, die darauf aufgebaut hätte.
+Begründung, geprüfte Alternativen (Reverse Proxy mit Identity Provider,
+Mesh-VPN) und die eingehandelten Nachteile:
+[ADR 0003](docs/adr/0003-loopback-only-access-no-bundled-identity-provider.md).
 
 ```
 Internet
    │
    ├── :80  ──▶ Caddy ──▶ redirect to HTTPS
-   └── :443 ──▶ Caddy ──▶ /bridgelink ──▶ bridgelink:8443  (geplant)
+   └── :443 ──▶ Caddy ──▶ Anwendungen des Betreibers
+                          (Linumed OS selbst liegt nicht dahinter)
 
 SSH-Tunnel (nicht öffentlich)
-   └── 127.0.0.1:3000 ──▶ Grafana
+   ├── 127.0.0.1:3000 ──▶ Grafana
+   ├── 127.0.0.1:9090 ──▶ Prometheus
+   └── 127.0.0.1:8443 ──▶ BridgeLink Admin
 ```
 
-Prometheus und interne Metrics-Endpoints sind für v0.1 nur per SSH-Tunnel
-erreichbar, nicht über Caddy und nicht direkt von außen.
+Caddy ist der Reverse Proxy für die **Anwendungen der Einrichtung**, nicht für
+die Verwaltungsoberflächen dieses Kits. Dass Caddy dabei einen Container in
+einem anderen Compose-Stack heute noch nicht erreichen kann, ist eine offene
+Lücke (Issue #39) und unabhängig von der Zugriffsentscheidung.
+
+Weil alles auf Loopback gebunden bleibt, funktioniert Linumed OS über jedes
+Netz, das der Betreiber ohnehin betreibt — Firmen-VPN, Mesh, Sprunghost oder
+Klinik-LAN — ohne davon etwas wissen zu müssen. Diese Kombinierbarkeit ist der
+Grund für die Entscheidung, nicht ihr Nebeneffekt.
 
 ---
 
@@ -316,14 +324,19 @@ dokumentiert.
 ## Versionsstrategie
 
 - v0.1: common + docker + caddy + monitoring + bridgelink + backup
-- v0.2: SSO-Integration via Authentik (optionale Role) - Übergangslösung bis
-  Linumed Passpin produktionsreif ist; Authentik deckt OIDC, SAML, LDAP-Sync
+- v0.2: Betriebsreife — funktionierender Einstieg, Betriebshandbuch,
+  Zugriffshärtung (Tunnel-Nutzer ohne Shell, echte Grafana-Benutzer),
+  automatisierter Restore-Test. Siehe `docs/ROADMAP.md`.
 - v0.3: DICOM-Stack (Orthanc)
 - v1.0: Vollständige Dokumentation, CI-getestete Rollen, Zertifizierungsvorbereitung
 
-Langfristig ersetzt Linumed Passpin die Authentik-Role als native Identitäts-
-und Secrets-Schicht. Passpin ist ein eigenständiges Linumed-Produkt und wird
-nicht in diesem Repository entwickelt.
+**Kein mitgelieferter Identity Provider.** Die ursprünglich für v0.2 geplante
+Authentik-Rolle ist verworfen ([ADR 0003](docs/adr/0003-loopback-only-access-no-bundled-identity-provider.md)):
+Sie hätte eine Öffnung nach außen vorausgesetzt, die dieses Kit bewusst
+vermeidet. Statt einen Identity Provider mitzuliefern, wird Grafana optional an
+einen **vorhandenen** angeschlossen (OIDC). Linumed Passpin bleibt davon
+unberührt — es ist ein eigenständiges Produkt und wird nicht in diesem
+Repository entwickelt.
 
 Anwendungssoftware (KIS, DMS, Dokumentenablage) ist bewusst nicht Teil von
 Linumed OS. Die Klinik betreibt ihre eigenen Anwendungen. Linumed OS
