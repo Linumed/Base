@@ -1,8 +1,16 @@
 # Ansible
 *.retry
-ansible/inventory/*/hosts.yml
-ansible/inventory/*/group_vars/
+# Every real inventory is host-specific configuration and must never be committed.
+# `!ansible/inventory/example/` alone does NOT work here - it only re-includes the
+# directory entry, not files inside it that a more specific pattern already excludes
+# (a documented git gitignore limitation, confirmed 2026-08-14: it silently kept
+# ansible/inventory/example/ untracked in this repo since the initial commit - nobody
+# who cloned it ever got the example inventory the README's quick start depends on).
+# Ignoring everything under ansible/inventory/ and re-including example/ plus its full
+# recursive contents sidesteps that trap entirely.
+ansible/inventory/*
 !ansible/inventory/example/
+!ansible/inventory/example/**
 *.vault
 .vault_pass
 vault_password_file
