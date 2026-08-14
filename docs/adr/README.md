@@ -17,3 +17,4 @@ Alles andere gehört als Kommentar an die betroffene Stelle, nicht hierher.
 | [0001](0001-bridgelink-statt-mirth-connect.md) | BridgeLink statt Mirth Connect als Integrationsengine | angenommen (2026-08-11) |
 | [0002](0002-english-as-documentation-language.md) | Englisch als Dokumentationssprache | angenommen (2026-08-14) |
 | [0003](0003-loopback-only-access-no-bundled-identity-provider.md) | Loopback-only-Zugriff, kein mitgelieferter Identity Provider | angenommen (2026-08-14) |
+| [0004](0004-vm-tests-in-ci-via-host-libvirt-socket.md) | VM-Tests in der CI über den libvirt-Socket des Hosts | angenommen (2026-08-14) |
