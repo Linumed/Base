@@ -29,9 +29,33 @@
   notify: Restart node exporter
 
 # Node Exporter must listen on all interfaces (see monitoring_node_exporter_port comment
-# in defaults/main.yml) - a container (Prometheus) can't reach 127.0.0.1 on the host.
-# ufw is what actually keeps this from being reachable from the LAN: unlike a published
-# Docker container port, ufw's rules genuinely apply to a native process's socket.
+# in defaults/main.yml) - a container (Prometheus) can't reach 127.0.0.1 on the host, so
+# the scrape crosses the Docker bridge gateway and lands in ufw's INPUT chain like any
+# other external connection. Without this allow rule, Prometheus's own request is denied
+# by the rule below - confirmed 2026-08-14 against a fresh VM (issue #40): the "node"
+# target's health was "down" with "context deadline exceeded", and ufw showed only the
+# deny rule, no allow. 172.16.0.0/12, not a narrower /16: `docker compose` assigns each
+# project's network a sequential /16 out of this pool (confirmed on linumed-dev -
+# monitoring_default landed on 172.20.0.0/16, other stacks on .17/.18/.19), so pinning to
+# one /16 would break depending on how many other Compose projects existed first.
+# insert: 1 / insert_relative_to: zero pins this at the absolute first ufw rule (ufw
+# numbers rules from 1, not 0 - "insert: 0" fails with "Cannot insert rule at position
+# '0'", confirmed against a real VM), regardless of task order or what already exists.
+# The deny rule below must never end up evaluated first, which a plain in-order append
+# would not guarantee on a host that already has the deny rule from a previous,
+# unpatched apply of this role.
+- name: Allow the Docker bridge network to reach the Node Exporter port
+  community.general.ufw:
+    rule: allow
+    port: "{{ monitoring_node_exporter_port | string }}"
+    proto: tcp
+    src: "{{ monitoring_node_exporter_allow_from }}"
+    insert: 1
+    insert_relative_to: zero
+    comment: "Node Exporter (managed by monitoring role) - Prometheus scrapes via the Docker host gateway"
+  become: true
+  when: monitoring_node_exporter_deny_external | bool
+
 - name: Deny external access to the Node Exporter port
   community.general.ufw:
     rule: deny
