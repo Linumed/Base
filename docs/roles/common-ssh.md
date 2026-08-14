@@ -64,8 +64,15 @@ Zusätzlich: ein Passwort-Login muss fehlschlagen, ein Key-Login muss funktionie
   anlegen, niemals mit niedrigerer.
 - **Socket-Aktivierung**: falls `ssh.socket` aktiv ist (Debian bietet das optional an, siehe
   `README.Debian` von `openssh-server`), ignoriert `sshd` seine eigene `Port`-Direktive — der
-  Port kommt dann aus `ListenStream=` der Socket-Unit. Die Rolle erkennt das und bricht ab,
-  statt einen wirkungslosen Port zu setzen.
+  Port kommt dann aus `ListenStream=` der Socket-Unit. Die Rolle erkennt das und templatet
+  seit #15 selbst einen Drop-in (`/etc/systemd/system/ssh.socket.d/listen.conf`), statt
+  abzubrechen — die Unit bringt `ListenStream=22` fest verdrahtet mit, der Drop-in muss das
+  erst leeren, bevor der eigentliche Port gesetzt wird, sonst lauscht `sshd` auf beiden
+  Ports gleichzeitig. Vor dem Neustart der Socket-Unit wird `ssh.service` gestoppt: bei
+  `Accept=no` läuft der Dienst dauerhaft mit der Listening-Fd der Socket-Unit, ein
+  Neustart der Socket-Unit dagegen schlägt fehl, solange der Dienst noch aktiv ist
+  ("Socket service ssh.service already active, refusing."). Wird `common_ssh_port` wieder
+  auf `22` gesetzt, entfernt die Rolle den Drop-in beim nächsten Lauf wieder.
 - **Root-Login-Sperre ohne Rettungsanker**: die Rolle bricht von sich aus ab, wenn kein
   Nicht-Root-Nutzer mit Sudo-Rechten und hinterlegtem SSH-Key existiert — das ist Absicht,
   nicht ein Bug. Vor dem ersten Lauf also erst einen Admin-Nutzer mit Key anlegen — auf

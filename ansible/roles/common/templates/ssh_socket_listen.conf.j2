@@ -1,0 +1,9 @@
+# Managed by Ansible (linumed-os, role: common). Do not edit by hand, changes will be
+# overwritten.
+#
+# ssh.socket ships with ListenStream=22 baked into the unit itself - an override has to
+# blank that out (the empty ListenStream= line) before setting the real port, or systemd
+# would listen on both 22 and common_ssh_port at once.
+[Socket]
+ListenStream=
+ListenStream={{ common_ssh_port }}
