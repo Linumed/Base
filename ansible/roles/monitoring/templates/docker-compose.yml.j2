@@ -145,6 +145,20 @@ services:
       GF_ANALYTICS_FEEDBACK_LINKS_ENABLED: "false"
       GF_USERS_ALLOW_SIGN_UP: "false"
       GF_AUTH_ANONYMOUS_ENABLED: "false"
+{% if monitoring_grafana_oidc_client_id %}
+      # OIDC as a connection point to an EXISTING identity provider (issue #42, ADR
+      # 0003) - not a bundled one. Empty client_id above means this whole block is
+      # skipped and nothing about auth changes.
+      GF_AUTH_GENERIC_OAUTH_ENABLED: "true"
+      GF_AUTH_GENERIC_OAUTH_NAME: "{{ monitoring_grafana_oidc_name }}"
+      GF_AUTH_GENERIC_OAUTH_CLIENT_ID: "{{ monitoring_grafana_oidc_client_id }}"
+      GF_AUTH_GENERIC_OAUTH_CLIENT_SECRET: "{{ monitoring_grafana_oidc_client_secret }}"
+      GF_AUTH_GENERIC_OAUTH_SCOPES: "{{ monitoring_grafana_oidc_scopes }}"
+      GF_AUTH_GENERIC_OAUTH_AUTH_URL: "{{ monitoring_grafana_oidc_auth_url }}"
+      GF_AUTH_GENERIC_OAUTH_TOKEN_URL: "{{ monitoring_grafana_oidc_token_url }}"
+      GF_AUTH_GENERIC_OAUTH_API_URL: "{{ monitoring_grafana_oidc_api_url }}"
+      GF_AUTH_GENERIC_OAUTH_ALLOW_SIGN_UP: "{{ monitoring_grafana_oidc_allow_sign_up | string | lower }}"
+{% endif %}
     ports:
       - "127.0.0.1:{{ monitoring_grafana_port }}:3000"
     volumes:

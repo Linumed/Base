@@ -28,6 +28,43 @@ monitoring_grafana_reporting_enabled: false
 monitoring_grafana_check_for_updates: false
 monitoring_grafana_analytics_enabled: false
 
+# Local Grafana users beyond the shared admin account (issue #42) - so "who looked at
+# this dashboard/these logs" has an answer, and Loki logs (which can carry personal data)
+# aren't viewed under one shared identity. Provisioned idempotently via the Grafana HTTP
+# API against 127.0.0.1 after the stack is up - Grafana's file-based provisioning
+# (provisioning/) covers datasources/dashboards/alerting, not users, there is no
+# declarative alternative. `password` must come from Ansible Vault, never committed;
+# `role` is one of Viewer/Editor/Admin (Grafana's own org roles). Password is only set at
+# creation time - changing an existing user's password here is deliberately not
+# supported, see docs/roles/monitoring.md.
+# Example:
+#   monitoring_grafana_users:
+#     - login: "jsmith"
+#       name: "Jane Smith"
+#       password: "{{ vault_grafana_jsmith_password }}"
+#       role: "Viewer"
+monitoring_grafana_users: []
+
+# OIDC as a connection point to an institution's EXISTING identity provider (AD, Entra,
+# Keycloak, ...) - not a bundled one, see ADR 0003. Empty client_id = off, nothing
+# changes. Costs zero extra containers, unlike the Authentik role that was evaluated and
+# dropped. Same "refuse a half-configured setup" preflight pattern as the Alertmanager
+# SMTP variables above.
+monitoring_grafana_oidc_client_id: ""
+monitoring_grafana_oidc_client_secret: ""
+monitoring_grafana_oidc_auth_url: ""
+monitoring_grafana_oidc_token_url: ""
+monitoring_grafana_oidc_api_url: ""
+monitoring_grafana_oidc_name: "SSO"
+# Grafana still needs read access to the userinfo endpoint's scopes to map a name/email -
+# "openid email profile" is the common denominator across AD/Entra/Keycloak.
+monitoring_grafana_oidc_scopes: "openid email profile"
+# Off by default: an OIDC login creating a brand-new local Grafana account for anyone who
+# can authenticate against the external IdP is a wider door than provisioning users
+# explicitly via monitoring_grafana_users above. Turn on deliberately once the operator's
+# IdP membership already gates who should get in.
+monitoring_grafana_oidc_allow_sign_up: false
+
 # Retention is split by data kind, not one global value: logs can contain personal data
 # (IP addresses, usernames) and get a shorter default than metrics - data minimization,
 # not an arbitrary choice. monitoring_retention_days is an escape hatch that, if set,

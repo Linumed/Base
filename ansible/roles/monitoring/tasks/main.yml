@@ -7,3 +7,6 @@
 
 - name: Docker Compose stack
   ansible.builtin.import_tasks: stack.yml
+
+- name: Grafana users
+  ansible.builtin.import_tasks: grafana-users.yml

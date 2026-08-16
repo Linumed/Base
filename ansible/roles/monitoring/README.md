@@ -78,6 +78,32 @@ configured address. `monitoring_alertmanager_group_wait`/`_group_interval`/
 `_repeat_interval` default to values sane for a clinic on-call context (batch a burst,
 re-page every 4h) but can be overridden.
 
+**Grafana users beyond the shared admin account (#42).** `monitoring_grafana_users`
+provisions local accounts (login/name/password/role) idempotently via the Grafana HTTP
+API against `127.0.0.1` - Grafana's own file-based provisioning
+(`provisioning/`) covers datasources, dashboards and alerting, but not users, confirmed
+against a real 13.1.3 instance while building this, there is no declarative alternative.
+Runs after "Deploy the monitoring stack" has already waited for the healthcheck, so the
+API is up by the time it's called; the admin password never leaves the host or appears
+on a command line (`ansible.builtin.uri`, `no_log: true` throughout). A 412 response from
+Grafana's create-user endpoint ("user already exists") is treated as the success case for
+an existing account - only the org-role assignment is re-applied on every run, an
+existing user's password is deliberately left untouched (see docs/roles/monitoring.md for
+why). Same "refuse a half-configured entry" preflight pattern as elsewhere in this role:
+a `monitoring_grafana_users` entry with no password fails the play before touching
+anything.
+
+**Grafana OIDC as a connection point, not a bundled identity provider (#42, ADR 0003).**
+`monitoring_grafana_oidc_*` points Grafana's built-in generic OAuth support at an
+institution's *existing* IdP (AD, Entra, Keycloak, ...). Empty `client_id` (the default)
+means the whole `GF_AUTH_GENERIC_OAUTH_*` block in the rendered compose file is skipped -
+nothing about auth changes. Setting `client_id` requires `client_secret`, `auth_url`,
+`token_url` and `api_url` all set too - same all-or-nothing preflight as the Alertmanager
+SMTP variables, refusing to deploy a Grafana that advertises SSO and then fails at login
+time. `monitoring_grafana_oidc_allow_sign_up` defaults to `false` on purpose: letting
+anyone who authenticates against the external IdP get an auto-created local account is a
+wider door than the explicit `monitoring_grafana_users` list above.
+
 ## What this role does not do
 
 - Does not install Docker itself - see the `docker` role, which runs before this one in

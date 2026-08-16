@@ -1,0 +1,74 @@
+---
+# Grafana's file-based provisioning (provisioning/) covers datasources, dashboards and
+# alerting - not users. There is no declarative alternative, confirmed against a real
+# 13.1.3 instance while building this (issue #42): the HTTP API is the only way. All
+# calls run against 127.0.0.1 on the target host itself, after "Deploy the monitoring
+# stack" has already waited for Grafana's healthcheck to pass - the admin password never
+# has to leave the host or appear on a command line.
+
+- name: Grafana users - fetch current org membership once
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ monitoring_grafana_port }}/api/org/users"
+    method: GET
+    user: "{{ monitoring_grafana_admin_user }}"
+    password: "{{ monitoring_grafana_admin_password }}"
+    force_basic_auth: true
+    status_code: [200]
+  register: monitoring_grafana_org_users
+  no_log: true
+  when: monitoring_grafana_users | length > 0
+
+- name: Grafana users - create missing accounts
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ monitoring_grafana_port }}/api/admin/users"
+    method: POST
+    user: "{{ monitoring_grafana_admin_user }}"
+    password: "{{ monitoring_grafana_admin_password }}"
+    force_basic_auth: true
+    body_format: json
+    body:
+      name: "{{ item.name }}"
+      login: "{{ item.login }}"
+      password: "{{ item.password }}"
+      OrgId: 1
+    # 200 = created. 412 = "user already exists" - Grafana's own idempotency signal,
+    # confirmed against a real instance; treated as success, not retried or updated -
+    # an already-existing user's password is deliberately left untouched (see
+    # docs/roles/monitoring.md), only the role assignment below is re-applied every run.
+    status_code: [200, 412]
+  register: monitoring_grafana_user_create
+  no_log: true
+  loop: "{{ monitoring_grafana_users }}"
+  loop_control:
+    label: "{{ item.login }}"
+  when: monitoring_grafana_users | length > 0
+
+# Runs for every configured user on every apply, including ones that already existed
+# before this run - the org-membership snapshot above was taken before the create step,
+# so a freshly created user isn't in it. userId comes from whichever of the two sources
+# actually has it: the pre-existing snapshot, or this run's own creation response.
+- name: Grafana users - set org role
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ monitoring_grafana_port }}/api/org/users/{{ monitoring_grafana_user_id }}"
+    method: PATCH
+    user: "{{ monitoring_grafana_admin_user }}"
+    password: "{{ monitoring_grafana_admin_password }}"
+    force_basic_auth: true
+    body_format: json
+    body:
+      role: "{{ item.role }}"
+    status_code: [200]
+  loop: "{{ monitoring_grafana_users }}"
+  loop_control:
+    label: "{{ item.login }}"
+  no_log: true
+  when: monitoring_grafana_users | length > 0
+  vars:
+    monitoring_grafana_existing_entry: >-
+      {{ monitoring_grafana_org_users.json | selectattr('login', 'equalto', item.login) | list }}
+    monitoring_grafana_user_id: >-
+      {{
+        monitoring_grafana_existing_entry[0].userId
+        if monitoring_grafana_existing_entry | length > 0
+        else (monitoring_grafana_user_create.results | selectattr('item.login', 'equalto', item.login) | first).json.id
+      }}

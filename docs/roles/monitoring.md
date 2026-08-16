@@ -31,6 +31,46 @@ All variables are prefixed `monitoring_*` and have sensible defaults in
 | `monitoring_alertmanager_smtp_require_tls` | `true` | STARTTLS - only turn off if the smarthost is local/tunneled |
 | `monitoring_alertmanager_receivers` | `[]` | List of email addresses that get the `default` receiver; required (at least one entry) once the smarthost is set |
 | `monitoring_alertmanager_group_wait` / `_group_interval` / `_repeat_interval` | `30s` / `5m` / `4h` | Sensible defaults for a clinic on-call context, overridable |
+| `monitoring_grafana_users` | `[]` | List of `{login, name, password, role}` - local Grafana accounts beyond the shared admin, see below |
+| `monitoring_grafana_oidc_client_id` | `""` | Empty = OIDC off. Setting it arms a preflight requiring `client_secret`/`auth_url`/`token_url`/`api_url` too |
+| `monitoring_grafana_oidc_allow_sign_up` | `false` | Whether a first-time OIDC login auto-creates a local Grafana account |
+
+### Grafana users (issue #42)
+
+The shared admin account means every dashboard/log view happens under one identity, and
+Loki logs can carry personal data - "who looked at this" had no answer. Two independent
+options, usable together or separately:
+
+**Local accounts**, provisioned idempotently via Grafana's own HTTP API (there's no
+declarative alternative - Grafana's file-based provisioning covers datasources/dashboards/
+alerting, not users):
+
+```yaml
+monitoring_grafana_users:
+  - login: "jsmith"
+    name: "Jane Smith"
+    password: "{{ vault_grafana_jsmith_password }}"   # from Ansible Vault
+    role: "Viewer"   # or "Editor" / "Admin"
+```
+
+A `Viewer` can see dashboards and Loki logs but can't change a datasource or dashboard -
+Grafana's own org-role enforcement, not something this role adds. The password is only
+set when the account is first created; changing an existing user's password through this
+variable isn't supported (see Pitfalls).
+
+**OIDC**, pointing Grafana at an institution's *existing* identity provider - not a
+bundled one (see [ADR 0003](../adr/0003-loopback-only-access-no-bundled-identity-provider.md)):
+
+```yaml
+monitoring_grafana_oidc_client_id: "grafana"
+monitoring_grafana_oidc_client_secret: "{{ vault_grafana_oidc_secret }}"
+monitoring_grafana_oidc_auth_url: "https://idp.example-clinic.org/oauth2/authorize"
+monitoring_grafana_oidc_token_url: "https://idp.example-clinic.org/oauth2/token"
+monitoring_grafana_oidc_api_url: "https://idp.example-clinic.org/oauth2/userinfo"
+```
+
+Costs zero extra containers - the difference to the Authentik role that was evaluated and
+dropped (ADR 0003).
 
 ## What gets changed
 
@@ -133,6 +173,16 @@ docker run --rm --network container:linumed-os-loki curlimages/curl:latest -s -G
   `\r\n` as real control characters at parse time, before Docker Compose ever reads it,
   which silently breaks the embedded shell command (confirmed the hard way while
   building this).
+- **An existing Grafana user's password is never changed by this role** (#42). The
+  create-user API call only ever runs once per account (a 412 "user already exists"
+  response is treated as success, not as "update it"); changing `password` in
+  `monitoring_grafana_users` for an account that already exists has no effect on a
+  subsequent run. Reset a forgotten password directly in Grafana (Administration ->
+  Users) or via its API by hand - not something this role automates, to avoid silently
+  invalidating a session or resetting a password an admin just changed by hand in the UI.
+- **The org-role assignment runs on every apply, the account creation does not.** So a
+  role change in `monitoring_grafana_users` (e.g. `Viewer` -> `Editor`) does take effect
+  on the next run, even though the password does not.
 
 ## GDPR: what ends up in Loki
 
@@ -144,7 +194,11 @@ on what the respective application logs. Because of that:
   (`monitoring_logs_retention_days: 30` vs. `monitoring_metrics_retention_days: 90`) -
   data minimization, not an arbitrary choice.
 - **Access to Grafana/Loki is limited to SSH-tunnel users** (no public access in v0.1),
-  which limits the circle of people who can see logs at all.
+  which limits the circle of people who can see logs at all - see `common`'s
+  `common_ssh_tunnel_users` (#41) for shell-less accounts scoped to exactly this port.
+- **Individual Grafana accounts (`monitoring_grafana_users`, #42), not a shared admin
+  login**, mean "who looked at these logs" now has an answer in Grafana's own logs -
+  previously every viewer was the same `admin` identity.
 - **What actually gets logged depends on the applications running** - this role only
   collects what the applications themselves write to the journal or to
   `stdout`/`stderr`. A customer's processing overview needs to document which
