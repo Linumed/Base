@@ -96,7 +96,6 @@ What survives from this stage is smaller and unrelated to exposing anything:
 | | Issue |
 |---|---|
 | Caddy cannot reach the operator's own containers - no working path documented | [#39](../../issues/39) |
-| CI: run the VM provisioning and idempotency checks, not just lint | [#33](../../issues/33) |
 
 [#39](../../issues/39) is the second job `linumed-net` was quietly carrying. Caddy exists to
 reverse-proxy the *operator's* applications, and today an application published on
@@ -105,14 +104,21 @@ reverse-proxy the *operator's* applications, and today an application published 
 external network plus an example that actually works - not the shared network that was just
 rejected.
 
-[#33](../../issues/33) has its access mechanism decided -
-[ADR 0004](adr/0004-vm-tests-in-ci-via-host-libvirt-socket.md) - and needs the workflow
-built. Its blocker, [#43](../../issues/43), is resolved (2026-08-16): a Docker Hub
-pull-through cache now runs on `linumed-dev` (dev-server infrastructure, not part of this
-repo) and `test/lib/site-idempotency.sh` points every VM test at it by default via the
-new, otherwise-inert `docker_registry_mirrors` variable. Verified against a real VM run -
-130 requests through the cache, every Docker Hub image in the stack served from it, zero
-pull failures.
+**CI now runs VM provisioning and idempotency checks, not just lint (#33, closed
+2026-08-16).** `.forgejo/workflows/vm-test.yml`, `workflow_dispatch`-triggered per
+[ADR 0004](adr/0004-vm-tests-in-ci-via-host-libvirt-socket.md) - the job container mounts
+the host's libvirt socket rather than running its own nested libvirtd. One thing the ADR
+hadn't accounted for surfaced while building this: the VM work directory has to be a bind
+mount at an identical path on both sides, because `virt-install` running in the container
+hands the *host's* libvirtd file paths it opens literally. A second real bug found on the
+first live run: `node:24-bookworm`'s own `osinfo-db` package predates both "debian12" and
+"debian13" as entries (Bookworm didn't exist yet when it was frozen), so `virt-install`
+failed with "Unknown OS name 'debian12'" until the workflow re-imports a current
+`osinfo-db` first. [#43](../../issues/43)'s pull-through cache resolved cleanly in the
+same run - the workflow's own log shows it served every Docker Hub image in the stack.
+Verified against two real triggered runs, not just a syntax check: the first caught the
+`osinfo-db` bug, the second completed a full double-run with `changed=0` on the second
+pass and a healthy Prometheus target check, end to end inside the actual CI pipeline.
 
 **Node_exporter's ufw-blocked scrape was confirmed and fixed on 2026-08-14 (#40, closed).**
 It mattered beyond the individual bug: `test/vm-test.sh` verified that the playbook ran,
