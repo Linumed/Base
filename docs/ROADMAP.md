@@ -107,9 +107,12 @@ rejected.
 
 [#33](../../issues/33) has its access mechanism decided -
 [ADR 0004](adr/0004-vm-tests-in-ci-via-host-libvirt-socket.md) - and needs the workflow
-built. Blocked on [#43](../../issues/43): two of four full-stack VM runs on 2026-08-14
-failed on Docker Hub pulls, not on the code, and a flaky CI job gets disabled rather than
-trusted.
+built. Its blocker, [#43](../../issues/43), is resolved (2026-08-16): a Docker Hub
+pull-through cache now runs on `linumed-dev` (dev-server infrastructure, not part of this
+repo) and `test/lib/site-idempotency.sh` points every VM test at it by default via the
+new, otherwise-inert `docker_registry_mirrors` variable. Verified against a real VM run -
+130 requests through the cache, every Docker Hub image in the stack served from it, zero
+pull failures.
 
 **Node_exporter's ufw-blocked scrape was confirmed and fixed on 2026-08-14 (#40, closed).**
 It mattered beyond the individual bug: `test/vm-test.sh` verified that the playbook ran,
