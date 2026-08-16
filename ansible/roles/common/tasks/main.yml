@@ -2,6 +2,9 @@
 - name: SSH hardening
   ansible.builtin.import_tasks: ssh.yml
 
+- name: SSH tunnel-only users
+  ansible.builtin.import_tasks: ssh-tunnel-users.yml
+
 - name: Ufw firewall
   ansible.builtin.import_tasks: ufw.yml
 

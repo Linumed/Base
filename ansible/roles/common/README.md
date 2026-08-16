@@ -15,9 +15,9 @@ Deploys `/etc/ssh/sshd_config.d/10-linumed-hardening.conf` as a drop-in — the 
 `/etc/ssh/sshd_config` is never templated, because it is ucf-managed on Debian and a
 full-file template would fight ucf on every `openssh-server` upgrade.
 
-See `docs/roles/common-ssh.md` (German) for the user-facing writeup: variables, files
-touched, verification command, and known pitfalls (drop-in ordering, socket activation,
-port changes without a matching ufw rule).
+See `docs/roles/common-ssh.md` for the user-facing writeup: variables, files touched,
+verification command, and known pitfalls (drop-in ordering, socket activation, port
+changes without a matching ufw rule).
 
 ### Variables
 
@@ -46,6 +46,20 @@ See `defaults/main.yml`. All variables are prefixed `common_ssh_*`.
 
 Deliberately left untouched. Debian 13 ships OpenSSH 10.0p1, which already disables weak
 KEX/DSA by default upstream; a role-maintained allowlist would only go stale.
+
+### Tunnel-only users (issue #41)
+
+`common_ssh_tunnel_users` creates shell-less accounts (`/usr/sbin/nologin`, no password)
+that can open exactly the loopback port-forwards listed in `targets` - nothing else.
+Enforced by sshd itself via a per-user `Match` block (`PermitOpen`, `ForceCommand
+nologin`, `PermitTTY no`), not by a wrapper script or a second component. Deployed as
+`/etc/ssh/sshd_config.d/90-linumed-tunnel-users.conf` - the highest-numbered drop-in this
+role ships, deliberately: a `Match` block scopes everything parsed after it (Include
+splices `sshd_config.d/*.conf` in alphabetically, inline) until the next `Match` line or
+the end of the whole chain, so this file has to sort after every other drop-in, including
+a cloud image's own `50-cloud-init.conf`, or those directives would be silently scoped to
+only the matched user. Validated with `sshd -t` and rolled back on failure, same pattern
+as the main hardening drop-in. An empty list removes the drop-in again.
 
 ## ufw firewall
 
