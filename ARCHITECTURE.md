@@ -219,9 +219,12 @@ SSH tunnel (not public)
 ```
 
 Caddy is the reverse proxy for the **institution's own applications**,
-not for this kit's management interfaces. That Caddy still can't reach
-a container in another Compose stack today is an open gap (issue #39),
-independent of the access decision above.
+not for this kit's management interfaces. It joins a second Docker
+network (`linumed-os-external`, created unconditionally by the caddy
+role) for exactly that purpose, independent of the access decision
+above: an operator's separate Compose stack joins the same network as
+`external: true` and is then reachable by service name, without
+publishing a port or touching ufw. See `docs/roles/caddy.md`.
 
 Because everything stays bound to loopback, Linumed OS works over
 whatever network the operator already runs - a corporate VPN, a mesh, a

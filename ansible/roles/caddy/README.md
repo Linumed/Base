@@ -5,8 +5,8 @@ Reverse proxy with automatic ACME/TLS, deployed as a single Docker Compose stack
 
 ## Variables
 
-See `defaults/main.yml`, all prefixed `caddy_*`. German user-facing writeup with
-verification steps: `docs/roles/caddy.md`.
+See `defaults/main.yml`, all prefixed `caddy_*`. User-facing writeup with verification
+steps: `docs/roles/caddy.md`.
 
 ## What this role does not do
 
@@ -36,6 +36,20 @@ then validated with `docker run ... caddy validate` using the same pinned image 
 actually run it. On failure, the previous Caddyfile (or no file, if this was the first
 deploy) is restored before the play fails - the stack is never left pointed at a Caddyfile
 that doesn't parse.
+
+## Reaching a container in a different Compose stack (issue #39)
+
+Caddy joins a second Docker network in addition to its own project network -
+`caddy_external_network_name`, default `linumed-os-external`, created unconditionally
+(an unused bridge network costs nothing and publishes nothing on its own; ufw is
+unaffected either way, since this is network membership, not a published port). The
+Compose-local key and the actual Docker network name are deliberately the same literal
+string via `name:` - not left to Compose's default `<project>_<key>` derivation, since an
+operator's entirely separate Compose stack needs a name that stays stable regardless of
+what this stack's project name happens to be. That's the piece `docs/roles/caddy.md`'s
+worked example is about: the operator's own compose file joins the same name as
+`external: true`, and `caddy_sites` then reaches it by service name, the same way it
+already reaches `bridgelink:8443` within this stack.
 
 ## Reload vs. recreate
 

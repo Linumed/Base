@@ -11,7 +11,11 @@ services:
       - "${CADDY_HTTP_PORT:-80}:80"
       - "${CADDY_HTTPS_PORT:-443}:443"
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Directory mount, not a single-file mount - see issue #44: a single-file bind
+      # mount attaches to the file's inode at container start, and an editor's atomic
+      # save (temp file + rename) would leave the container serving the old content
+      # forever. Put your Caddyfile in ./conf/Caddyfile.
+      - ./conf:/etc/caddy:ro
       - caddy_data:/data
       - caddy_config:/config
     healthcheck:
