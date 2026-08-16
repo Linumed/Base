@@ -146,7 +146,7 @@ With SSO gone, v0.2 gets the content the audit actually surfaced.
 | | Issue |
 |---|---|
 | Tunnel-only SSH users, no shell | [#41](../../issues/41), closed 2026-08-16 |
-| Real Grafana users plus optional OIDC connection | [#42](../../issues/42) |
+| Real Grafana users plus optional OIDC connection | [#42](../../issues/42), closed 2026-08-16 |
 
 **[#41](../../issues/41) is resolved (closed 2026-08-16).** New `common_ssh_tunnel_users`
 variable: shell-less accounts (`/usr/sbin/nologin`, no password) restricted by `sshd`
@@ -160,6 +160,25 @@ own preliminary check: an account limited to `127.0.0.1:3000` reaches it (`HTTP 
 through the tunnel) and is refused a forward to `127.0.0.1:9090` with `administratively
 prohibited`, and gets no shell at all (`ssh ... whoami` -> "This account is currently not
 available."). That is finer granularity than a proxy-level login would have given.
+
+**[#42](../../issues/42) is resolved (closed 2026-08-16).** New `monitoring_grafana_users`
+provisions local Grafana accounts (login/name/password/role) idempotently via Grafana's
+own HTTP API against `127.0.0.1`, run after the stack deploy has already waited for the
+healthcheck - confirmed while building this that Grafana's file-based provisioning covers
+datasources/dashboards/alerting but not users, there is no declarative path. A `412`
+("user already exists") response is the success case for an already-provisioned account;
+only the org-role assignment re-runs on every apply, an existing password is never
+touched. `monitoring_grafana_oidc_*` optionally points Grafana's built-in generic OAuth
+at an institution's *existing* identity provider - empty `client_id` means nothing
+changes, setting it arms a preflight requiring the rest of the OIDC variables, same
+all-or-nothing pattern as the Alertmanager SMTP preflight. Verified against a real VM
+running the full stack: a freshly provisioned Viewer logs in (`HTTP 200`), is correctly
+refused `datasources:create` (`HTTP 403`), sees the shipped dashboards, and a role change
+to Editor takes effect on the next apply while the account stays idempotent
+(`changed=0`).
+
+**This closes Stage 4 and, with it, every issue that was open at the start of this
+session (#39, #41, #42, plus #44 found along the way).**
 
 **The restore test is automated (#36, closed 2026-08-16).** A second, independent
 systemd timer in the `backup` role, weekly: restore into a throwaway target, diff
