@@ -123,6 +123,16 @@ docker run --rm --network container:linumed-os-loki curlimages/curl:latest -s -G
   must stay in the pre-pull loop in `tasks/stack.yml`, or a fresh install's second
   `site.yml` run spuriously recreates it and breaks idempotency (found and fixed the same
   day as the ufw issue above, see the role's `tasks/stack.yml` comments).
+- **Alertmanager, cAdvisor, docker-socket-proxy and Alloy all have healthchecks now**
+  (issue #38) - `grafana/loki` was the genuine exception, not a precedent. Checked before
+  assuming any of the other four couldn't have one: all had a working option once
+  actually tested (`wget` was present, or a documented HTTP endpoint answered). Alloy is
+  the interesting case - no `wget`/`curl` in its image, but it does have a shell, so its
+  healthcheck uses bash's `/dev/tcp` pseudo-device to speak raw HTTP instead. That
+  command needs single-quoted YAML, not double: a double-quoted YAML scalar interprets
+  `\r\n` as real control characters at parse time, before Docker Compose ever reads it,
+  which silently breaks the embedded shell command (confirmed the hard way while
+  building this).
 
 ## GDPR: what ends up in Loki
 
