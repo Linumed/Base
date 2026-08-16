@@ -29,10 +29,19 @@
     mode: "0755"
   become: true
 
+- name: Ensure conf directory exists
+  ansible.builtin.file:
+    path: "{{ caddy_deploy_dir }}/conf"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+
 - name: Deploy Caddyfile
   ansible.builtin.template:
     src: Caddyfile.j2
-    dest: "{{ caddy_deploy_dir }}/Caddyfile"
+    dest: "{{ caddy_deploy_dir }}/conf/Caddyfile"
     owner: root
     group: root
     mode: "0644"
@@ -44,7 +53,7 @@
 - name: Validate Caddyfile
   ansible.builtin.command: >-
     docker run --rm
-    -v {{ caddy_deploy_dir }}/Caddyfile:/etc/caddy/Caddyfile:ro
+    -v {{ caddy_deploy_dir }}/conf/Caddyfile:/etc/caddy/Caddyfile:ro
     {{ caddy_image }}
     caddy validate --config /etc/caddy/Caddyfile --adapter caddyfile
   register: caddy_validate
@@ -55,7 +64,7 @@
 - name: Roll back Caddyfile if validation failed and a previous version existed
   ansible.builtin.copy:
     src: "{{ caddy_dropin.backup_file }}"
-    dest: "{{ caddy_deploy_dir }}/Caddyfile"
+    dest: "{{ caddy_deploy_dir }}/conf/Caddyfile"
     remote_src: true
     owner: root
     group: root
@@ -67,7 +76,7 @@
 
 - name: Remove Caddyfile if validation failed and no previous version existed
   ansible.builtin.file:
-    path: "{{ caddy_deploy_dir }}/Caddyfile"
+    path: "{{ caddy_deploy_dir }}/conf/Caddyfile"
     state: absent
   become: true
   when:

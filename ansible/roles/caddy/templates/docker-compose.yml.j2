@@ -19,9 +19,24 @@ services:
       - "{{ caddy_http_port }}:80"
       - "{{ caddy_https_port }}:443"
     volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      # Directory mount, not a single-file mount - a single-file bind mount attaches to
+      # the file's inode at container start, and Ansible's template module rewrites
+      # atomically (temp file + rename). After the first Caddyfile change post-deploy,
+      # a single-file mount would keep serving the original inode forever - "caddy
+      # reload" succeeds and the healthcheck stays green, but the config never actually
+      # updates. Confirmed and fixed as issue #44. The directory mount follows the
+      # directory entry instead, so the rename is visible.
+      - ./conf:/etc/caddy:ro
       - caddy_data:/data
       - caddy_config:/config
+    # "default" has to be listed explicitly, not left implicit - once a service defines
+    # networks: at all, Compose stops attaching it to the project's own default network
+    # automatically. Nothing else lives on it today, but silently dropping Caddy off its
+    # own project network the moment this role adds a second one would be a surprising
+    # side effect of an unrelated change - keep the existing topology, add to it.
+    networks:
+      - default
+      - {{ caddy_external_network_name }}
     healthcheck:
       # 127.0.0.1, not localhost - Caddy's admin API only binds the IPv4 loopback, and
       # "localhost" resolves to ::1 first inside the container, which wget then can't
@@ -36,3 +51,12 @@ services:
 volumes:
   caddy_data:
   caddy_config:
+
+networks:
+  # explicit `name:`, not left to Compose's default "<project>_<key>" derivation - an
+  # operator's own, entirely separate Compose stack has to reference this network by a
+  # name that's stable regardless of what this stack's project name happens to be (issue
+  # #39). See docs/roles/caddy.md for the operator-facing side: their compose file joins
+  # this same name as `external: true`.
+  {{ caddy_external_network_name }}:
+    name: {{ caddy_external_network_name }}
