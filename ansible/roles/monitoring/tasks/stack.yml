@@ -29,6 +29,38 @@
       would silently drop alerts.
   when: monitoring_alertmanager_smtp_smarthost | length > 0
 
+# Same "refuse rather than half-deploy" pattern as the two preflights above - a
+# client_id with a missing client_secret/URL would deploy a Grafana that offers an SSO
+# button which then fails at login time, not at apply time.
+- name: Preflight - abort on half-configured Grafana OIDC
+  ansible.builtin.assert:
+    that:
+      - monitoring_grafana_oidc_client_secret | length > 0
+      - monitoring_grafana_oidc_auth_url | length > 0
+      - monitoring_grafana_oidc_token_url | length > 0
+      - monitoring_grafana_oidc_api_url | length > 0
+    fail_msg: >-
+      monitoring_grafana_oidc_client_id is set but OIDC is not fully configured - need
+      client_secret, auth_url, token_url and api_url all set too. Refusing to deploy a
+      Grafana that advertises SSO and then fails at login time.
+  when: monitoring_grafana_oidc_client_id | length > 0
+
+# Same reasoning as the Grafana admin password preflight above: a Viewer/Editor account
+# with no password can never actually log in, so refuse rather than silently provision a
+# dead account.
+- name: Preflight - abort if a Grafana user has no password
+  ansible.builtin.assert:
+    that:
+      - item.password | default('') | length > 0
+    fail_msg: >-
+      monitoring_grafana_users entry '{{ item.login }}' has no password set - refusing to
+      provision a Grafana account nobody can log into. Set it via Ansible Vault, never
+      committed in plain text.
+  loop: "{{ monitoring_grafana_users }}"
+  loop_control:
+    label: "{{ item.login | default('?') }}"
+  no_log: true
+
 - name: Ensure deploy directory exists
   ansible.builtin.file:
     path: "{{ monitoring_deploy_dir }}"
