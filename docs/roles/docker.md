@@ -21,6 +21,7 @@ All variables are prefixed `docker_*` and have sensible defaults in
 | `docker_packages` | docker-ce, docker-ce-cli, containerd.io, docker-buildx-plugin, docker-compose-plugin | Packages installed |
 | `docker_users` | `[]` | Users added to the `docker` group (root-equivalent access to the Docker socket - deliberately empty by default) |
 | `docker_log_max_size` / `docker_log_max_file` | `"10m"` / `"3"` | Log rotation for container logs via `/etc/docker/daemon.json` |
+| `docker_registry_mirrors` | `[]` | Pull-through cache URLs added to `registry-mirrors` in `/etc/docker/daemon.json`. No behavior change for a real installation - exists for `test/vm-test.sh` (issue #43), not something to set on a customer deployment |
 
 ## Why the official Docker repo, not `docker.io`
 
@@ -41,7 +42,8 @@ native Trixie repo exists, `docker_apt_release` picks it up automatically.
 
 - `/etc/apt/keyrings/docker.asc` (GPG key)
 - `/etc/apt/sources.list.d/docker.list` (repo line)
-- `/etc/docker/daemon.json` (log rotation)
+- `/etc/docker/daemon.json` (log rotation, and `registry-mirrors` if
+  `docker_registry_mirrors` is set)
 - Docker packages via apt, the `docker.service` enabled and started
 
 ## Verification
@@ -64,4 +66,8 @@ systemctl is-active docker
   missing `become: true`, deterministically, every time. See
   `ansible/roles/common/README.md`, "become: true on every privileged task, no
   exceptions" - found and documented there first, initially missed here.
-- **Rootless mode and private registries are out of scope** for v0.1.
+- **Rootless mode and running/provisioning a private registry are out of scope** for
+  v0.1. The role can only *point* the daemon at an existing pull-through cache
+  (`docker_registry_mirrors`) - Forgejo's own package registry can't fill that role, it's
+  a namespaced push/pull registry, not an implementation of Docker's registry-mirror
+  protocol.

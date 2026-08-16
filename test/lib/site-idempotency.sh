@@ -10,6 +10,15 @@
 # Not meant to be executed directly. Expects these variables to already be set by the
 # caller: REPO_ROOT, WORK_DIR, VM_NAME, VM_IP, SSH_KEY, ANSIBLE_USER.
 
+# Optional Docker Hub pull-through cache (issue #43) - half of the full-stack VM runs on
+# 2026-08-14 failed pulling images from Docker Hub directly, not on any role. Defaults to
+# the libvirt "default" network's own gateway address, which every caller of this script
+# already assumes exists (vm-test.sh provisions guests with --network network=default) -
+# safe to default even when nothing is listening there: a closed port on that address
+# returns an immediate "connection refused" (confirmed: ~10ms), not a hang, and Docker
+# falls back to pulling from Docker Hub directly. Override or unset to test without it.
+DOCKER_REGISTRY_MIRROR="${DOCKER_REGISTRY_MIRROR-http://192.168.122.1:5000}"
+
 # A green ansible-playbook run only proves the config was applied, not that the result
 # does anything - issue #40 found this the hard way: node_exporter was DOWN in Prometheus
 # on every fresh install (ufw blocked the scrape) while both vm-test.sh and
@@ -72,6 +81,12 @@ all:
           backup_repository: "/var/backups/restic-test"
           backup_restic_password: "throwaway-test-restic-password"
 EOF
+
+  if [ -n "${DOCKER_REGISTRY_MIRROR}" ]; then
+    cat >> "${inventory}" <<EOF
+          docker_registry_mirrors: ["${DOCKER_REGISTRY_MIRROR}"]
+EOF
+  fi
 
   (
     cd "${REPO_ROOT}/ansible"

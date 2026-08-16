@@ -23,3 +23,14 @@ docker_users: []
 # server's 256 GB SSD, but applies to any target).
 docker_log_max_size: "10m"
 docker_log_max_file: "3"
+
+# Optional pull-through registry mirror(s), e.g. "http://192.168.122.1:5000" for a
+# registry:2 cache reachable from a libvirt guest. Empty by default - no behavior change
+# for a real installation. Exists for test/vm-test.sh (#43): every fresh test VM pulls
+# the full image set (Prometheus, Grafana, Loki, Alloy, Alertmanager, cAdvisor,
+# docker-socket-proxy, BridgeLink, PostgreSQL) straight from Docker Hub, and half the
+# full-stack VM runs on 2026-08-14 failed on that pull, not on any role. Forgejo's own
+# package registry cannot serve this purpose - it's a namespaced push/pull registry, not
+# a Docker registry-mirror-protocol-compatible pull-through cache; only a plain
+# registry:2 with proxy.remoteurl (or an equivalent) implements that protocol.
+docker_registry_mirrors: []
