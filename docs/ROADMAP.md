@@ -95,14 +95,27 @@ What survives from this stage is smaller and unrelated to exposing anything:
 
 | | Issue |
 |---|---|
-| Caddy cannot reach the operator's own containers - no working path documented | [#39](../../issues/39) |
+| Caddy cannot reach the operator's own containers - no working path documented | [#39](../../issues/39), closed 2026-08-16 |
 
-[#39](../../issues/39) is the second job `linumed-net` was quietly carrying. Caddy exists to
-reverse-proxy the *operator's* applications, and today an application published on
-`127.0.0.1` is unreachable from the Caddy container (measured), while publishing on
-`0.0.0.0` contradicts the kit's own firewall doctrine. The likely answer is a small opt-in
-external network plus an example that actually works - not the shared network that was just
-rejected.
+**[#39](../../issues/39) is resolved (closed 2026-08-16).** Caddy joins a second Docker
+network, created unconditionally by the role (`caddy_external_network_name`, default
+`linumed-os-external`, fixed literal name rather than Compose's project-derived one). The
+operator's own, entirely separate Compose stack joins that same network as `external: true`
+and `caddy_sites` then reaches it by service name - no published port, no ufw change. Full
+worked example in `docs/roles/caddy.md`. Verified against a real VM: a genuinely separate
+operator stack, network membership confirmed, direct container-to-container reachability
+confirmed, and (after the fix below) Caddy's own `reverse_proxy` actually serving the
+request.
+
+Verifying #39 surfaced an unrelated, pre-existing bug: **the Caddyfile bind mount was a
+single file, which silently stopped picking up changes after the first deploy (issue #44,
+closed 2026-08-16).** A single-file Docker bind mount attaches to the file's inode at
+container start; Ansible's `template` module rewrites atomically (temp file + rename),
+which orphans that mount - the container kept serving the *original* Caddyfile forever,
+with `caddy reload` reporting success and the healthcheck staying green throughout. Fixed
+by mounting the containing directory (`conf/`) instead, which follows the directory entry
+rather than a fixed inode. This affected every production deployment that ever changed
+`caddy_sites` after the first run, not just the #39 verification VM.
 
 **CI now runs VM provisioning and idempotency checks, not just lint (#33, closed
 2026-08-16).** `.forgejo/workflows/vm-test.yml`, `workflow_dispatch`-triggered per
