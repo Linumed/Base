@@ -157,13 +157,18 @@ returns if the stack grows.
 
 ## Open convention questions
 
-These are not blocked by anything and can be picked up whenever. Both are cases where the
-repository states a rule it does not follow, which is worse than either following it or
-changing it.
+These were cases where the repository stated a rule it didn't follow, which is worse than
+either following it or changing it. Both are now resolved.
 
-| | Issue |
-|---|---|
-| The healthcheck rule is ambiguous; four services have none | [#38](../../issues/38) |
+**The healthcheck rule now means the broad reading, and the four missing ones exist
+(#38, closed 2026-08-16).** Alertmanager, cAdvisor, docker-socket-proxy and Alloy all got
+real healthchecks - checked before assuming any of them couldn't have one, and all four
+did once actually tested. `grafana/loki` stays the one genuine exception. Found a real
+YAML pitfall while building Alloy's (no `wget`/`curl` in that image, so its healthcheck
+uses bash's `/dev/tcp` to speak raw HTTP): a double-quoted YAML scalar interprets `\r\n`
+as real control characters at parse time, silently breaking the embedded shell command
+before Compose ever sees it - single-quoted YAML was the fix. Verified against a real VM:
+all four report `healthy`, not just `running`.
 
 **`docker/` only holding two of six roles is the intended shape now (#37, closed
 2026-08-16).** [ADR 0005](adr/0005-docker-directory-is-a-manual-testing-reference-not-a-mirror.md) -
