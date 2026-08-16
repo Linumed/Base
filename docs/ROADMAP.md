@@ -134,7 +134,6 @@ With SSO gone, v0.2 gets the content the audit actually surfaced.
 |---|---|
 | Tunnel-only SSH users, no shell | [#41](../../issues/41) |
 | Real Grafana users plus optional OIDC connection | [#42](../../issues/42) |
-| Automate the restore test | [#36](../../issues/36) |
 
 [#41](../../issues/41) and [#42](../../issues/42) close the two genuine weaknesses of the
 tunnel model without adding a component. The `sshd` restriction is verified rather than
@@ -142,9 +141,15 @@ assumed: an account limited with `PermitOpen` reaches Grafana and is refused Pro
 `administratively prohibited`, and `ForceCommand` denies it a shell. That is finer
 granularity than a proxy-level login would have given.
 
-[#36](../../issues/36) stays because `ARCHITECTURE.md` calls recovery tests a GDPR
-requirement, and this is the last release at which it can still be part of v0.2 rather than
-a permanent "later".
+**The restore test is automated (#36, closed 2026-08-16).** A second, independent
+systemd timer in the `backup` role, weekly: restore into a throwaway target, diff
+against the live source, write the result as its own textfile metrics so a restore test
+that silently stops running is exactly as visible as one that starts failing. Found and
+fixed a real bug before shipping it - `diff`'s exit code under `set -euo pipefail` would
+have zeroed out the exact signal the whole thing exists to produce, the same class of bug
+as issue #25. Verified against a real VM with both outcomes actually provoked, not
+assumed: a clean restore reports `success=1`, a deliberate post-backup change reports
+`success=0` with the diff counted, not just detected.
 
 [#35](../../issues/35) - re-measuring the system requirements - is closed along with the
 Authentik role: without four additional containers there is nothing to re-measure. It
