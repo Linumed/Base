@@ -100,7 +100,16 @@ linumed-os/
   don't chase every Ansible-side comment/detail change.
 - Container images must be pinned to a specific version tag, never `latest` - applies to
   both the Ansible templates and any `docker/<role>/` reference.
-- Health checks required for every service that exposes a port - applies to both.
+- **Health checks required for every service that listens on a port at all** - the broad
+  reading, not just services with a published host port. Checked before writing this
+  rule down precisely: every image in this repo that looks unable to support one
+  (no `wget`/`curl` in a minimal container) turned out to have *some* working option once
+  actually tested - `wget` was present after all, or a documented HTTP endpoint answered
+  over bash's `/dev/tcp`. The one confirmed, genuine exception is `grafana/loki`: no
+  shell, no `wget`, no executable besides the `loki` binary itself, so no exec-form
+  healthcheck is technically possible - documented at that exact service in the
+  monitoring role's Compose template, not treated as a precedent for skipping the check
+  elsewhere without the same verification.
 
 ---
 
