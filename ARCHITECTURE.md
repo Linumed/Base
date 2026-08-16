@@ -255,9 +255,12 @@ Exporter uses) - Prometheus picks it up on its regular scrape, no
 pushgateway needed.
 
 Recovery tests are mandated as a documented process (a GDPR
-requirement) - the manual restore procedure is in
-`docs/roles/backup.md`. An automated test playbook wasn't built for
-v0.1; that's tracked as open work for a later version.
+requirement). The `backup` role runs one automatically, weekly, on its
+own systemd timer independent of the daily backup - restore into a
+throwaway target, diff against the live source, write the result as
+its own textfile metrics so a restore test that silently stops running
+is exactly as visible as one that starts failing. See
+`docs/roles/backup.md`.
 
 ---
 
