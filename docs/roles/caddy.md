@@ -18,9 +18,12 @@ All variables are prefixed `caddy_*` and have sensible defaults in
 | `caddy_deploy_dir` | `/opt/linumed-os/caddy` | Target directory on the host for the Caddyfile and docker-compose.yml |
 | `caddy_http_port` / `caddy_https_port` | `80` / `443` | Host ports. Caddy needs both for ACME HTTP-01 and normal traffic - **do not** restrict them to `127.0.0.1`, unlike the usual convention for purely internal services on this machine |
 | `caddy_email` | `""` (off) | ACME account email for Let's Encrypt notifications. Empty is valid, but not recommended |
-| `caddy_sites` | `[]` | List of `{domain, reverse_proxy, extra}` - see the example below. Empty = Caddy runs but does nothing |
+| `caddy_sites` | `[]` | List of `{domain, reverse_proxy, extra}` - see the examples below. Empty = Caddy runs but does nothing |
+| `caddy_external_network_name` | `"linumed-os-external"` | Docker network Caddy joins in addition to its own, so it can reach a container in a *different* Compose stack by service name - see below |
 
-Example for a service running natively on the host (not in Docker):
+Two upstream shapes, depending on where the proxied service actually runs:
+
+**A service running natively on the host** (not in Docker):
 
 ```yaml
 caddy_email: "admin@example-clinic.org"
@@ -31,14 +34,52 @@ caddy_sites:
 
 **Not `127.0.0.1:8080`** - Caddy itself runs as a container, so `127.0.0.1` inside it
 would mean Caddy itself, not the Docker host (issue #23). `host.docker.internal` works
-because the role sets `extra_hosts: host-gateway` on the Caddy container. For a service
-in another Compose stack, you instead need a shared Docker network and the service name
-as the hostname - this role doesn't automate that yet.
+because the role sets `extra_hosts: host-gateway` on the Caddy container.
+
+**A service running in its own, separate Compose stack** (issue #39) - the common case,
+since most operator applications are containerized. Loopback doesn't work here either,
+for the same reason as above, and publishing on `0.0.0.0` to work around it would
+contradict this kit's own firewall doctrine (a published container port bypasses ufw
+entirely). The fix is a shared Docker network: the operator's compose file joins
+`caddy_external_network_name` as `external: true` and Caddy reaches it by service name.
+
+In the operator's own `docker-compose.yml` (not managed by this role):
+
+```yaml
+services:
+  myapp:
+    image: example/myapp:1.0
+    # No `ports:` needed for Caddy to reach it - only publish one if the app also needs
+    # to be reachable some other way. Loopback-only would still be unreachable from
+    # Caddy (same reason as host.docker.internal above); the shared network is what
+    # makes it reachable, not a port.
+    networks:
+      - default
+      - linumed-os-external
+
+networks:
+  linumed-os-external:
+    external: true
+```
+
+And in the inventory:
+
+```yaml
+caddy_sites:
+  - domain: "myapp.example-clinic.org"
+    reverse_proxy: "myapp:8080"   # the service name from the operator's own compose file
+```
+
+`myapp` resolves because both stacks' `myapp` and `caddy` containers now share the
+`linumed-os-external` network - Docker's embedded DNS resolves service names to
+container IPs within a shared network, the same mechanism `caddy_sites` targeting
+another service in *this* stack (e.g. `bridgelink:8443`) already relies on.
 
 ## What gets changed
 
-- `{{ caddy_deploy_dir }}/Caddyfile` (template, with backup and validation before
-  deployment - see below).
+- `{{ caddy_deploy_dir }}/conf/Caddyfile` (template, with backup and validation before
+  deployment - see below). Mounted into the container as a directory, not a single file -
+  see [Pitfalls](#pitfalls), issue #44.
 - `{{ caddy_deploy_dir }}/docker-compose.yml` (template).
 - The Compose stack is brought up via `community.docker.docker_compose_v2`.
 
@@ -85,3 +126,10 @@ otherwise ACME HTTP-01 fails silently in the background.
   machine (see that machine's own `CLAUDE.md`), the whole point of Caddy here is to be
   reachable from outside. `caddy_http_port`/`caddy_https_port` deliberately bind to all
   interfaces.
+- **The Caddyfile is bind-mounted as a directory (`./conf:/etc/caddy`), not a single
+  file** (issue #44). A single-file bind mount attaches to the file's inode at container
+  start; Ansible's `template` module rewrites atomically (temp file + rename), which would
+  orphan a single-file mount - the container would keep serving the original content
+  forever after the first change, with `caddy reload` reporting success and the
+  healthcheck staying green throughout. If a manually created Caddyfile or a symlink
+  workaround ever reappears here, this is why it's wrong.
