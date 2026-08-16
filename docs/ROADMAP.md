@@ -163,8 +163,17 @@ changing it.
 
 | | Issue |
 |---|---|
-| `docker/` holds only two of four stacks - complete it or narrow the rule | [#37](../../issues/37) |
 | The healthcheck rule is ambiguous; four services have none | [#38](../../issues/38) |
+
+**`docker/` only holding two of six roles is the intended shape now (#37, closed
+2026-08-16).** [ADR 0005](adr/0005-docker-directory-is-a-manual-testing-reference-not-a-mirror.md) -
+narrowed the convention rather than completing it. `backup` was never a gap: it installs
+`restic` natively via `apt`, there's no Compose stack there to mirror. `monitoring`'s
+seven containers and multiple secrets would have cost real, recurring maintenance for a
+reference whose only job is manual smoke-testing - not worth it for a single maintainer.
+Checked rather than assumed before deciding: the two existing references
+(`docker/caddy/`, `docker/bridgelink/`) had not actually drifted from their Ansible
+templates despite the issue's concern.
 
 ## Deliberately not on this roadmap
 
