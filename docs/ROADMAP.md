@@ -145,14 +145,21 @@ With SSO gone, v0.2 gets the content the audit actually surfaced.
 
 | | Issue |
 |---|---|
-| Tunnel-only SSH users, no shell | [#41](../../issues/41) |
+| Tunnel-only SSH users, no shell | [#41](../../issues/41), closed 2026-08-16 |
 | Real Grafana users plus optional OIDC connection | [#42](../../issues/42) |
 
-[#41](../../issues/41) and [#42](../../issues/42) close the two genuine weaknesses of the
-tunnel model without adding a component. The `sshd` restriction is verified rather than
-assumed: an account limited with `PermitOpen` reaches Grafana and is refused Prometheus with
-`administratively prohibited`, and `ForceCommand` denies it a shell. That is finer
-granularity than a proxy-level login would have given.
+**[#41](../../issues/41) is resolved (closed 2026-08-16).** New `common_ssh_tunnel_users`
+variable: shell-less accounts (`/usr/sbin/nologin`, no password) restricted by `sshd`
+itself, via a per-user `Match` block, to exactly the loopback forwards listed in
+`targets`. Deployed as its own drop-in (`90-linumed-tunnel-users.conf`, the
+highest-numbered one in the role - a `Match` block scopes everything parsed after it,
+across the whole `sshd_config.d` chain, not just its own file, so it has to sort last or
+a later drop-in like a cloud image's `50-cloud-init.conf` would get silently swallowed
+into it). Verified against a real VM, not just the throwaway container from the issue's
+own preliminary check: an account limited to `127.0.0.1:3000` reaches it (`HTTP 200`
+through the tunnel) and is refused a forward to `127.0.0.1:9090` with `administratively
+prohibited`, and gets no shell at all (`ssh ... whoami` -> "This account is currently not
+available."). That is finer granularity than a proxy-level login would have given.
 
 **The restore test is automated (#36, closed 2026-08-16).** A second, independent
 systemd timer in the `backup` role, weekly: restore into a throwaway target, diff
