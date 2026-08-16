@@ -80,16 +80,22 @@
   become: true
   register: docker_package_install
 
-- name: Configure Docker daemon log rotation
+# Built via to_nice_json rather than a hand-written string, so registry-mirrors can be
+# added conditionally without producing invalid JSON (a trailing comma before an empty
+# list, or the key present-but-empty) when docker_registry_mirrors is unset.
+- name: Configure Docker daemon
   ansible.builtin.copy:
-    content: |
-      {
-        "log-driver": "json-file",
-        "log-opts": {
-          "max-size": "{{ docker_log_max_size }}",
-          "max-file": "{{ docker_log_max_file }}"
-        }
-      }
+    content: >-
+      {{
+        {
+          "log-driver": "json-file",
+          "log-opts": {
+            "max-size": docker_log_max_size,
+            "max-file": docker_log_max_file
+          }
+        } | combine({"registry-mirrors": docker_registry_mirrors} if docker_registry_mirrors else {})
+        | to_nice_json
+      }}
     dest: /etc/docker/daemon.json
     owner: root
     group: root

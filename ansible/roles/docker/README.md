@@ -40,11 +40,32 @@ in practice. Revisit `docker_apt_release` once a native Trixie repo exists.
   published container ports, independently of ufw. See the `common` role's ufw
   documentation for the "Docker bypasses ufw" caveat: anything published via `ports:` in
   a compose file is reachable regardless of ufw state unless bound to `127.0.0.1`.
-- Does not configure the Docker registry, buildx builders, or rootless mode - out of
-  scope for v0.1.
+- Does not run or provision a private registry, buildx builders, or rootless mode - out
+  of scope for v0.1. It can *point* the daemon at an existing pull-through mirror
+  (`docker_registry_mirrors`, see below), but doesn't stand one up.
 
 ## Log rotation
 
 `docker_log_max_size` / `docker_log_max_file` cap container log growth via
 `/etc/docker/daemon.json` - unbounded json-file logs are a real way to fill a small disk
 on a long-running host.
+
+## Registry mirrors
+
+`docker_registry_mirrors` (default `[]`, no behavior change) adds a `registry-mirrors`
+entry to `/etc/docker/daemon.json` when set - a list of pull-through cache URLs Docker
+tries before Docker Hub. `/etc/docker/daemon.json` is built via Ansible's `combine` +
+`to_nice_json` rather than a hand-written template, so the key is fully absent (not
+present-but-empty) when unset - an empty `"registry-mirrors": []` in the config is valid
+JSON but changes Docker's resolution behavior in a way `[]`-by-omission doesn't.
+
+This exists for `test/vm-test.sh` (issue #43): every fresh test VM otherwise pulls the
+full image set straight from Docker Hub, and that pull was measured to be the least
+reliable part of a full-stack VM run, not any role. **Not something a real installation
+needs to set** - it's wired up by the test tooling, pointed at a `registry:2` cache
+running on the dev server itself (`docker_registry_mirrors:
+["http://192.168.122.1:5000"]`, the libvirt default-network gateway address, reachable
+from every test VM). A Forgejo package registry cannot serve this role: it's a
+namespaced push/pull registry, not an implementation of Docker's registry-mirror
+protocol - only a plain `registry:2` configured with `proxy.remoteurl` (or an equivalent)
+does that.
