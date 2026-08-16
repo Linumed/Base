@@ -121,3 +121,82 @@
     state: started
     daemon_reload: true
   become: true
+
+# Restore test (#36) - a backup that has never been restored is not a verified backup.
+# Same deploy/validate/enable shape as the backup script above, on its own weekly timer.
+- name: Deploy the restore-test script
+  ansible.builtin.template:
+    src: restore-test.sh.j2
+    dest: /usr/local/bin/linumed-os-restore-test.sh
+    owner: root
+    group: root
+    mode: "0700"
+  become: true
+  register: backup_restore_test_script
+  when: backup_restore_test_enabled | bool
+
+- name: Validate the restore-test script's syntax
+  ansible.builtin.command: bash -n /usr/local/bin/linumed-os-restore-test.sh
+  changed_when: false
+  become: true
+  when: backup_restore_test_enabled | bool
+
+- name: Deploy the restore-test systemd service unit
+  ansible.builtin.template:
+    src: restore-test.service.j2
+    dest: /etc/systemd/system/linumed-os-restore-test.service
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  notify: Reload systemd
+  when: backup_restore_test_enabled | bool
+
+- name: Deploy the restore-test systemd timer unit
+  ansible.builtin.template:
+    src: restore-test.timer.j2
+    dest: /etc/systemd/system/linumed-os-restore-test.timer
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  notify:
+    - Reload systemd
+    - Restart restore-test timer
+  when: backup_restore_test_enabled | bool
+
+- name: Ensure the restore-test timer is enabled and running
+  ansible.builtin.systemd_service:
+    name: linumed-os-restore-test.timer
+    enabled: true
+    state: started
+    daemon_reload: true
+  become: true
+  when: backup_restore_test_enabled | bool
+
+# Idempotency for the opt-out path: if backup_restore_test_enabled is flipped back to
+# false on a host that previously had it on, the timer/service/script need to actually go
+# away, not just stop being managed - an orphaned enabled timer would keep running a now
+# unmanaged script.
+- name: Remove the restore-test timer and service if disabled
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    state: stopped
+    enabled: false
+  become: true
+  loop:
+    - linumed-os-restore-test.timer
+    - linumed-os-restore-test.service
+  when: not (backup_restore_test_enabled | bool)
+  failed_when: false
+
+- name: Remove restore-test files if disabled
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  become: true
+  loop:
+    - /etc/systemd/system/linumed-os-restore-test.timer
+    - /etc/systemd/system/linumed-os-restore-test.service
+    - /usr/local/bin/linumed-os-restore-test.sh
+  when: not (backup_restore_test_enabled | bool)

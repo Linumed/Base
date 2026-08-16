@@ -1,0 +1,9 @@
+[Unit]
+Description=Linumed OS backup restore test (restic)
+
+[Service]
+Type=oneshot
+# Same reasoning as backup.service.j2 - restic needs a real $HOME to find/reuse its local
+# metadata cache instead of rebuilding it from scratch on every run.
+Environment=HOME=/root
+ExecStart=/usr/local/bin/linumed-os-restore-test.sh
