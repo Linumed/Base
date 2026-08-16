@@ -18,3 +18,4 @@ Everything else belongs as a comment at the relevant spot, not here.
 | [0002](0002-english-as-documentation-language.md) | English as the documentation language | accepted (2026-08-14) |
 | [0003](0003-loopback-only-access-no-bundled-identity-provider.md) | Loopback-only access, no bundled identity provider | accepted (2026-08-14) |
 | [0004](0004-vm-tests-in-ci-via-host-libvirt-socket.md) | VM tests in CI via the host's libvirt socket | accepted (2026-08-14) |
+| [0005](0005-docker-directory-is-a-manual-testing-reference-not-a-mirror.md) | `docker/` is a manual-testing reference, not a required mirror | accepted (2026-08-16) |

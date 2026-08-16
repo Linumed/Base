@@ -40,12 +40,17 @@ surface and a base OS that doesn't match the target system.
 
 ## Variables
 
-See `defaults/main.yml`, all prefixed `bridgelink_*`. German user-facing writeup with
+See `defaults/main.yml`, all prefixed `bridgelink_*`. User-facing writeup with
 verification steps: `docs/roles/bridgelink.md`.
 
 Four have **no default** and the role's preflight refuses to run without them:
 `bridgelink_db_password`, `bridgelink_keystore_storepass`, `bridgelink_keystore_keypass`,
 `bridgelink_server_id`. Supply via Ansible Vault.
+
+`docker/bridgelink/docker-compose.yml` is a static, `.env`-driven reference for spinning
+BridgeLink up manually without Ansible - a hand-maintained testing convenience, not a
+guaranteed mirror (see [ADR 0005](../../../docs/adr/0005-docker-directory-is-a-manual-testing-reference-not-a-mirror.md)).
+Bump `bridgelink_image` here *and* the image tag in `docker/bridgelink/` together.
 
 ## Secrets are files, not environment variables
 

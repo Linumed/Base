@@ -67,3 +67,4 @@ nav:
       - "0002: English as the documentation language": adr/0002-english-as-documentation-language.md
       - "0003: Loopback-only access, no bundled identity provider": adr/0003-loopback-only-access-no-bundled-identity-provider.md
       - "0004: VM tests in CI via the host's libvirt socket": adr/0004-vm-tests-in-ci-via-host-libvirt-socket.md
+      - "0005: docker/ is a manual-testing reference": adr/0005-docker-directory-is-a-manual-testing-reference-not-a-mirror.md
