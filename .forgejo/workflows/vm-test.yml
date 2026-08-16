@@ -1,0 +1,60 @@
+name: vm-test
+
+# VM provisioning + idempotency check (issue #33), the second half of the CI target
+# picture in CLAUDE.md - ansible-lint runs on every push, this doesn't. Deliberately
+# manual, not on every push: a full site.yml double-run against a real libvirt/KVM VM
+# takes several minutes on this hardware (i5-2400, shared with Forgejo, staging and
+# monitoring), and the runner has capacity 1 - one run here blocks ansible-lint pushes
+# for its duration. See ADR 0004 for the full reasoning behind running this at all via
+# the runner, rather than not, or via a nested libvirtd.
+on:
+  workflow_dispatch:
+
+jobs:
+  vm-test:
+    runs-on: docker
+    # Overrides the runner label's default image (node:24-bookworm) only to add volume
+    # mounts - same image, so actions/checkout@v4 still finds `node` (see
+    # ansible-lint.yml's own comment on that requirement).
+    #
+    # Both mounts are host paths, not container-private ones, and both must be listed in
+    # `container.valid_volumes` in the runner's config.yml (ADR 0004):
+    #   - the libvirt socket: this job never runs its own libvirtd. It talks to the one
+    #     already running on linumed-dev over qemu:///system, the same way an operator
+    #     testing by hand does.
+    #   - the VM work directory: virt-install running in this container tells the HOST's
+    #     libvirtd where to put disk images. That only works if the path resolves to the
+    #     same files on both sides - a bind mount at an identical path, not a directory
+    #     private to this container. TMPDIR below points test/vm-test.sh's own mktemp
+    #     call at it.
+    container:
+      image: node:24-bookworm
+      volumes:
+        - /var/run/libvirt/libvirt-sock:/var/run/libvirt/libvirt-sock
+        - /srv/data/ci-vm-workdir:/srv/data/ci-vm-workdir
+    env:
+      TMPDIR: /srv/data/ci-vm-workdir
+    steps:
+      - uses: actions/checkout@v4
+
+      # Client tools only (libvirt-clients, not libvirt-daemon-system) - this container
+      # never starts its own libvirtd, see above. Ansible pinned to match
+      # ansible-lint.yml's version, so a lint rule change upstream can't turn this
+      # workflow red independently.
+      - name: Install libvirt client tools and Ansible
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq --no-install-recommends \
+            libvirt-clients virtinst cloud-image-utils qemu-utils python3-pip
+          pip install --no-cache-dir --break-system-packages ansible-core ansible-lint==26.6.0
+
+      - name: Install required collections
+        run: ansible-galaxy collection install -r ansible/requirements.yml
+
+      - name: Confirm the host's libvirtd is reachable over the mounted socket
+        run: |
+          export LIBVIRT_DEFAULT_URI="qemu:///system"
+          virsh list --all
+
+      - name: Run the full site.yml double-run against a fresh VM
+        run: bash test/vm-test.sh
