@@ -45,8 +45,19 @@ jobs:
         run: |
           apt-get update -qq
           apt-get install -y -qq --no-install-recommends \
-            libvirt-clients virtinst cloud-image-utils qemu-utils python3-pip
+            libvirt-clients virtinst cloud-image-utils qemu-utils osinfo-db-tools python3-pip
           pip install --no-cache-dir --break-system-packages ansible-core ansible-lint==26.6.0
+
+      # node:24-bookworm's own osinfo-db package (0.20221130-2, from Debian bookworm's
+      # own repo) predates both "debian12" and "debian13" as osinfo-db entries - Bookworm
+      # itself didn't exist yet when that package was frozen. virt-install then fails
+      # with "Unknown OS name 'debian12'" (confirmed the first time this workflow ran).
+      # osinfo-db-import replaces the database with a real release, independent of the
+      # container's own distro version - pinned to match the version already installed
+      # on the host (`dpkg -l | grep osinfo-db` there), not `--latest`: that flag computes
+      # a URL from today's date that doesn't reliably exist yet (confirmed: 404).
+      - name: Update osinfo-db (bookworm's own package predates debian12/13 entries)
+        run: osinfo-db-import --system https://releases.pagure.org/libosinfo/osinfo-db-20250606.tar.xz
 
       - name: Install required collections
         run: ansible-galaxy collection install -r ansible/requirements.yml
