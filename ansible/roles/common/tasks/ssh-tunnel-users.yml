@@ -1,0 +1,99 @@
+---
+- name: Tunnel users - ensure the accounts exist, shell-less
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    shell: /usr/sbin/nologin
+    password: "!"
+    create_home: true
+  become: true
+  loop: "{{ common_ssh_tunnel_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Tunnel users - ensure ~/.ssh exists
+  ansible.builtin.file:
+    path: "/home/{{ item.name }}/.ssh"
+    state: directory
+    owner: "{{ item.name }}"
+    group: "{{ item.name }}"
+    mode: "0700"
+  become: true
+  loop: "{{ common_ssh_tunnel_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Tunnel users - deploy authorized_keys
+  ansible.builtin.copy:
+    content: "{{ item.public_key }}\n"
+    dest: "/home/{{ item.name }}/.ssh/authorized_keys"
+    owner: "{{ item.name }}"
+    group: "{{ item.name }}"
+    mode: "0600"
+  become: true
+  loop: "{{ common_ssh_tunnel_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+# Config validation and rollback mirror the pattern in ssh.yml.
+- name: Tunnel users - deploy Match-block drop-in
+  ansible.builtin.template:
+    src: sshd_tunnel_users.conf.j2
+    dest: /etc/ssh/sshd_config.d/90-linumed-tunnel-users.conf
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+  register: common_ssh_tunnel_dropin
+  become: true
+  notify: Reload ssh
+  when: common_ssh_tunnel_users | length > 0
+
+# An empty common_ssh_tunnel_users list means "no tunnel users configured" - remove a
+# stale drop-in from an earlier run rather than leaving it (and its now-orphaned Match
+# blocks for since-removed users) in place.
+- name: Tunnel users - remove drop-in when no tunnel users are configured
+  ansible.builtin.file:
+    path: /etc/ssh/sshd_config.d/90-linumed-tunnel-users.conf
+    state: absent
+  become: true
+  notify: Reload ssh
+  when: common_ssh_tunnel_users | length == 0
+
+- name: Tunnel users - validate full sshd configuration
+  ansible.builtin.command: /usr/sbin/sshd -t
+  register: common_ssh_tunnel_validate
+  changed_when: false
+  failed_when: false
+  become: true
+  when: common_ssh_tunnel_users | length > 0
+
+- name: Tunnel users - roll back drop-in if validation failed and a previous version existed
+  ansible.builtin.copy:
+    src: "{{ common_ssh_tunnel_dropin.backup_file }}"
+    dest: /etc/ssh/sshd_config.d/90-linumed-tunnel-users.conf
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  when:
+    - common_ssh_tunnel_users | length > 0
+    - common_ssh_tunnel_validate.rc != 0
+    - common_ssh_tunnel_dropin.backup_file is defined
+
+- name: Tunnel users - remove drop-in if validation failed and no previous version existed
+  ansible.builtin.file:
+    path: /etc/ssh/sshd_config.d/90-linumed-tunnel-users.conf
+    state: absent
+  become: true
+  when:
+    - common_ssh_tunnel_users | length > 0
+    - common_ssh_tunnel_validate.rc != 0
+    - common_ssh_tunnel_dropin.backup_file is not defined
+
+- name: Tunnel users - fail if sshd configuration is invalid
+  ansible.builtin.fail:
+    msg: "sshd -t failed after deploying the tunnel-users drop-in: {{ common_ssh_tunnel_validate.stderr }}"
+  when:
+    - common_ssh_tunnel_users | length > 0
+    - common_ssh_tunnel_validate.rc != 0

@@ -1,0 +1,17 @@
+# Managed by Ansible (linumed-os, role: common). Do not edit by hand, changes will be overwritten.
+# A Match block runs until the next "Match" line or the end of the whole sshd_config
+# chain, not just the end of this file - Include splices sshd_config.d/*.conf in
+# alphabetically, inline. Deployed as 90-linumed-tunnel-users.conf, the highest prefix in
+# this role, specifically so nothing (not even a cloud image's 50-cloud-init.conf) is
+# ever parsed after it and gets silently scoped to only these matched users.
+{% for u in common_ssh_tunnel_users %}
+Match User {{ u.name }}
+    PermitTTY no
+    X11Forwarding no
+    AllowAgentForwarding no
+    AllowTcpForwarding local
+{% for target in u.targets %}
+    PermitOpen {{ target }}
+{% endfor %}
+    ForceCommand /usr/sbin/nologin
+{% endfor %}

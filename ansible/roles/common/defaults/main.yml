@@ -11,6 +11,22 @@ common_ssh_login_grace_time: 30
 common_ssh_allow_users: []
 common_ssh_allow_groups: []
 
+# Tunnel-only users (issue #41): a way to hand someone access to exactly one loopback
+# port (e.g. Grafana on 127.0.0.1:3000) without giving them a shell on a machine that
+# processes patient data. sshd enforces this itself via a per-user Match block -
+# PermitOpen restricts which forwarding targets are allowed, ForceCommand nologin denies
+# an interactive session even though PermitTTY/AllowAgentForwarding are also off in
+# depth. Verified in a throwaway container 2026-08-14: `ssh viewer@host whoami` refused,
+# `ssh -N -L 19000:127.0.0.1:3000` works, a forward to a target not in `targets` is
+# refused by sshd with "administratively prohibited".
+# Example:
+#   common_ssh_tunnel_users:
+#     - name: viewer
+#       public_key: "ssh-ed25519 AAAA... viewer@laptop"
+#       targets:
+#         - "127.0.0.1:3000"
+common_ssh_tunnel_users: []
+
 # Set to false only for deliberately root-only setups (e.g. throwaway CI images).
 common_ssh_preflight_enabled: true
 

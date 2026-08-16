@@ -26,6 +26,26 @@ All variables are prefixed `common_ssh_*` and have sensible defaults in
 | `common_ssh_allow_users` | `[]` | Empty = no restriction. Only set once you're sure your own user is in the list |
 | `common_ssh_allow_groups` | `[]` | Same as above, group-based |
 | `common_ssh_preflight_enabled` | `true` | Safety check before disabling root login (see below). Only set to `false` for deliberately root-only hosts (e.g. throwaway CI images) |
+| `common_ssh_tunnel_users` | `[]` | List of `{name, public_key, targets}` - shell-less users restricted to exactly the loopback port-forwards listed in `targets`, e.g. `127.0.0.1:3000` for a Grafana dashboard. See below |
+
+Someone who only needs to see a dashboard (Grafana, Prometheus) doesn't need a shell on a
+server that processes patient data - that was the strongest argument against a plain SSH
+tunnel as the access model (see
+[ADR 0003](../adr/0003-loopback-only-access-no-bundled-identity-provider.md)).
+`common_ssh_tunnel_users` closes that gap:
+
+```yaml
+common_ssh_tunnel_users:
+  - name: viewer
+    public_key: "ssh-ed25519 AAAA... viewer@laptop"
+    targets:
+      - "127.0.0.1:3000"
+```
+
+The account gets `/usr/sbin/nologin` as its shell and no password; sshd itself enforces
+the restriction to `targets` via a per-user `Match` block (`PermitOpen`, `ForceCommand
+nologin`) - no separate proxy or component. Multiple targets need multiple entries in the
+`targets` list, one `PermitOpen` line each.
 
 ## What gets changed
 
@@ -76,3 +96,10 @@ Additionally: a password login must fail, a key login must succeed.
   non-root user with sudo rights and a deployed SSH key exists - that's intentional, not
   a bug. So create an admin user with a key before the first run - on a fresh minimal
   install, `scripts/bootstrap.sh` takes care of that.
+- **Tunnel users' drop-in has to be the last one parsed**: a `Match` block scopes every
+  directive parsed after it - across files, since `Include` splices `sshd_config.d/*.conf`
+  in inline - until the next `Match` line or the end of the config. The tunnel-users
+  drop-in is deployed as `90-linumed-tunnel-users.conf`, deliberately higher than every
+  other number in this role (and higher than a cloud image's own `50-cloud-init.conf`).
+  If you ever add your own `sshd_config.d` drop-in with a still higher number, its
+  directives would silently end up scoped to only the last tunnel user's `Match` block.
