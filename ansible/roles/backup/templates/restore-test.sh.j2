@@ -1,0 +1,66 @@
+#!/bin/bash
+# Managed by Ansible (linumed-os, role: backup). Do not edit by hand, changes will be
+# overwritten.
+#
+# Restores the latest snapshot into a throwaway target and diffs it against the live
+# source - a backup that has never been restored is not a verified backup (see the role
+# README). Writes its own metrics via the same trap pattern as backup.sh.j2 (Issue #18's
+# lesson: a failure that leaves no trace is worse than one that gets noticed), so a
+# restore test that silently stops running is exactly as visible to Prometheus as one
+# that starts failing.
+set -euo pipefail
+
+export RESTIC_REPOSITORY="{{ backup_repository }}"
+export RESTIC_PASSWORD_FILE="{{ backup_restic_password_file }}"
+
+METRICS_FILE="{{ backup_textfile_dir }}/restore_test.prom"
+METRICS_TMP="${METRICS_FILE}.$$.tmp"
+RESTORE_TARGET="$(mktemp -d)"
+success=0
+diff_lines=0
+
+cleanup() {
+  rm -rf "${RESTORE_TARGET}"
+  cat > "${METRICS_TMP}" <<-EOF
+	# HELP restore_test_last_run_timestamp_seconds Unix time of the last restore-test attempt, regardless of outcome.
+	# TYPE restore_test_last_run_timestamp_seconds gauge
+	restore_test_last_run_timestamp_seconds $(date +%s)
+	# HELP restore_test_success Whether the last restore test succeeded (1) or not (0) - a clean restore AND a matching diff.
+	# TYPE restore_test_success gauge
+	restore_test_success ${success}
+	# HELP restore_test_diff_lines Lines of difference between the restored and live data on the last run. 0 does not by itself mean success - restic or the restore itself can still have failed.
+	# TYPE restore_test_diff_lines gauge
+	restore_test_diff_lines ${diff_lines}
+	EOF
+  if [ "${success}" -eq 1 ]; then
+    cat >> "${METRICS_TMP}" <<-EOF
+	# HELP restore_test_last_success_timestamp_seconds Unix time of the last restore test that restored cleanly and diffed identical.
+	# TYPE restore_test_last_success_timestamp_seconds gauge
+	restore_test_last_success_timestamp_seconds $(date +%s)
+	EOF
+  fi
+  mv "${METRICS_TMP}" "${METRICS_FILE}"
+}
+trap cleanup EXIT
+
+restic restore latest --target "${RESTORE_TARGET}"
+
+# `diff -rq` prints one line per differing/missing/extra file - the count itself is the
+# metric, not just an exit code, so a partial restore (some files match, some don't)
+# shows up as a number rather than a single opaque failure.
+#
+# `|| true` on the diff is required, not decoration: diff exits 1 when it finds any
+# difference, and under `set -eo pipefail` that kills the script right here - the exact
+# moment a real difference needs to be counted and reported, not silently lost. Confirmed
+# by reproducing it directly: without `|| true`, the script exits before `diff_lines` is
+# ever assigned, and the trap still writes a metrics file, but with diff_lines stuck at 0
+# - indistinguishable from a clean restore. The repository's own issue #25 hit the same
+# class of set -e/pipefail trap once already.
+diff_lines=0
+{% for path in backup_restore_test_diff_paths %}
+diff_lines=$(( diff_lines + $(diff -rq "${RESTORE_TARGET}{{ path }}" "{{ path }}" | wc -l || true) ))
+{% endfor %}
+
+if [ "${diff_lines}" -eq 0 ]; then
+  success=1
+fi

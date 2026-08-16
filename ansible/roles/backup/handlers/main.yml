@@ -12,3 +12,11 @@
     name: linumed-os-backup.timer
     state: restarted
   become: true
+
+# Same reasoning as "Restart backup timer" above - restarting only reschedules, it never
+# interrupts a restore test that happens to be running.
+- name: Restart restore-test timer
+  ansible.builtin.systemd_service:
+    name: linumed-os-restore-test.timer
+    state: restarted
+  become: true

@@ -1,0 +1,10 @@
+[Unit]
+Description=Weekly Linumed OS backup restore test
+
+[Timer]
+OnCalendar={{ backup_restore_test_schedule }}
+Persistent=true
+RandomizedDelaySec=5m
+
+[Install]
+WantedBy=timers.target

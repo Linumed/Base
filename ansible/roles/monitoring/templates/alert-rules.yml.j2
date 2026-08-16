@@ -68,3 +68,35 @@ groups:
           description: >-
             The last successful restic backup on {{ '{{ $labels.instance }}' }} was more
             than 25 hours ago.
+
+      # Same dormant-until-the-metric-exists pattern as BackupStale - restore_test_success
+      # only appears once the backup role's restore-test timer (#36) has run at least
+      # once. Fires on the first failed run, not after a delay: unlike a stale metric, a
+      # restore test that ran and produced a real diff is worth knowing about
+      # immediately, not after a grace period.
+      - alert: RestoreTestFailed
+        expr: restore_test_success == 0
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backup restore test failed on {{ '{{ $labels.instance }}' }}"
+          description: >-
+            The last restore test on {{ '{{ $labels.instance }}' }} either failed to
+            restore or the restored data did not match the source
+            ({{ '{{ $labels.instance }}' }}: restore_test_diff_lines > 0). Treat the
+            underlying backup as unverified until this is investigated.
+
+      # Weekly schedule by default (backup_restore_test_schedule), so the threshold is a
+      # multiple of a week, not a day like BackupStale - 9 days allows one missed run
+      # (e.g. a reboot during the scheduled window) before paging, matching
+      # RandomizedDelaySec and Persistent=true already giving the timer room to catch up
+      # on its own first.
+      - alert: RestoreTestStale
+        expr: time() - restore_test_last_success_timestamp_seconds > 777600
+        labels:
+          severity: warning
+        annotations:
+          summary: "No successful restore test in over 9 days"
+          description: >-
+            The last successful backup restore test on {{ '{{ $labels.instance }}' }} was
+            more than 9 days ago - the weekly schedule expects one every 7.

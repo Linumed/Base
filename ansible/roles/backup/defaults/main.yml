@@ -42,3 +42,25 @@ backup_restic_password_file: "/etc/restic/password"
 # already-dormant BackupStale alert rule lights up with zero extra configuration once
 # both roles are present.
 backup_textfile_dir: "/var/lib/prometheus/node-exporter"
+
+# Automated restore test (#36) - a backup that has never been restored is not a verified
+# backup. Runs on its own systemd timer, separate from the daily backup, and writes its
+# own textfile metrics so a restore test that silently stops running is exactly as
+# visible to Prometheus as a failed one - the whole point, see the role README.
+backup_restore_test_enabled: true
+
+# Weekly, not daily: a full restore-and-diff is heavier than a backup (reads the entire
+# repository back down) and the thing it protects against - restic itself producing an
+# unrestorable backup - does not change day to day the way source data does. Sunday
+# 04:00, an hour after the daily backup's own 03:00 run so there is always something
+# recent to restore, on the day with the least other load on this host.
+backup_restore_test_schedule: "Sun *-*-* 04:00:00"
+
+# What gets diffed after restoring, deliberately narrower than backup_paths. Comparing
+# /var/lib/docker/volumes against a live restore would produce spurious diffs from
+# Prometheus/Loki/Postgres writing to their own data directories during the test, which
+# would make a healthy restore test look broken. /opt/linumed-os (role configuration and
+# secrets) is comparatively static and a fair, exact comparison - a full diff, not a
+# sample, since a sample would defeat the point of a verified restore.
+backup_restore_test_diff_paths:
+  - /opt/linumed-os
