@@ -85,11 +85,22 @@ linumed-os/
 
 ## Docker Compose conventions
 
-- One Compose file per service stack under `docker/`
-- Named volumes only, no bind mounts to host paths except for explicitly documented exceptions
-- Always include a `.env.example` alongside each Compose file
-- Container images must be pinned to a specific version tag, never `latest`
-- Health checks required for every service that exposes a port
+- `ansible/roles/*/templates/docker-compose.yml.j2` is the source of truth for every
+  Docker-based role - what `site.yml` actually deploys.
+- `docker/<role>/` holds a hand-testable, `.env`-driven reference version for a subset of
+  roles (currently `caddy`, `bridgelink`) - manual smoke-testing without Ansible, not a
+  contractual mirror. It is **not required for every role** - see
+  `docs/adr/0005-docker-directory-is-a-manual-testing-reference-not-a-mirror.md` for why
+  (`backup` has no Compose stack at all; `monitoring`'s 7 containers and multiple secrets
+  make a hand-maintained parallel version a maintenance cost outweighing its value for a
+  solo-maintained repo) and when to add one for a new role.
+- Where a `docker/<role>/` does exist: named volumes only, no bind mounts to host paths
+  except for explicitly documented exceptions; include a `.env.example` alongside the
+  Compose file; keep the image tag manually in sync with the role's default on touch, but
+  don't chase every Ansible-side comment/detail change.
+- Container images must be pinned to a specific version tag, never `latest` - applies to
+  both the Ansible templates and any `docker/<role>/` reference.
+- Health checks required for every service that exposes a port - applies to both.
 
 ---
 

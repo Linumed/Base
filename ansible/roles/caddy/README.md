@@ -21,11 +21,13 @@ verification steps: `docs/roles/caddy.md`.
 
 ## Two docker-compose.yml files, deliberately
 
-`docker/caddy/docker-compose.yml` is a static reference for spinning Caddy up manually
-(local testing, `.env`-driven). `ansible/roles/caddy/templates/docker-compose.yml.j2` is
-what actually gets deployed by this role - it uses Ansible variables instead of `.env`,
-since the role already owns the whole config lifecycle. They're kept close in structure
-on purpose; bump `caddy_image` here *and* the image tag in `docker/caddy/` together.
+`docker/caddy/docker-compose.yml` is a static, hand-maintained reference for spinning
+Caddy up manually (local testing, `.env`-driven) - not a guaranteed mirror, see
+[ADR 0005](../../../docs/adr/0005-docker-directory-is-a-manual-testing-reference-not-a-mirror.md).
+`ansible/roles/caddy/templates/docker-compose.yml.j2` is what actually gets deployed by
+this role - it uses Ansible variables instead of `.env`, since the role already owns the
+whole config lifecycle. They're kept close in structure on purpose; bump `caddy_image`
+here *and* the image tag in `docker/caddy/` together.
 
 ## Validation and rollback
 
