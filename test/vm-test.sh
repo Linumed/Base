@@ -33,6 +33,8 @@ ANSIBLE_USER="vmtest"
 
 # shellcheck source=lib/site-idempotency.sh
 source "${REPO_ROOT}/test/lib/site-idempotency.sh"
+# shellcheck source=lib/docker-reference-smoke.sh
+source "${REPO_ROOT}/test/lib/docker-reference-smoke.sh"
 
 cleanup() {
   virsh destroy "${VM_NAME}" >/dev/null 2>&1 || true
@@ -115,3 +117,8 @@ ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "${SSH_KEY}" 
   vmtest@"${VM_IP}" 'sudo cloud-init status --wait'
 
 run_site_idempotency_check
+
+# Runs after site.yml, not instead of it: it needs the Docker the docker role installs,
+# and it deliberately reuses this already-provisioned throwaway VM rather than exposing a
+# Docker socket to the CI job container (issue #46).
+run_docker_reference_smoke_check
