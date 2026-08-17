@@ -1,4 +1,7 @@
-# Copy to Caddyfile and adjust before running `docker compose up -d` in this directory.
+# Copy to Caddyfile *in this same conf/ directory* (conf/Caddyfile), adjust, then run
+# `docker compose up -d` one level up. The compose file mounts this whole directory as
+# /etc/caddy, not the single file - see issue #44 for why (a single-file bind mount
+# attaches to the inode and stops seeing edits that are saved atomically).
 # See docs/roles/caddy.md for the Ansible-managed equivalent (ansible/roles/caddy).
 {
 	email admin@example.com
