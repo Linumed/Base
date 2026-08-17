@@ -47,6 +47,16 @@ docker/*/secrets/
 id_rsa
 id_ed25519
 
+# Claude Code local settings. Machine-specific and not shareable: this file records
+# per-machine permission grants, which on this repo's own dev box include the internal
+# Tailscale hostname of the Forgejo instance and local scratchpad paths. It was only
+# kept out of the repo by a *global* gitignore in the maintainer's home directory
+# (~/.config/git/ignore) - that protects one machine and does not travel with a clone,
+# so a `git add -A` on any other checkout would have committed it. Ignored here so the
+# protection ships with the repository (found while auditing for publication, #50).
+# Deliberately only settings.local.json: a shared .claude/settings.json is committable.
+.claude/settings.local.json
+
 # Editor
 .vscode/
 .idea/
