@@ -29,6 +29,17 @@
     mode: "0755"
   become: true
 
+# Upgrade path from before issue #44: the Caddyfile used to live directly in
+# caddy_deploy_dir and was bind-mounted as a single file. Nothing mounts that path any
+# more, so a leftover copy is inert - but it's an inert copy of a config file an operator
+# would reasonably still edit, and those edits would silently have no effect. That is
+# exactly the failure mode #44 was about, so remove it rather than leave it lying around.
+- name: Remove the pre-#44 Caddyfile location
+  ansible.builtin.file:
+    path: "{{ caddy_deploy_dir }}/Caddyfile"
+    state: absent
+  become: true
+
 - name: Ensure conf directory exists
   ansible.builtin.file:
     path: "{{ caddy_deploy_dir }}/conf"
