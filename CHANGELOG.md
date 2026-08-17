@@ -4,8 +4,8 @@ All notable changes to this project are documented here.
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this
 project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html). Written in
-English like the rest of the documentation ([ADR 0002](docs/adr/0002-english-as-documentation-language.md)),
-even though commit messages are German - a changelog addresses the same readers the
+English like the rest of the documentation (ADR 0002), even though commit messages are
+German - a changelog addresses the same readers the
 documentation does. Every entry names its issue, so the reasoning behind a change is one
 click away instead of restated here.
 
@@ -28,7 +28,7 @@ restores.
   way everyone views dashboards and logs (#42).
 - **Optional OIDC for Grafana** (`monitoring_grafana_oidc_*`) pointing at an institution's
   *existing* identity provider. No provider is bundled, and empty settings change nothing
-  ([ADR 0003](docs/adr/0003-loopback-only-access-no-bundled-identity-provider.md), #42).
+  (ADR 0003, #42).
 - **Shared Docker network for Caddy** (`caddy_external_network_name`, default
   `linumed-os-external`) so Caddy can reverse-proxy a container in an operator's own,
   separate Compose stack by service name - without publishing a port or touching ufw
@@ -38,9 +38,7 @@ restores.
   metrics, with `RestoreTestFailed` and `RestoreTestStale` alert rules. A restore test
   that silently stops running is now as visible as one that fails (#36).
 - **VM provisioning and idempotency checks in CI** - a full `site.yml` double-run against
-  a real libvirt/KVM VM, not just linting
-  ([ADR 0004](docs/adr/0004-vm-tests-in-ci-via-host-libvirt-socket.md), #33). Since #45 it
-  triggers itself on changes under `ansible/`, `docker/`, `test/` and `scripts/`.
+  a real libvirt/KVM VM, not just linting (ADR 0004, #33). Since #45 it triggers itself on changes under `ansible/`, `docker/`, `test/` and `scripts/`.
 - **Health checks** for Alertmanager, cAdvisor, docker-socket-proxy and Alloy. All four
   had been assumed impossible; all four turned out to have a working option once actually
   tested. `grafana/loki` remains the single genuine exception (#38).
@@ -59,9 +57,7 @@ restores.
   `docs/roles/*.md` were translated; ADR 0001 stays German on purpose, as a record of a
   decision as it was made (#30).
 - **`docker/<role>/` is a manual-testing reference, not a required mirror** of the Ansible
-  templates - the templates are the single source of truth
-  ([ADR 0005](docs/adr/0005-docker-directory-is-a-manual-testing-reference-not-a-mirror.md),
-  #37).
+  templates - the templates are the single source of truth (ADR 0005, #37).
 
 ### Fixed
 
@@ -102,8 +98,7 @@ First tagged release. Complete v0.1 role set, each verified against a real Debia
   (#8, #9). Optional Alertmanager SMTP delivery, all-or-nothing (#22); Alloy reaches the
   Docker API only through a read-only socket proxy (#21).
 - **`bridgelink`** - HL7 v2 / FHIR R4 integration engine, an MPL-2.0 fork of Mirth
-  Connect, which went proprietary in March 2025
-  ([ADR 0001](docs/adr/0001-bridgelink-statt-mirth-connect.md), #12).
+  Connect, which went proprietary in March 2025 (ADR 0001, #12).
 - **`backup`** - restic via systemd timer, any restic backend, with the result exported as
   Prometheus metrics (#7).
 - **`scripts/bootstrap.sh`** - establishes the `python3`/`sudo` baseline on a minimal

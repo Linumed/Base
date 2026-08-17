@@ -15,7 +15,7 @@ Written 2026-08-14, after an audit of the repository against its own stated requ
 > test (#46), `SECURITY.md` exists (#47), and there is a `CHANGELOG.md` (#49). The single
 > remaining open issue is [#50](../../issues/50), publication to GitHub - deliberately the
 > last step, since publishing a kit that is still being worked on serves nobody. See
-> [CHANGELOG.md](../CHANGELOG.md) for what shipped.
+> [CHANGELOG.md](changelog.md) for what shipped.
 
 ## Where this actually stands
 
