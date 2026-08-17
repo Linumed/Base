@@ -1,13 +1,32 @@
 name: vm-test
 
 # VM provisioning + idempotency check (issue #33), the second half of the CI target
-# picture in CLAUDE.md - ansible-lint runs on every push, this doesn't. Deliberately
-# manual, not on every push: a full site.yml double-run against a real libvirt/KVM VM
-# takes several minutes on this hardware (i5-2400, shared with Forgejo, staging and
-# monitoring), and the runner has capacity 1 - one run here blocks ansible-lint pushes
-# for its duration. See ADR 0004 for the full reasoning behind running this at all via
-# the runner, rather than not, or via a nested libvirtd.
+# picture in CLAUDE.md. See ADR 0004 for the reasoning behind running this via the
+# runner at all, rather than not, or via a nested libvirtd.
+#
+# Triggering is a compromise between two real constraints (issue #45):
+#   - It has to run by itself. This was dispatch-only until 2026-08-17, and issue #48 is
+#     what that cost: a broken docker/caddy reference passed ansible-lint and the
+#     role-level VM verification, and surfaced only because the repo happened to get read
+#     through a second time by hand. A check that only runs when someone remembers it is
+#     not a check.
+#   - It can't run on literally every push. A full site.yml double-run against a real VM
+#     took ~9 minutes on this hardware (i5-2400, shared with Forgejo, staging and
+#     monitoring), and the runner has capacity 1 - every run here blocks ansible-lint
+#     behind it for that long.
+#
+# The paths filter is what reconciles them: this runs when something it can actually
+# catch changed, and stays out of the way for documentation-only commits (the most
+# frequent kind of push in this repo). workflow_dispatch stays for on-demand runs.
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'ansible/**'
+      - 'docker/**'
+      - 'test/**'
+      - 'scripts/**'
+      - '.forgejo/workflows/vm-test.yml'
   workflow_dispatch:
 
 jobs:
