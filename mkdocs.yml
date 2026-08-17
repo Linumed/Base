@@ -43,6 +43,9 @@ nav:
   - Home: index.md
   - Architecture: architecture.md
   - Roadmap: ROADMAP.md
+  # Symlink auf ../CHANGELOG.md, wie architecture.md - keine Inhaltsdopplung, und
+  # die Datei bleibt fuer GitHub/Forgejo im Wurzelverzeichnis liegen.
+  - Changelog: changelog.md
   - Operations:
       - Deployment: operations/deployment.md
       - Access: operations/access.md
