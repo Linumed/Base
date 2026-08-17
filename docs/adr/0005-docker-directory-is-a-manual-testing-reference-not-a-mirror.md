@@ -115,9 +115,49 @@ that always applied to them: pinned image tags, named volumes, health checks,
   is explicitly about a single maintainer's time; a team might reasonably decide the
   completeness guarantee is worth the recurring cost.
 
+## What this decision cost, one day later (2026-08-17)
+
+The first revisit trigger listed above fired within a day of this ADR being accepted, and
+it is recorded here rather than quietly fixed, because an ADR that only lists the upside
+of the chosen option is worthless at the next review.
+
+Issue #44 moved Caddy's Caddyfile from a single-file bind mount to a directory mount, in
+the Ansible template **and** in `docker/caddy/docker-compose.yml`. The accompanying
+`Caddyfile.example` was left behind in the old location. Following `docker/caddy/` as
+documented therefore broke at the documented `cp` step, and bringing the stack up anyway
+left Caddy crash-looping (`Restarting`), because Compose creates the missing bind target
+as an empty directory and Caddy exits when `/etc/caddy/Caddyfile` isn't there - measured
+2026-08-17, after an earlier write-up of this same incident claimed a silently-healthy
+container instead and turned out to be wrong. Nothing in the repository noticed either
+way: `ansible-lint` does not read `docker/`, and the `site.yml` VM test never deploys it.
+It surfaced (issue #48) only because the repository happened to be read through by hand.
+
+So the maintenance-cost argument in this ADR was right, and incomplete: the cost of *not*
+mirroring is not only staleness, it is staleness that nothing reports. That is the part
+worth knowing at the next review.
+
+What was **not** done in response: the drift comparison rejected above. It would not have
+caught this - the two files did not disagree with each other, they agreed, and a
+supporting file was in the wrong place. What was done instead follows this ADR's own
+guidance ("fix the sync process for real ... not to build drift-detection tooling
+preemptively"): `test/lib/docker-reference-smoke.sh` (issue #46) copies
+`conf/Caddyfile.example` into place, brings the stack up inside the throwaway `site.yml`
+test VM, and asserts that the **loaded configuration** contains the example's site block.
+Asserting on the loaded config rather than on container state is deliberate even though
+this particular failure did crash the container: a Caddy that comes up against a stale or
+half-written config file is exactly the failure mode issue #44 was about, and that one
+does stay green. The check costs seconds and answers only the question the reference
+exists to answer.
+
+`docker/bridgelink/` is deliberately left uncovered: a JVM plus PostgreSQL is minutes of
+runtime for a check whose value is being cheap. If it ever breaks the same way, that is
+the argument for extending the smoke test - not before.
+
 ## Sources
 
 - Issue #37 - the original finding that started this.
+- Issues #48 and #46 - the broken reference this decision failed to catch, and the
+  minimal check added in response.
 - `ansible/roles/caddy/README.md`, `ansible/roles/bridgelink/README.md` - already
   describe their `docker/<role>/` counterpart as a manual-testing reference; this ADR
   makes that description the repo-wide rule instead of a per-role note.
