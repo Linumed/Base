@@ -7,6 +7,16 @@ it.
 Written 2026-08-14, after an audit of the repository against its own stated requirements
 (`CLAUDE.md`, `ARCHITECTURE.md`).
 
+> **Update 2026-08-17: every stage below is done and `v0.2.0` is tagged.** A second pass
+> over the repository afterwards - deliberately looking for what a green test suite does
+> not prove - turned up one real defect (#48, a Compose reference broken by the #44 fix
+> and caught by nobody, because nothing tested it) and four gaps that were closed straight
+> away: the full VM test now triggers itself (#45), the `docker/` references have a smoke
+> test (#46), `SECURITY.md` exists (#47), and there is a `CHANGELOG.md` (#49). The single
+> remaining open issue is [#50](../../issues/50), publication to GitHub - deliberately the
+> last step, since publishing a kit that is still being worked on serves nobody. See
+> [CHANGELOG.md](../CHANGELOG.md) for what shipped.
+
 ## Where this actually stands
 
 All six v0.1 roles are implemented, VM-tested and idempotent: `common`, `docker`, `caddy`,

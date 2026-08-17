@@ -25,13 +25,15 @@ HL7/FHIR integration, monitoring, reverse proxy, and encrypted backups.
 
 ## Status
 
-**`v0.1.0` is tagged.** Every role passed a full `site.yml` double-run against a
-throwaway VM (idempotent - `changed=0` on the second run) and, separately, against a real
-Debian 13 netinst/preseed install via `scripts/bootstrap.sh` and `test/vm-test-netinst.sh`
-(issues #13/#14). The onboarding path itself is verified too, not just the roles: a full
-double-run following this README's own quick start verbatim - clone, copy the example
-inventory, fill in the vault, deploy - with no repository knowledge beyond what's written
-below (issues #27/#28/#29).
+**`v0.2.0` is tagged** - see [CHANGELOG.md](CHANGELOG.md). Every role passed a full
+`site.yml` double-run against a throwaway VM (idempotent - `changed=0` on the second run)
+and, separately, against a real Debian 13 netinst/preseed install via
+`scripts/bootstrap.sh` and `test/vm-test-netinst.sh` (issues #13/#14). That double-run now
+happens in CI on every change under `ansible/`, `docker/`, `test/` or `scripts/`, not only
+when someone remembers to start it (#45). The onboarding path itself is verified too, not
+just the roles: a full double-run following this README's own quick start verbatim -
+clone, copy the example inventory, fill in the vault, deploy - with no repository
+knowledge beyond what's written below (issues #27/#28/#29).
 
 The full plan, in order, with the reasoning behind the sequencing:
 [`docs/ROADMAP.md`](docs/ROADMAP.md).
