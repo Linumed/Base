@@ -1,6 +1,6 @@
 # common
 
-Base hardening role for Linumed OS. Runs first, before any other role.
+Base hardening role for Linumed Base. Runs first, before any other role.
 
 Implements SSH hardening (issue #1), ufw (#3), fail2ban (#10), unattended-upgrades (#5),
 and NTP/timezone (#11) - the full planned scope of the common role.

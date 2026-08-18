@@ -40,7 +40,7 @@ that doesn't parse.
 ## Reaching a container in a different Compose stack (issue #39)
 
 Caddy joins a second Docker network in addition to its own project network -
-`caddy_external_network_name`, default `linumed-os-external`, created unconditionally
+`caddy_external_network_name`, default `linumed-base-external`, created unconditionally
 (an unused bridge network costs nothing and publishes nothing on its own; ufw is
 unaffected either way, since this is network membership, not a published port). The
 Compose-local key and the actual Docker network name are deliberately the same literal

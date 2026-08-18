@@ -1,5 +1,5 @@
 ---
-monitoring_deploy_dir: "/opt/linumed-os/monitoring"
+monitoring_deploy_dir: "/opt/linumed-base/monitoring"
 
 # Container images, all pinned (checked 2026-08-10, no "latest" per CLAUDE.md).
 monitoring_prometheus_image: "prom/prometheus:v3.13.2"

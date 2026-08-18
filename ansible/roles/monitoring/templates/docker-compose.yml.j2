@@ -1,11 +1,11 @@
-# Managed by Ansible (linumed-os, role: monitoring). Do not edit by hand, changes will be
+# Managed by Ansible (linumed-base, role: monitoring). Do not edit by hand, changes will be
 # overwritten. Services are added incrementally as the role grows (Prometheus first,
 # Loki/Alloy/Grafana/Alertmanager/cAdvisor follow) - each verified against a real target
 # before the next is added.
 services:
   loki:
     image: {{ monitoring_loki_image }}
-    container_name: linumed-os-loki
+    container_name: linumed-base-loki
     restart: unless-stopped
     # No published port - only Alloy and Grafana (added later) reach it, both inside this
     # same Compose network, by service name.
@@ -27,7 +27,7 @@ services:
   # stack's Compose network.
   docker-socket-proxy:
     image: {{ monitoring_docker_socket_proxy_image }}
-    container_name: linumed-os-docker-socket-proxy
+    container_name: linumed-base-docker-socket-proxy
     restart: unless-stopped
     environment:
       CONTAINERS: "1"
@@ -49,7 +49,7 @@ services:
 
   alloy:
     image: {{ monitoring_alloy_image }}
-    container_name: linumed-os-alloy
+    container_name: linumed-base-alloy
     restart: unless-stopped
     command:
       - run
@@ -91,7 +91,7 @@ services:
 
   alertmanager:
     image: {{ monitoring_alertmanager_image }}
-    container_name: linumed-os-alertmanager
+    container_name: linumed-base-alertmanager
     restart: unless-stopped
     command:
       - --config.file=/etc/alertmanager/alertmanager.yml
@@ -112,7 +112,7 @@ services:
 
   cadvisor:
     image: {{ monitoring_cadvisor_image }}
-    container_name: linumed-os-cadvisor
+    container_name: linumed-base-cadvisor
     restart: unless-stopped
     # No published port - only Prometheus scrapes it, by service name inside this stack's
     # Compose network. Standard cAdvisor mounts, no --privileged needed on Debian (that's
@@ -132,7 +132,7 @@ services:
 
   grafana:
     image: {{ monitoring_grafana_image }}
-    container_name: linumed-os-grafana
+    container_name: linumed-base-grafana
     restart: unless-stopped
     environment:
       GF_SECURITY_ADMIN_USER: "{{ monitoring_grafana_admin_user }}"
@@ -176,7 +176,7 @@ services:
       - loki
   prometheus:
     image: {{ monitoring_prometheus_image }}
-    container_name: linumed-os-prometheus
+    container_name: linumed-base-prometheus
     restart: unless-stopped
     # --web.enable-lifecycle: needed for the "Reload prometheus" handler's /-/reload call.
     command:

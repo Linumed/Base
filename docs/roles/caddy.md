@@ -15,11 +15,11 @@ All variables are prefixed `caddy_*` and have sensible defaults in
 | Variable | Default | Meaning |
 |---|---|---|
 | `caddy_image` | `"caddy:2.11.4-alpine"` | Pinned image, never `latest` |
-| `caddy_deploy_dir` | `/opt/linumed-os/caddy` | Target directory on the host for the Caddyfile and docker-compose.yml |
+| `caddy_deploy_dir` | `/opt/linumed-base/caddy` | Target directory on the host for the Caddyfile and docker-compose.yml |
 | `caddy_http_port` / `caddy_https_port` | `80` / `443` | Host ports. Caddy needs both for ACME HTTP-01 and normal traffic - **do not** restrict them to `127.0.0.1`, unlike the usual convention for purely internal services on this machine |
 | `caddy_email` | `""` (off) | ACME account email for Let's Encrypt notifications. Empty is valid, but not recommended |
 | `caddy_sites` | `[]` | List of `{domain, reverse_proxy, extra}` - see the examples below. Empty = Caddy runs but does nothing |
-| `caddy_external_network_name` | `"linumed-os-external"` | Docker network Caddy joins in addition to its own, so it can reach a container in a *different* Compose stack by service name - see below |
+| `caddy_external_network_name` | `"linumed-base-external"` | Docker network Caddy joins in addition to its own, so it can reach a container in a *different* Compose stack by service name - see below |
 
 Two upstream shapes, depending on where the proxied service actually runs:
 
@@ -55,10 +55,10 @@ services:
     # makes it reachable, not a port.
     networks:
       - default
-      - linumed-os-external
+      - linumed-base-external
 
 networks:
-  linumed-os-external:
+  linumed-base-external:
     external: true
 ```
 
@@ -71,7 +71,7 @@ caddy_sites:
 ```
 
 `myapp` resolves because both stacks' `myapp` and `caddy` containers now share the
-`linumed-os-external` network - Docker's embedded DNS resolves service names to
+`linumed-base-external` network - Docker's embedded DNS resolves service names to
 container IPs within a shared network, the same mechanism `caddy_sites` targeting
 another service in *this* stack (e.g. `bridgelink:8443`) already relies on.
 
@@ -98,13 +98,13 @@ another service in *this* stack (e.g. `bridgelink:8443`) already relies on.
 ## Verification
 
 ```bash
-docker compose -f /opt/linumed-os/caddy/docker-compose.yml ps
+docker compose -f /opt/linumed-base/caddy/docker-compose.yml ps
 ```
 
-Expected output: container `linumed-os-caddy` with status `healthy`.
+Expected output: container `linumed-base-caddy` with status `healthy`.
 
 ```bash
-docker exec linumed-os-caddy caddy validate --config /etc/caddy/Caddyfile
+docker exec linumed-base-caddy caddy validate --config /etc/caddy/Caddyfile
 ```
 
 Also from outside: `curl -I https://<domain>` must return a valid certificate (no
@@ -116,7 +116,7 @@ otherwise ACME HTTP-01 fails silently in the background.
 - **The HTTP-01 challenge fails silently** if port 80 isn't reachable from outside (a
   forgotten ufw rule, or the host sits behind NAT without port forwarding). Caddy retries
   automatically, but never succeeds without a reachable port 80 - when in doubt, check
-  `docker logs linumed-os-caddy` for ACME errors.
+  `docker logs linumed-base-caddy` for ACME errors.
 - **A Caddyfile change doesn't trigger a container restart**, but a `caddy reload` inside
   the running container (zero downtime). That's intentional: `docker_compose_v2` doesn't
   detect a plain file change in the bind mount as a service change. Changing

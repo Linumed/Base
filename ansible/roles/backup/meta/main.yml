@@ -2,7 +2,7 @@
 galaxy_info:
   role_name: backup
   author: Linumed
-  description: Encrypted backups for Linumed OS (restic, systemd timer, Prometheus textfile metrics)
+  description: Encrypted backups for Linumed Base (restic, systemd timer, Prometheus textfile metrics)
   license: MIT
   min_ansible_version: "2.15"
   platforms:

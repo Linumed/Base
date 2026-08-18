@@ -2,7 +2,7 @@
 
 For the actual commands - cloning, filling in the inventory, encrypting the vault,
 running the playbook - use the [repository README's quick
-start](https://github.com/linumed/linumed-os#quick-start). This page covers what
+start](https://github.com/linumed/linumed-base#quick-start). This page covers what
 happens during that run and why, across roles, which the README doesn't.
 
 ## Role order, and why it's fixed

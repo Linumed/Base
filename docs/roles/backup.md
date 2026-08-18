@@ -16,12 +16,12 @@ All variables are prefixed `backup_*` and live in
 |---|---|---|
 | `backup_repository` | `""` (required) | restic repository URI, any backend restic supports |
 | `backup_restic_password` | `""` (required) | Encryption password - **without this password, all backups are unrecoverable, permanently** |
-| `backup_paths` | `/opt/linumed-os`, `/var/lib/docker/volumes` | What gets backed up |
+| `backup_paths` | `/opt/linumed-base`, `/var/lib/docker/volumes` | What gets backed up |
 | `backup_retention_keep_daily/weekly/monthly` | `7`/`4`/`6` | Retention after `restic forget` |
 | `backup_schedule` | `*-*-* 03:00:00` | systemd `OnCalendar` expression |
 | `backup_restore_test_enabled` | `true` | Deploys a weekly automated restore test (see below) |
 | `backup_restore_test_schedule` | `Sun *-*-* 04:00:00` | systemd `OnCalendar` expression for the restore test |
-| `backup_restore_test_diff_paths` | `/opt/linumed-os` | What gets diffed after a test restore - deliberately narrower than `backup_paths`, see below |
+| `backup_restore_test_diff_paths` | `/opt/linumed-base` | What gets diffed after a test restore - deliberately narrower than `backup_paths`, see below |
 
 Without `backup_repository` and `backup_restic_password`, the role aborts in its
 preflight. Both belong in Ansible Vault.
@@ -30,14 +30,14 @@ preflight. Both belong in Ansible Vault.
 
 ```yaml
 # Local / external drive
-backup_repository: "/mnt/backup-disk/linumed-os"
+backup_repository: "/mnt/backup-disk/linumed-base"
 
 # SFTP
-backup_repository: "sftp:user@backup-host:/srv/restic/linumed-os"
+backup_repository: "sftp:user@backup-host:/srv/restic/linumed-base"
 
 # S3-compatible (e.g. Hetzner Object Storage) - credentials set separately
 # as AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY, not part of this role
-backup_repository: "s3:https://fsn1.your-objectstorage.com/linumed-os-backup"
+backup_repository: "s3:https://fsn1.your-objectstorage.com/linumed-base-backup"
 ```
 
 This role doesn't set up the backend itself - SSH keys, S3 buckets or IAM policies must
@@ -45,7 +45,7 @@ already exist.
 
 ## What gets backed up
 
-By default, `/opt/linumed-os` (configuration and secrets for every role) and
+By default, `/opt/linumed-base` (configuration and secrets for every role) and
 `/var/lib/docker/volumes` (every named Docker volume: Prometheus, Loki and Grafana data,
 BridgeLink's app data and its PostgreSQL database). Direct file access, no
 `docker-volume-backup`, no database-native dump tool.
@@ -54,11 +54,11 @@ BridgeLink's app data and its PostgreSQL database). Direct file access, no
 
 ```bash
 # Is the timer active?
-systemctl status linumed-os-backup.timer
+systemctl status linumed-base-backup.timer
 
 # Last run
-systemctl status linumed-os-backup.service
-journalctl -u linumed-os-backup.service -n 50
+systemctl status linumed-base-backup.service
+journalctl -u linumed-base-backup.service -n 50
 
 # Was the metric actually written?
 cat /var/lib/prometheus/node-exporter/backup.prom
@@ -67,7 +67,7 @@ cat /var/lib/prometheus/node-exporter/backup.prom
 restic snapshots
 ```
 
-A manual test run: `sudo systemctl start linumed-os-backup.service`.
+A manual test run: `sudo systemctl start linumed-base-backup.service`.
 
 ## Restore test: automated, weekly (#36)
 
@@ -80,19 +80,19 @@ throwaway `mktemp -d` target, `diff -rq` against the live source for every path 
 stops running is exactly as visible to Prometheus as one that starts failing
 (`RestoreTestStale`/`RestoreTestFailed` alert rules in the monitoring role).
 
-`backup_restore_test_diff_paths` defaults to `/opt/linumed-os` only, deliberately
+`backup_restore_test_diff_paths` defaults to `/opt/linumed-base` only, deliberately
 narrower than `backup_paths` - diffing `/var/lib/docker/volumes` against a live,
 currently-writing Prometheus/Loki/Postgres would produce spurious differences that have
 nothing to do with whether the backup actually works.
 
 ```bash
 # Same checks as the backup timer, against the restore-test unit instead:
-systemctl status linumed-os-restore-test.timer
-journalctl -u linumed-os-restore-test.service -n 50
+systemctl status linumed-base-restore-test.timer
+journalctl -u linumed-base-restore-test.service -n 50
 cat /var/lib/prometheus/node-exporter/restore_test.prom
 
 # Manual test run:
-sudo systemctl start linumed-os-restore-test.service
+sudo systemctl start linumed-base-restore-test.service
 ```
 
 The underlying manual procedure, if you want to restore something specific rather than
@@ -104,7 +104,7 @@ export RESTIC_PASSWORD_FILE=/etc/restic/password
 
 restic snapshots                                    # which snapshots exist
 restic restore latest --target /tmp/restore-test     # restore into a scratch directory
-diff -rq /tmp/restore-test/opt/linumed-os /opt/linumed-os   # spot check
+diff -rq /tmp/restore-test/opt/linumed-base /opt/linumed-base   # spot check
 rm -rf /tmp/restore-test
 ```
 

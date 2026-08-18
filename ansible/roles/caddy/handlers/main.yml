@@ -4,6 +4,6 @@
 # mounted file). An explicit reload picks up the new config without dropping connections.
 - name: Reload caddy
   community.docker.docker_container_exec:
-    container: linumed-os-caddy
+    container: linumed-base-caddy
     command: caddy reload --config /etc/caddy/Caddyfile --force
   become: true

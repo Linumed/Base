@@ -109,7 +109,7 @@ What survives from this stage is smaller and unrelated to exposing anything:
 
 **[#39](../../issues/39) is resolved (closed 2026-08-16).** Caddy joins a second Docker
 network, created unconditionally by the role (`caddy_external_network_name`, default
-`linumed-os-external`, fixed literal name rather than Compose's project-derived one). The
+`linumed-base-external`, fixed literal name rather than Compose's project-derived one). The
 operator's own, entirely separate Compose stack joins that same network as `external: true`
 and `caddy_sites` then reaches it by service name - no published port, no ufw change. Full
 worked example in `docs/roles/caddy.md`. Verified against a real VM: a genuinely separate
@@ -239,5 +239,5 @@ templates despite the issue's concern.
   Grafana to an *existing* provider via OIDC is in scope ([#42](../../issues/42)); shipping
   one is not.
 - **Application software** (HIS, DMS, document management). Out of scope by design.
-  Institutions bring their own applications; Linumed OS provides the secure base.
+  Institutions bring their own applications; Linumed Base provides the secure base.
 - **Kubernetes, bootable images, PXE.** Excluded by `CLAUDE.md`, not revisited here.

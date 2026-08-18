@@ -14,7 +14,7 @@ All variables are prefixed `monitoring_*` and have sensible defaults in
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `monitoring_deploy_dir` | `/opt/linumed-os/monitoring` | Target directory on the host |
+| `monitoring_deploy_dir` | `/opt/linumed-base/monitoring` | Target directory on the host |
 | `monitoring_grafana_admin_password` | `""` (required) | No default - the role aborts in its preflight if unset |
 | `monitoring_grafana_admin_user` | `"admin"` | Grafana admin username |
 | `monitoring_grafana_port` | `3000` | Bound to `127.0.0.1` only - access via SSH tunnel |
@@ -122,7 +122,7 @@ Compose network they're only reachable through a temporary debug container in th
 network namespace:
 
 ```bash
-docker run --rm --network container:linumed-os-loki curlimages/curl:latest -s -G \
+docker run --rm --network container:linumed-base-loki curlimages/curl:latest -s -G \
   "http://127.0.0.1:3100/loki/api/v1/query_range" \
   --data-urlencode 'query={job="journal"}' --data-urlencode limit=3
 ```

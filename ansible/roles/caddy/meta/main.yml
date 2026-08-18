@@ -2,7 +2,7 @@
 galaxy_info:
   role_name: caddy
   author: Linumed
-  description: Reverse proxy with automatic ACME/TLS for Linumed OS (Caddy, Docker Compose)
+  description: Reverse proxy with automatic ACME/TLS for Linumed Base (Caddy, Docker Compose)
   license: MIT
   min_ansible_version: "2.15"
   platforms:

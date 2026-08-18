@@ -76,7 +76,7 @@
 - name: Deploy the backup script
   ansible.builtin.template:
     src: backup.sh.j2
-    dest: /usr/local/bin/linumed-os-backup.sh
+    dest: /usr/local/bin/linumed-base-backup.sh
     owner: root
     group: root
     mode: "0700"
@@ -88,14 +88,14 @@
 # validate-before-activate pattern in caddy/monitoring/bridgelink - just with the tool
 # that actually applies to a shell script.
 - name: Validate the backup script's syntax
-  ansible.builtin.command: bash -n /usr/local/bin/linumed-os-backup.sh
+  ansible.builtin.command: bash -n /usr/local/bin/linumed-base-backup.sh
   changed_when: false
   become: true
 
 - name: Deploy the systemd service unit
   ansible.builtin.template:
     src: backup.service.j2
-    dest: /etc/systemd/system/linumed-os-backup.service
+    dest: /etc/systemd/system/linumed-base-backup.service
     owner: root
     group: root
     mode: "0644"
@@ -105,7 +105,7 @@
 - name: Deploy the systemd timer unit
   ansible.builtin.template:
     src: backup.timer.j2
-    dest: /etc/systemd/system/linumed-os-backup.timer
+    dest: /etc/systemd/system/linumed-base-backup.timer
     owner: root
     group: root
     mode: "0644"
@@ -116,7 +116,7 @@
 
 - name: Ensure the backup timer is enabled and running
   ansible.builtin.systemd_service:
-    name: linumed-os-backup.timer
+    name: linumed-base-backup.timer
     enabled: true
     state: started
     daemon_reload: true
@@ -127,7 +127,7 @@
 - name: Deploy the restore-test script
   ansible.builtin.template:
     src: restore-test.sh.j2
-    dest: /usr/local/bin/linumed-os-restore-test.sh
+    dest: /usr/local/bin/linumed-base-restore-test.sh
     owner: root
     group: root
     mode: "0700"
@@ -136,7 +136,7 @@
   when: backup_restore_test_enabled | bool
 
 - name: Validate the restore-test script's syntax
-  ansible.builtin.command: bash -n /usr/local/bin/linumed-os-restore-test.sh
+  ansible.builtin.command: bash -n /usr/local/bin/linumed-base-restore-test.sh
   changed_when: false
   become: true
   when: backup_restore_test_enabled | bool
@@ -144,7 +144,7 @@
 - name: Deploy the restore-test systemd service unit
   ansible.builtin.template:
     src: restore-test.service.j2
-    dest: /etc/systemd/system/linumed-os-restore-test.service
+    dest: /etc/systemd/system/linumed-base-restore-test.service
     owner: root
     group: root
     mode: "0644"
@@ -155,7 +155,7 @@
 - name: Deploy the restore-test systemd timer unit
   ansible.builtin.template:
     src: restore-test.timer.j2
-    dest: /etc/systemd/system/linumed-os-restore-test.timer
+    dest: /etc/systemd/system/linumed-base-restore-test.timer
     owner: root
     group: root
     mode: "0644"
@@ -167,7 +167,7 @@
 
 - name: Ensure the restore-test timer is enabled and running
   ansible.builtin.systemd_service:
-    name: linumed-os-restore-test.timer
+    name: linumed-base-restore-test.timer
     enabled: true
     state: started
     daemon_reload: true
@@ -185,8 +185,8 @@
     enabled: false
   become: true
   loop:
-    - linumed-os-restore-test.timer
-    - linumed-os-restore-test.service
+    - linumed-base-restore-test.timer
+    - linumed-base-restore-test.service
   when: not (backup_restore_test_enabled | bool)
   failed_when: false
 
@@ -196,7 +196,7 @@
     state: absent
   become: true
   loop:
-    - /etc/systemd/system/linumed-os-restore-test.timer
-    - /etc/systemd/system/linumed-os-restore-test.service
-    - /usr/local/bin/linumed-os-restore-test.sh
+    - /etc/systemd/system/linumed-base-restore-test.timer
+    - /etc/systemd/system/linumed-base-restore-test.service
+    - /usr/local/bin/linumed-base-restore-test.sh
   when: not (backup_restore_test_enabled | bool)
