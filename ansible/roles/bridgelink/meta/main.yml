@@ -2,7 +2,7 @@
 galaxy_info:
   role_name: bridgelink
   author: Linumed
-  description: HL7/FHIR integration engine for Linumed OS (BridgeLink, an MPL-2.0 fork of Mirth Connect, with PostgreSQL)
+  description: HL7/FHIR integration engine for Linumed Base (BridgeLink, an MPL-2.0 fork of Mirth Connect, with PostgreSQL)
   license: MIT
   min_ansible_version: "2.15"
   platforms:

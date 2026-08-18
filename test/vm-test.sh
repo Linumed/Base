@@ -23,10 +23,10 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # VM and briefly left the host without a working /tmp). /var/tmp is disk-backed on a
 # standard Debian install; if that assumption doesn't hold on some other host, override
 # TMPDIR before running this script.
-WORK_DIR="$(mktemp -d "${TMPDIR:-/var/tmp}/linumed-os-vmtest.XXXXXX")"
+WORK_DIR="$(mktemp -d "${TMPDIR:-/var/tmp}/linumed-base-vmtest.XXXXXX")"
 # The libvirt-qemu user (not root/the invoking user) needs to reach the disk images.
 chmod 711 "${WORK_DIR}"
-VM_NAME="linumed-os-vmtest-$$"
+VM_NAME="linumed-base-vmtest-$$"
 IMAGE_URL="https://cloud.debian.org/images/cloud/trixie/latest/debian-13-genericcloud-amd64.qcow2"
 SSH_KEY="${WORK_DIR}/id_ed25519"
 ANSIBLE_USER="vmtest"
@@ -58,7 +58,7 @@ curl -fsSL -o "${WORK_DIR}/base.qcow2" "${IMAGE_URL}"
 qemu-img create -f qcow2 -F qcow2 -b "${WORK_DIR}/base.qcow2" "${WORK_DIR}/disk.qcow2" 10G
 chmod 644 "${WORK_DIR}/base.qcow2" "${WORK_DIR}/disk.qcow2"
 
-ssh-keygen -t ed25519 -N "" -f "${SSH_KEY}" -C "linumed-os-vmtest" >/dev/null
+ssh-keygen -t ed25519 -N "" -f "${SSH_KEY}" -C "linumed-base-vmtest" >/dev/null
 
 cat > "${WORK_DIR}/user-data" <<EOF
 #cloud-config

@@ -1,5 +1,5 @@
 ---
-# Observability stack for Linumed OS (issues #8, #9). Node Exporter is native (see
+# Observability stack for Linumed Base (issues #8, #9). Node Exporter is native (see
 # defaults/main.yml); everything else is a Docker Compose stack, added in stack.yml.
 
 - name: Node Exporter (native)

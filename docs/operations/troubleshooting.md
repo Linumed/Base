@@ -20,12 +20,12 @@ login), `monitoring` (no Grafana password, or a half-configured Alertmanager SMT
 `bridgelink` (any of its four required secrets missing), `backup` (no repository or
 password set). The fail message says which variable is missing; see
 [Deployment](deployment.md) and the required-variables table in
-[the README's quick start](https://github.com/linumed/linumed-os#quick-start) for where
+[the README's quick start](https://github.com/linumed/linumed-base#quick-start) for where
 those belong (`group_vars/linumed/vars.yml` vs. `vault.yml`).
 
 ## A service is running but I can't reach it, even from the LAN
 
-Working as designed. Every Linumed OS management interface binds to `127.0.0.1` or has
+Working as designed. Every Linumed Base management interface binds to `127.0.0.1` or has
 no host port at all - see [Access](access.md) and
 [ADR 0003](../adr/0003-loopback-only-access-no-bundled-identity-provider.md). Use an SSH
 tunnel.

@@ -1,5 +1,5 @@
 [Unit]
-Description=Linumed OS backup (restic)
+Description=Linumed Base backup (restic)
 
 [Service]
 Type=oneshot
@@ -7,4 +7,4 @@ Type=oneshot
 # its local metadata cache from scratch on every single run instead of reusing it -
 # harmless but slow, confirmed against a hand-rolled backup service before this role.
 Environment=HOME=/root
-ExecStart=/usr/local/bin/linumed-os-backup.sh
+ExecStart=/usr/local/bin/linumed-base-backup.sh

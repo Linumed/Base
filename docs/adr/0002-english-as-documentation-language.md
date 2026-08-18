@@ -13,19 +13,19 @@ neither.
 
 Two facts collide.
 
-**Linumed OS is not German in substance.** It is a hardened Debian with Ansible and
+**Linumed Base is not German in substance.** It is a hardened Debian with Ansible and
 Docker. Debian is an international operating system, the GDPR is EU-wide rather than
 German, and nothing in the roles (`common`, `docker`, `caddy`, `monitoring`,
 `bridgelink`, `backup`) encodes German law or German infrastructure. The only German
 bracket around the project was the documentation language convention itself.
 
 **The commercial product it was meant to feed is German-only.** The original business
-rationale for Linumed OS was a "trojan horse": free kit, easy path to Linumed Shifts.
-That coupling was decided against on 2026-08-13 - Linumed OS is to be positioned
+rationale for Linumed Base was a "trojan horse": free kit, easy path to Linumed Shifts.
+That coupling was decided against on 2026-08-13 - Linumed Base is to be positioned
 internationally, decoupled from Shifts' DACH-only status, because the DACH expansion
 for Shifts is blocked on the complexity of Austrian and Swiss working-time law and a
 genuine internationalisation beyond DACH is a different question again (it is unclear
-who the customer would even be). Linumed OS therefore has to stand on its own -
+who the customer would even be). Linumed Base therefore has to stand on its own -
 reputation and portfolio, possibly groundwork for a later internationalised Shifts.
 
 The audience follows from that. The realistic primary audience is IT service providers
@@ -96,7 +96,7 @@ style of the file they are in, as before.
 
 ### When to revisit this decision
 
-- **Linumed OS acquires a mainly German-speaking user base in practice** (issues,
+- **Linumed Base acquires a mainly German-speaking user base in practice** (issues,
   questions and contributions arriving in German). Then serving that audience beats the
   international ambition, and a German translation of the operations handbook becomes the
   first thing to add.
@@ -104,13 +104,13 @@ style of the file they are in, as before.
   and hospital procurement in Germany can demand it; that would be a hard requirement
   rather than a preference, and would force a bilingual setup regardless of the drift
   cost.
-- **The international positioning is dropped** and Linumed OS is re-coupled to Shifts as
+- **The international positioning is dropped** and Linumed Base is re-coupled to Shifts as
   a pure DACH upsell path.
 
 ## Sources
 
 - Positioning decision of 2026-08-13, recorded in the project memory
-  (`project_linumed_os_international_gtm`) - Linumed OS to be positioned internationally,
+  (`project_linumed_os_international_gtm`) - Linumed Base to be positioned internationally,
   decoupled from Shifts.
 - `CLAUDE.md`, "Documentation" - the split rule this ADR supersedes.
 - Issue #26 - operations handbook and MkDocs setup, the first document written under this

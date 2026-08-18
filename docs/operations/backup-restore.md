@@ -8,9 +8,9 @@ deliberately doesn't repeat.
 
 ## What a full restore actually means
 
-A restore of `/opt/linumed-os` and `/var/lib/docker/volumes` brings back:
+A restore of `/opt/linumed-base` and `/var/lib/docker/volumes` brings back:
 
-- every role's configuration and rendered templates (`/opt/linumed-os/*`)
+- every role's configuration and rendered templates (`/opt/linumed-base/*`)
 - BridgeLink's app data, including its keystore and `server.id`
   (`bridgelink_appdata` volume)
 - BridgeLink's PostgreSQL database, channel configuration and stored messages

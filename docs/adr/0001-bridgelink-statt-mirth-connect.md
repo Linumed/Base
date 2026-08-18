@@ -6,7 +6,7 @@
 
 Mirth Connect ist der De-facto-Standard für Healthcare-Datenintegration im
 DACH-Raum. Wer sich in Kliniken umsieht, findet Mirth oder das kommerzielle
-Orchestra — sonst wenig. Linumed OS liefert die Engine trotzdem nicht als
+Orchestra — sonst wenig. Linumed Base liefert die Engine trotzdem nicht als
 „Mirth Connect" aus, sondern als **BridgeLink**. Das ist erklärungsbedürftig,
 und genau darum geht es hier.
 
@@ -43,11 +43,11 @@ Branchenberichten zufolge betrifft das rund 15.000 Organisationen weltweit.
 Innerhalb weniger Wochen entstanden zwei Forks des letzten quelloffenen Standes,
 beide unter MPL 2.0.
 
-Für Linumed OS kollidiert das mit zwei festgeschriebenen Grundsätzen:
+Für Linumed Base kollidiert das mit zwei festgeschriebenen Grundsätzen:
 
 - **FOSS-only im Core** (`CLAUDE.md`, `ARCHITECTURE.md`): keine kommerzielle
   Software, keine proprietären Lizenzen.
-- **Linumed OS ist der kostenlose Unterbau.** Eine Pflicht zur kommerziellen
+- **Linumed Base ist der kostenlose Unterbau.** Eine Pflicht zur kommerziellen
   Lizenz für die zentrale Komponente würde den Zweck des Kits aushebeln.
 
 Hinzu kommt: Eine Integrationsengine bewegt echte Patientendaten. Eine eingefrorene
@@ -104,7 +104,7 @@ gleichzeitig quelloffen, aktuell gepatcht **und** ohne Eigenbau deploybar ist.
 
 - **Beschaffungs- und Wahrnehmungsreibung.** „Mirth Connect" steht in Lastenheften,
   Ausschreibungen, Wartungsverträgen und Lebensläufen; „BridgeLink" nicht. Wer
-  Linumed OS anbietet, muss die Frage „warum nicht Mirth?" beantworten können —
+  Linumed Base anbietet, muss die Frage „warum nicht Mirth?" beantworten können —
   dieses Dokument ist die Antwort und darf zitiert werden.
 - **Ökosystem.** Kommerzielle Mirth-Erweiterungen und NextGen-Supportverträge zielen
   auf NextGens Produkt, nicht auf Forks.

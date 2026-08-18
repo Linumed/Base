@@ -1,6 +1,6 @@
 # monitoring
 
-Observability stack for Linumed OS (issues #8, #9): Prometheus, Grafana, Loki, Grafana
+Observability stack for Linumed Base (issues #8, #9): Prometheus, Grafana, Loki, Grafana
 Alloy, Alertmanager, cAdvisor as a Docker Compose stack, plus a native Node Exporter.
 
 ## Variables

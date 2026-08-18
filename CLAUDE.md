@@ -1,19 +1,19 @@
-# CLAUDE.md - Linumed OS
+# CLAUDE.md - Linumed Base
 
 This file defines the rules, architecture, and constraints for this project.
 Always read this file before making any changes.
 
 ---
 
-## What is Linumed OS?
+## What is Linumed Base?
 
-Linumed OS is an Ansible-based Infrastructure-as-Code kit that turns a
+Linumed Base is an Ansible-based Infrastructure-as-Code kit that turns a
 standard Debian installation into a hardened, DSGVO-compliant healthcare
 infrastructure platform. It is fully open source (MIT). It is NOT a custom
 Linux distribution and does NOT produce a bootable ISO.
 
 Linumed Shifts (the nurse scheduling SaaS product) is a separate commercial
-product that can optionally run on top of Linumed OS. It is NOT part of this
+product that can optionally run on top of Linumed Base. It is NOT part of this
 repository.
 
 ---
@@ -44,7 +44,7 @@ repository.
 ## Repository structure
 
 ```
-linumed-os/
+linumed-base/
 ├── ansible/
 │   ├── roles/
 │   │   ├── common/          # Hardening, firewall, SSH, updates
@@ -136,13 +136,13 @@ Out of scope for v0.1: Orthanc (DICOM, v0.3), Linumed Passpin (separate product,
 see `docs/adr/0003-loopback-only-access-no-bundled-identity-provider.md`. Every management
 interface binds to `127.0.0.1` and is reached through an SSH tunnel; Caddy serves the
 operator's own applications, not this kit's admin UIs. Do not propose a shared
-`linumed-net`, a reverse-proxy route to a Linumed OS service, or a mesh-VPN role without
+`linumed-net`, a reverse-proxy route to a Linumed Base service, or a mesh-VPN role without
 first reading that ADR - all three were evaluated and rejected on the grounds that the kit
 must work after the playbooks run, without the institution supplying a second subsystem.
 Connecting Grafana to an *existing* identity provider via OIDC is fine; shipping one is not.
 
 Application software (KIS, DMS, document management) is out of scope entirely.
-Clinics bring their own applications. Linumed OS provides the secure base.
+Clinics bring their own applications. Linumed Base provides the secure base.
 
 ---
 
