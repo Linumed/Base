@@ -1,9 +1,9 @@
-site_name: Linumed OS
+site_name: Linumed Base
 site_description: >-
   Ansible-based IaC kit that turns a standard Debian 13 installation into a hardened,
   GDPR-compliant healthcare infrastructure platform.
-repo_url: https://github.com/linumed/linumed-os
-repo_name: linumed/linumed-os
+repo_url: https://github.com/linumed/linumed-base
+repo_name: linumed/linumed-base
 edit_uri: edit/main/docs/
 docs_dir: docs
 
@@ -71,3 +71,4 @@ nav:
       - "0003: Loopback-only access, no bundled identity provider": adr/0003-loopback-only-access-no-bundled-identity-provider.md
       - "0004: VM tests in CI via the host's libvirt socket": adr/0004-vm-tests-in-ci-via-host-libvirt-socket.md
       - "0005: docker/ is a manual-testing reference": adr/0005-docker-directory-is-a-manual-testing-reference-not-a-mirror.md
+      - "0006: Linumed Base, not Linumed OS": adr/0006-linumed-base-not-linumed-os.md
