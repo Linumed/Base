@@ -154,33 +154,37 @@ Clinics bring their own applications. Linumed OS provides the secure base.
   is no official Debian 13 Vagrant box (Debian bug #1110834, open as of 2026).
 - Before opening a PR, the full `site.yml` playbook must run idempotently
   against the test VM (no errors, no changes on second run) - `test/vm-test.sh` checks this.
-- Target CI/CD: Forgejo (forgejo.linumed.com on HostEurope VPS) with Forgejo Runner
-  on the local Linumed dev server, connected via Headscale/WireGuard tunnel
-- Interim CI/CD (until dev server is operational): GitHub Actions runs ansible-lint
-  on all roles - do not build deep GitHub Actions dependencies, keep workflows minimal
-  and portable so migration to Forgejo is straightforward
+- CI/CD is Forgejo Actions, self-hosted alongside the runner - see the CI/CD section
+  below. `ansible-lint` runs on every push; the full `site.yml` VM double-run runs on
+  changes under `ansible/`, `docker/`, `test/` or `scripts/` (issue #45).
 
 ---
 
 ## CI/CD
 
-Target setup (once Linumed dev server is operational):
+Forgejo is canonical and self-hosted, with its Actions runner on the same machine - there
+is no separate VPS and no tunnel between them. (Earlier drafts of this file described a
+split setup - Forgejo on a remote VPS, runner at home, mesh VPN in between. That was a
+plan, it is not what got built. Corrected 2026-08-18 after checking against the running
+system rather than trusting this file.)
 
-- Forgejo at forgejo.linumed.com (HostEurope VPS) as Git host and CI platform
-- Forgejo Runner on the Linumed dev server (local EliteDesk), connected to the VPS
-  via Headscale/WireGuard tunnel
-- Pipelines run locally on the dev server: ansible-lint, libvirt/KVM VM provisioning
-  (`test/vm-test.sh`), idempotency checks
+Two workflows under `.forgejo/workflows/`:
 
-Interim setup (GitHub Actions, until dev server is ready):
+- `ansible-lint.yml` - every push and pull request to `main`.
+- `vm-test.yml` - the full `site.yml` double-run against a throwaway libvirt/KVM VM, plus
+  Prometheus target health and the `docker/` smoke test. Triggers on pushes touching
+  `ansible/`, `docker/`, `test/` or `scripts/`, and on demand via `workflow_dispatch`.
+  Not on every push: a run takes ~9 minutes and the runner has capacity 1 (issue #45).
 
-- Minimal workflow: ansible-lint only, no VM-based tests
-- Keep .github/workflows/ simple and portable - no GitHub-specific features
-  that would make migration to Forgejo painful
-- Once Forgejo is live, GitHub repo can remain as a public mirror
+`runs-on: docker`, never `ubuntu-latest` - the runner registers that label only.
 
-Do not introduce GitHub Actions steps that cannot be replicated 1:1 in a
-Forgejo Actions workflow.
+Keep workflows portable. If a GitHub mirror is ever added it stays a mirror; do not
+introduce steps that only work on one platform.
+
+**Machine-specific details of this particular runner and host** (paths, the libvirt
+socket mount, its Docker/registry setup) belong in that machine's own system
+documentation, not in this repository - see ADR 0004 for the parts that genuinely affect
+the workflow design.
 
 ## Documentation
 

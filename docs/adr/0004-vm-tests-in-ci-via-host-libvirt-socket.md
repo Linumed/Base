@@ -1,6 +1,6 @@
 # ADR 0004: VM tests in CI via the host's libvirt socket
 
-**Status:** accepted · **Date:** 2026-08-14 · **Affects:** `.forgejo/workflows/`, `test/vm-test.sh`, the Forgejo runner configuration on `linumed-dev`; issue #33
+**Status:** accepted · **Date:** 2026-08-14 · **Affects:** `.forgejo/workflows/`, `test/vm-test.sh`, the Forgejo runner configuration; issue #33
 
 ## The question answered here
 
@@ -14,7 +14,9 @@ mechanism was chosen, and why the more isolated-looking option was rejected.
 
 ## Context
 
-Measured on `linumed-dev`, 2026-08-14.
+Measured on the maintainer's dev/build host, 2026-08-14. Paths below are that host's;
+they are the concrete setup this decision was measured against, not a requirement for
+anyone reproducing it.
 
 **The runner does not run jobs on the host.** `/srv/data/runner/config.yml` declares a
 single label, `docker:docker://node:24-bookworm`, so every job step runs in a fresh
@@ -164,7 +166,7 @@ when started by hand; nothing about this decision changes how they are invoked l
 
 ## Sources
 
-- Measurements of 2026-08-14 on `linumed-dev`: runner configuration
+- Measurements of 2026-08-14 on the dev/build host: runner configuration
   (`/srv/data/runner/config.yml`), `docker inspect forgejo-runner`, `/dev/kvm` ownership,
   libvirt socket permissions and `60-libvirt.rules`, and the two container reachability
   probes quoted above.
