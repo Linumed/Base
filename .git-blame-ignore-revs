@@ -1,0 +1,8 @@
+# Commits, die git blame ignorieren soll: rein mechanische Läufe ohne inhaltliche
+# Änderung. Ohne diese Datei zeigt `git blame` für jede betroffene Zeile auf den
+# Umbenennungslauf statt auf die Änderung, die die Zeile tatsächlich geschrieben hat.
+#
+# Lokal aktivieren (einmalig, `make setup` gibt es in diesem Repo nicht):
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+#
+# Umbenennung Linumed OS -> Linumed Base (Issue #51, ADR 0006)

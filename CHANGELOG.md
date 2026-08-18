@@ -11,6 +11,24 @@ click away instead of restated here.
 
 ## [Unreleased]
 
+### Changed
+
+- **The product is now called Linumed Base.** It was released as "Linumed OS" through
+  `v0.2.0`; the name was wrong, because this is a collection of Ansible roles that
+  configure a standard Debian install, not an operating system, a distribution or a
+  bootable image. Renamed while nothing was published and nothing was installed anywhere -
+  see ADR 0006 for the full reasoning and for what was deliberately *not* renamed.
+
+  **What this means for you:** identifiers changed with the name. Container names are now
+  `linumed-base-*`, the default deploy path is `/opt/linumed-base`, and the shared Docker
+  network is `linumed-base-external`. There are no known installations of the earlier
+  releases, so no migration path is provided - if you did install `v0.1.0` or `v0.2.0`,
+  treat this as a fresh deployment rather than an upgrade.
+
+  Git history and the `v0.1.0` / `v0.2.0` tag messages keep the old name on purpose. Those
+  releases happened under it, and rewriting published history to pretend otherwise would
+  be dishonest.
+
 ## [0.2.0] - 2026-08-17
 
 Operational maturity rather than new services: the v0.1 role set stayed as it was, and
@@ -30,7 +48,7 @@ restores.
   *existing* identity provider. No provider is bundled, and empty settings change nothing
   (ADR 0003, #42).
 - **Shared Docker network for Caddy** (`caddy_external_network_name`, default
-  `linumed-os-external`) so Caddy can reverse-proxy a container in an operator's own,
+  `linumed-base-external`) so Caddy can reverse-proxy a container in an operator's own,
   separate Compose stack by service name - without publishing a port or touching ufw
   (#39).
 - **Automated weekly restore test** in the `backup` role: restores into a throwaway
