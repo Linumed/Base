@@ -20,7 +20,7 @@ login), `monitoring` (no Grafana password, or a half-configured Alertmanager SMT
 `bridgelink` (any of its four required secrets missing), `backup` (no repository or
 password set). The fail message says which variable is missing; see
 [Deployment](deployment.md) and the required-variables table in
-[the README's quick start](https://github.com/linumed/linumed-base#quick-start) for where
+[the README's quick start](https://github.com/Linumed/Base#quick-start) for where
 those belong (`group_vars/linumed/vars.yml` vs. `vault.yml`).
 
 ## A service is running but I can't reach it, even from the LAN

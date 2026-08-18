@@ -325,7 +325,7 @@ outside the repository and references the roles.
 | Type | open-source IaC kit | commercial SaaS application |
 | License | MIT | proprietary |
 | Content | infra stack, integration engine, monitoring | shift scheduling for care wards |
-| Repo | linumed/linumed-base | linumed/shifts (private) |
+| Repo | Linumed/Base | Linumed/Shifts (private) |
 | Audience | IT admins, system integrators | care management, ward leads, nursing staff |
 | Dependency | independent | can run on top of Linumed Base |
 
