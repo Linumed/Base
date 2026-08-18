@@ -42,6 +42,6 @@ person with the SSH key effectively has access to everything.
 Caddy - the reverse proxy this kit ships - is for the **operator's own applications**,
 not for these management interfaces. Today it also can't reach a container the operator
 runs in a separate Compose stack without extra, currently undocumented network setup
-(tracked as [#39](https://github.com/linumed/linumed-base/issues/39)). That's unrelated to
+(tracked as [#39](https://github.com/Linumed/Base/issues/39)). That's unrelated to
 the access model above; even once #39 is resolved, Grafana/Prometheus/BridgeLink stay
 off Caddy's routes on purpose.

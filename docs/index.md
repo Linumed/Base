@@ -6,7 +6,7 @@ design. FOSS only.
 
 This site is the operator's handbook: how the pieces fit together, how to run the kit
 day to day, and why specific decisions were made. For installing it, start with the
-[repository README](https://github.com/linumed/linumed-base) - it has the quick start.
+[repository README](https://github.com/Linumed/Base) - it has the quick start.
 
 ## Where to start
 

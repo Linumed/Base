@@ -84,9 +84,21 @@ is plain.
 
 ## Decision
 
-The product is **Linumed Base**. The repository slug is `linumed-base`, container names
-use the `linumed-base-` prefix, the default deploy path is `/opt/linumed-base`, and the
-shared Docker network is `linumed-base-external`.
+The product is **Linumed Base**. Container names use the `linumed-base-` prefix, the
+default deploy path on a managed host is `/opt/linumed-base`, and the shared Docker
+network is `linumed-base-external`.
+
+The repository is named **`Base`**, matching the existing `Shifts` repository - the
+organisation already carries the "Linumed" part, so repeating it in the repository name
+would be redundant. The working copy therefore lives at `/opt/base`, alongside
+`/opt/shifts`.
+
+**The deploy path deliberately does not follow that shortening.** `/opt/base` is fine on
+a machine that only ever holds Linumed checkouts; on a clinic's server, a directory
+called `base` says nothing about what put it there or who maintains it, while
+`/opt/linumed-base` is self-documenting for whoever inherits the system. Short names for
+our own working copies, descriptive names for anything that lands on someone else's
+machine.
 
 **Deliberately not renamed:**
 
