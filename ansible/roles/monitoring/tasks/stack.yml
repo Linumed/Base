@@ -263,7 +263,7 @@
   when: monitoring_alloy_validate.rc != 0
 
 # Looked up at play time rather than hardcoded - the GID varies per host, same caveat as
-# the docker group GID noted in the Forgejo runner setup (/srv/data/system-doku).
+# the docker group GID in a Forgejo runner setup.
 - name: Look up the systemd-journal group GID for Alloy's group_add
   ansible.builtin.command: getent group systemd-journal
   register: monitoring_journal_gid_raw
