@@ -148,7 +148,8 @@ to exposing Linumed OS services, and it does not go away with this decision. Tra
 
 - Session transcript of 2026-08-10 - the original access decision and the rejected
   alternatives.
-- Verification runs of 2026-08-14 on `linumed-dev`: tunnel-only `sshd` configuration, and
+- Verification runs of 2026-08-14 on the maintainer's dev host: tunnel-only `sshd`
+  configuration, and
   container-to-host reachability for a loopback-published port.
 - `ansible/roles/caddy/defaults/main.yml` - "both stacks need a shared Docker network […]
   not automated by this role yet".

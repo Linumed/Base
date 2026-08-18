@@ -10,8 +10,9 @@ METRICS_FILE="{{ backup_textfile_dir }}/backup.prom"
 METRICS_TMP="${METRICS_FILE}.$$.tmp"
 success=0
 
-# Runs no matter how the script exits - the exact bug fixed on linumed-dev itself in
-# Issue #18 (backup-linumed-dev.sh left the service down after a failed restic step,
+# Runs no matter how the script exits - the exact bug fixed in Issue #18, in a
+# hand-written predecessor of this script that left a service down after a failed
+# restic step,
 # because nothing ran on failure). Here the risk is smaller (nothing gets stopped), but
 # the same principle applies to observability: a failed run must be visible to
 # Prometheus, not silently missing. Atomic write (tmp file + mv) so node_exporter's

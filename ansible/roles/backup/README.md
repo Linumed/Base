@@ -47,7 +47,7 @@ didn't exist yet) starts firing for real as soon as this role's first run lands.
 
 The backup script always writes its metrics via a `trap ... EXIT`, regardless of how the
 script exits. This is not a stylistic choice - it's the direct lesson from Issue #18: the
-hand-written backup script on `linumed-dev` itself stopped Forgejo before backing up and
+hand-written predecessor of this script stopped a container before backing up and
 started it again after, without a trap, so a failed `restic` step left the container down
 for hours before anyone noticed by accident. This role's script doesn't stop any service
 (see the consistency trade-off above), so the failure mode is smaller - but "a failed

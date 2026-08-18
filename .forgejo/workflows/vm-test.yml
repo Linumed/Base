@@ -39,7 +39,7 @@ jobs:
     # Both mounts are host paths, not container-private ones, and both must be listed in
     # `container.valid_volumes` in the runner's config.yml (ADR 0004):
     #   - the libvirt socket: this job never runs its own libvirtd. It talks to the one
-    #     already running on linumed-dev over qemu:///system, the same way an operator
+    #     already running on the runner's host over qemu:///system, the same way an operator
     #     testing by hand does.
     #   - the VM work directory: virt-install running in this container tells the HOST's
     #     libvirtd where to put disk images. That only works if the path resolves to the

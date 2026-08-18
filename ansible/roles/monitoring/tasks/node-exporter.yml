@@ -35,7 +35,8 @@
 # by the rule below - confirmed 2026-08-14 against a fresh VM (issue #40): the "node"
 # target's health was "down" with "context deadline exceeded", and ufw showed only the
 # deny rule, no allow. 172.16.0.0/12, not a narrower /16: `docker compose` assigns each
-# project's network a sequential /16 out of this pool (confirmed on linumed-dev -
+# project's network a sequential /16 out of this pool (confirmed on a host running
+# several stacks -
 # monitoring_default landed on 172.20.0.0/16, other stacks on .17/.18/.19), so pinning to
 # one /16 would break depending on how many other Compose projects existed first.
 # insert: 1 / insert_relative_to: zero pins this at the absolute first ufw rule (ufw
