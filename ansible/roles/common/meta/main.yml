@@ -2,7 +2,7 @@
 galaxy_info:
   role_name: common
   author: Linumed
-  description: Base hardening for Linumed OS (SSH hardening, ufw, fail2ban, unattended-upgrades, NTP/timezone)
+  description: Base hardening for Linumed Base (SSH hardening, ufw, fail2ban, unattended-upgrades, NTP/timezone)
   license: MIT
   min_ansible_version: "2.15"
   platforms:

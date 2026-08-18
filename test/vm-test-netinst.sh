@@ -18,9 +18,9 @@ export LIBVIRT_DEFAULT_URI="qemu:///system"
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # See test/vm-test.sh for why /var/tmp, not /tmp, on this dev server.
-WORK_DIR="$(mktemp -d "${TMPDIR:-/var/tmp}/linumed-os-netinst.XXXXXX")"
+WORK_DIR="$(mktemp -d "${TMPDIR:-/var/tmp}/linumed-base-netinst.XXXXXX")"
 chmod 711 "${WORK_DIR}"
-VM_NAME="linumed-os-netinst-$$"
+VM_NAME="linumed-base-netinst-$$"
 ISO_URL="https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-13.6.0-amd64-netinst.iso"
 SSH_KEY="${WORK_DIR}/id_ed25519"
 ANSIBLE_USER="root"
@@ -56,7 +56,7 @@ curl -fsSL -o "${WORK_DIR}/netinst.iso" "${ISO_URL}"
 qemu-img create -f qcow2 "${WORK_DIR}/disk.qcow2" 10G >/dev/null
 chmod 644 "${WORK_DIR}/disk.qcow2" "${WORK_DIR}/netinst.iso"
 
-ssh-keygen -t ed25519 -N "" -f "${SSH_KEY}" -C "linumed-os-netinst" >/dev/null
+ssh-keygen -t ed25519 -N "" -f "${SSH_KEY}" -C "linumed-base-netinst" >/dev/null
 
 # Deliberately minimal - this is the whole point of the test. tasksel deselected
 # (including "standard system utilities"), pkgsel/include limited to openssh-server

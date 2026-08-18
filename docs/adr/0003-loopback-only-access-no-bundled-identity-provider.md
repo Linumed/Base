@@ -11,7 +11,7 @@ kit aimed at hospitals ships *less* here rather than more.
 
 ## Context
 
-Every service in Linumed OS binds to `127.0.0.1` or publishes no host port at all. Grafana,
+Every service in Linumed Base binds to `127.0.0.1` or publishes no host port at all. Grafana,
 Prometheus and the BridgeLink admin interface are reached with `ssh -L`. Caddy proxies
 nothing by default (`caddy_sites: []`); it exists for the operator's own applications.
 
@@ -48,7 +48,7 @@ forever.
 **C · Mesh VPN (Headscale/WireGuard).** Technically the most elegant: services stay bound to
 loopback, nothing is exposed, revocation is central. It is what the Linumed development
 server actually does. **Rejected on scope, not on merit.** A mesh needs a coordination
-server, clients on every accessing device, and someone to operate both. Linumed OS ships
+server, clients on every accessing device, and someone to operate both. Linumed Base ships
 none of that. The role would do nothing on its own, the institution's monitoring access
 would depend on infrastructure the kit neither delivers nor runs, and if the service
 provider hosts the coordination plane, the blast radius spans every site they serve - the
@@ -71,7 +71,7 @@ substitute.
 **No mesh VPN role is added.**
 
 **`linumed-net` is dropped** in the sense it was written: a shared network for exposing
-Linumed OS services through Caddy. Issues #31, #32 and #34 are closed accordingly.
+Linumed Base services through Caddy. Issues #31, #32 and #34 are closed accordingly.
 
 Three things are adopted instead, all of which stay inside existing roles and add no
 component:
@@ -119,7 +119,7 @@ surface, no dependency on a component the kit does not ship, and no availability
 between diagnosing an incident and an identity provider being reachable.
 
 **Composability, the property that mattered most.** Because everything stays bound to
-loopback, Linumed OS runs over whatever network the operator already has - a corporate VPN,
+loopback, Linumed Base runs over whatever network the operator already has - a corporate VPN,
 a mesh, a jump host, the hospital LAN - without knowing about any of it. A service provider
 running a mesh across their fleet still gets option C; it is simply their decision, one
 layer up, instead of freight carried by the base system. Options B and C would each have
@@ -130,7 +130,7 @@ containerised application the operator deploys in its own Compose stack. Measure
 2026-08-14: an app published on `127.0.0.1:8080` answers the host with HTTP 200 and a
 Caddy-like container with nothing, because host loopback is not the gateway address a
 container arrives on. That is the *second* job `linumed-net` was carrying, it is unrelated
-to exposing Linumed OS services, and it does not go away with this decision. Tracked as
+to exposing Linumed Base services, and it does not go away with this decision. Tracked as
 **#39**.
 
 ### When to revisit this decision
@@ -138,7 +138,7 @@ to exposing Linumed OS services, and it does not go away with this decision. Tra
 - **A customer needs browser-based dashboard access for people without SSH**, for example
   clinical staff looking at their own metrics. Then option B has to be reconsidered on its
   merits, because no amount of SSH hardening produces a browser login.
-- **Linumed OS grows a component that must be reachable from outside by design** - a patient-
+- **Linumed Base grows a component that must be reachable from outside by design** - a patient-
   or partner-facing endpoint rather than an admin interface. The reasoning here covers
   management interfaces only.
 - **`sshd` restrictions turn out to be insufficient in practice**, for instance if operators

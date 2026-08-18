@@ -1,4 +1,4 @@
-# Linumed OS
+# Linumed Base
 
 Ansible-based IaC kit that turns a standard Debian 13 installation into a
 hardened, DSGVO-compliant healthcare infrastructure platform.
@@ -8,7 +8,7 @@ On-premise by design. FOSS only.
 
 ## What it is
 
-Linumed OS is not a custom Linux distribution. It is a collection of
+Linumed Base is not a custom Linux distribution. It is a collection of
 Ansible playbooks and roles that configure a standard Debian 13 (Trixie)
 server into a production-ready healthcare infrastructure stack - including
 HL7/FHIR integration, monitoring, reverse proxy, and encrypted backups.
@@ -92,8 +92,8 @@ cloud image, or a host you've set up before).
 ```
 
 ```bash
-git clone https://github.com/linumed/linumed-os.git
-cd linumed-os/ansible
+git clone https://github.com/linumed/linumed-base.git
+cd linumed-base/ansible
 # Every ansible-playbook/ansible-vault/ansible-lint command in this repo runs from here,
 # not the repo root - ansible.cfg (roles_path, default inventory) lives in this
 # directory and Ansible only picks up an ansible.cfg from the current working directory.
@@ -129,7 +129,7 @@ MIT - see [LICENSE](LICENSE)
 
 ## Part of the Linumed ecosystem
 
-- **Linumed OS** (this repo) - open source infrastructure platform
+- **Linumed Base** (this repo) - open source infrastructure platform
 - **Linumed Shifts** - nurse shift scheduling SaaS (commercial)
 - **Linumed Passpin** - identity and secrets management (in development)
 

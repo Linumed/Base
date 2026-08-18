@@ -1,5 +1,5 @@
 ---
-# Linumed OS specific defaults for the `linumed` group.
+# Linumed Base specific defaults for the `linumed` group.
 #
 # This file holds plain configuration - values that are fine to read in a code review or
 # a backup of this repo. Actual secrets (passwords, keystore passphrases, the BridgeLink

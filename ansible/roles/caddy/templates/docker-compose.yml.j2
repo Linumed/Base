@@ -1,4 +1,4 @@
-# Managed by Ansible (linumed-os, role: caddy). Do not edit by hand, changes will be overwritten.
+# Managed by Ansible (linumed-base, role: caddy). Do not edit by hand, changes will be overwritten.
 # Deliberately close to docker/caddy/docker-compose.yml (the manual-testing reference) but
 # not identical - this one uses Ansible variables instead of a .env file, since the role
 # already owns config generation end to end. Keep both in sync when bumping caddy_image.
@@ -7,7 +7,7 @@ services:
     image: {{ caddy_image }}
     # Fixed name, not left to compose's default project-derived naming - the "Reload caddy"
     # handler execs into this container by name and needs a stable target.
-    container_name: linumed-os-caddy
+    container_name: linumed-base-caddy
     restart: unless-stopped
     # A container can't reach the host's own 127.0.0.1 - host-gateway resolves
     # host.docker.internal to the host, for reverse_proxy targets that run natively on

@@ -16,7 +16,7 @@ and channels are exportable between all variants.
 
 Background: NextGen Healthcare moved Mirth Connect to a **purely commercial, proprietary
 license in March 2025**, closing the source from 4.6 onward. The open-source line has
-continued under new names since - Linumed OS follows that open line because the kit is
+continued under new names since - Linumed Base follows that open line because the kit is
 FOSS-only, and the last free Mirth version (4.5.2) gets no more security fixes.
 
 The full reasoning, with every evaluated alternative, the downsides accepted along the
@@ -27,7 +27,7 @@ the answer to "why not Mirth?" and can be quoted as such.
 
 ## If the institution wants to use licensed Mirth Connect
 
-Linumed OS doesn't force a fork on anyone - it ships a FOSS default. Two paths:
+Linumed Base doesn't force a fork on anyone - it ships a FOSS default. Two paths:
 
 **Reliable: take the channels with you.** Channels, code templates and transformers can
 be exported from BridgeLink and imported into licensed Mirth Connect (or OIE), because
@@ -69,7 +69,7 @@ inventory.
   `db_password` - the password files are plaintext, that's how file-based Docker secrets
   work. `mirth.properties` is owned by UID 65532 (0400), or the hardened container can't
   read it.
-- Containers `linumed-os-bridgelink` and `linumed-os-bridgelink-db`, volumes for app
+- Containers `linumed-base-bridgelink` and `linumed-base-bridgelink-db`, volumes for app
   data, custom extensions and the database.
 
 ## Access
@@ -96,10 +96,10 @@ Container status alone says **nothing** here (see pitfalls). What counts:
 curl -sk -H 'X-Requested-With: check' https://127.0.0.1:8443/api/server/version
 
 # Is the database backend healthy
-docker inspect linumed-os-bridgelink-db --format '{{ "{{" }}.State.Health.Status{{ "}}" }}'
+docker inspect linumed-base-bridgelink-db --format '{{ "{{" }}.State.Health.Status{{ "}}" }}'
 
 # Is the engine actually running against PostgreSQL (not the built-in Derby DB)?
-docker logs linumed-os-bridgelink 2>&1 | grep -i "postgres"
+docker logs linumed-base-bridgelink 2>&1 | grep -i "postgres"
 ```
 
 The role runs this same check itself right after deployment and aborts if the engine

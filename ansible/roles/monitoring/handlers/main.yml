@@ -24,21 +24,21 @@
 
 - name: Restart loki
   community.docker.docker_container:
-    name: linumed-os-loki
+    name: linumed-base-loki
     state: started
     restart: true
   become: true
 
 - name: Restart alertmanager
   community.docker.docker_container:
-    name: linumed-os-alertmanager
+    name: linumed-base-alertmanager
     state: started
     restart: true
   become: true
 
 - name: Restart alloy
   community.docker.docker_container:
-    name: linumed-os-alloy
+    name: linumed-base-alloy
     state: started
     restart: true
   become: true

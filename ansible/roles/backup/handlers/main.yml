@@ -4,12 +4,12 @@
     daemon_reload: true
   become: true
 
-# Only the timer, never the service - restarting linumed-os-backup.service would
+# Only the timer, never the service - restarting linumed-base-backup.service would
 # interrupt a backup that happens to be running. The timer merely reschedules; restarting
 # it just re-reads OnCalendar, it never touches whether a backup is currently in progress.
 - name: Restart backup timer
   ansible.builtin.systemd_service:
-    name: linumed-os-backup.timer
+    name: linumed-base-backup.timer
     state: restarted
   become: true
 
@@ -17,6 +17,6 @@
 # interrupts a restore test that happens to be running.
 - name: Restart restore-test timer
   ansible.builtin.systemd_service:
-    name: linumed-os-restore-test.timer
+    name: linumed-base-restore-test.timer
     state: restarted
   become: true

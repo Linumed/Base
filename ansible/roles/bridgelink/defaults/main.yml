@@ -1,5 +1,5 @@
 ---
-bridgelink_deploy_dir: "/opt/linumed-os/bridgelink"
+bridgelink_deploy_dir: "/opt/linumed-base/bridgelink"
 
 # BridgeLink, not Mirth Connect: NextGen moved Mirth Connect to a proprietary licence in
 # March 2025 (closed source from 4.6 onwards), which collides with this repo's FOSS-only

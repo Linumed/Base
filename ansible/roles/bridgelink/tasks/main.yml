@@ -155,7 +155,7 @@
     url: "https://127.0.0.1:{{ bridgelink_admin_port }}/api/server/version"
     method: GET
     headers:
-      X-Requested-With: "ansible-linumed-os"
+      X-Requested-With: "ansible-linumed-base"
     validate_certs: false
     return_content: true
   register: bridgelink_version_check

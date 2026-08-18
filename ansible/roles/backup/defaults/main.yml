@@ -15,7 +15,7 @@ backup_restic_password: ""
 # Not role-specific on purpose, so this role has no hard dependency on caddy/monitoring/
 # bridgelink being installed - back up whatever is actually present.
 backup_paths:
-  - /opt/linumed-os
+  - /opt/linumed-base
   - /var/lib/docker/volumes
 
 # Nothing here is backed up consistently in the database sense - see "Stolperfallen" in
@@ -59,8 +59,8 @@ backup_restore_test_schedule: "Sun *-*-* 04:00:00"
 # What gets diffed after restoring, deliberately narrower than backup_paths. Comparing
 # /var/lib/docker/volumes against a live restore would produce spurious diffs from
 # Prometheus/Loki/Postgres writing to their own data directories during the test, which
-# would make a healthy restore test look broken. /opt/linumed-os (role configuration and
+# would make a healthy restore test look broken. /opt/linumed-base (role configuration and
 # secrets) is comparatively static and a fair, exact comparison - a full diff, not a
 # sample, since a sample would defeat the point of a verified restore.
 backup_restore_test_diff_paths:
-  - /opt/linumed-os
+  - /opt/linumed-base

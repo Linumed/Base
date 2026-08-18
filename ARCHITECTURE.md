@@ -1,8 +1,8 @@
-# ARCHITECTURE.md - Linumed OS
+# ARCHITECTURE.md - Linumed Base
 
 ## Overview
 
-Linumed OS is not a custom operating system and not a bootable image.
+Linumed Base is not a custom operating system and not a bootable image.
 It is an Infrastructure-as-Code kit built on Ansible that turns a
 standard Debian 13 (Trixie) installation into a hardened, GDPR-compliant
 healthcare infrastructure platform.
@@ -17,7 +17,7 @@ from scratch.
 ## Design principles
 
 **On-premise by design**
-Linumed OS is built to run in the institution's own infrastructure.
+Linumed Base is built to run in the institution's own infrastructure.
 There is no cloud dependency, no telemetry call-home, no SaaS
 component. All data stays in-house.
 
@@ -31,7 +31,7 @@ All Ansible playbooks are idempotent. A second run produces no
 changes. That is a hard requirement, not a recommendation.
 
 **FOSS-only in the core**
-Every component of Linumed OS is free open-source software.
+Every component of Linumed Base is free open-source software.
 Linumed Shifts (the commercial product) is not part of this repository
 and is licensed separately.
 
@@ -125,7 +125,7 @@ transformers and connectors - the Java packages are still called
 `com.mirth.connect`. NextGen Healthcare moved Mirth Connect to a purely
 commercial, proprietary license in March 2025 (source closed from 4.6
 onward); the open-source line has continued under new names since, and
-Linumed OS follows that open line. Mirth Connect remains the industry's
+Linumed Base follows that open line. Mirth Connect remains the industry's
 de-facto standard - channels are portable between all variants, so an
 institution keeps its integration work if it ever wants to switch.
 
@@ -192,7 +192,7 @@ restic results are pushed to Prometheus as metrics.
 
 ## Network design
 
-**Decided, not open:** no Linumed OS management interface is reachable
+**Decided, not open:** no Linumed Base management interface is reachable
 from outside. Every component binds to `127.0.0.1` or publishes no
 host port at all; access goes through an SSH tunnel. Each Compose stack
 has its own, isolated Docker network.
@@ -210,7 +210,7 @@ Internet
    │
    ├── :80  ──▶ Caddy ──▶ redirect to HTTPS
    └── :443 ──▶ Caddy ──▶ the operator's own applications
-                          (Linumed OS itself is not behind it)
+                          (Linumed Base itself is not behind it)
 
 SSH tunnel (not public)
    ├── 127.0.0.1:3000 ──▶ Grafana
@@ -220,13 +220,13 @@ SSH tunnel (not public)
 
 Caddy is the reverse proxy for the **institution's own applications**,
 not for this kit's management interfaces. It joins a second Docker
-network (`linumed-os-external`, created unconditionally by the caddy
+network (`linumed-base-external`, created unconditionally by the caddy
 role) for exactly that purpose, independent of the access decision
 above: an operator's separate Compose stack joins the same network as
 `external: true` and is then reachable by service name, without
 publishing a port or touching ufw. See `docs/roles/caddy.md`.
 
-Because everything stays bound to loopback, Linumed OS works over
+Because everything stays bound to loopback, Linumed Base works over
 whatever network the operator already runs - a corporate VPN, a mesh, a
 jump host, or the clinic LAN - without needing to know about any of it.
 That composability is the reason for the decision, not a side effect of
@@ -251,7 +251,7 @@ Node Exporter has no volume of its own - it runs natively, and host
 metrics aren't persisted there (Prometheus takes care of that).
 
 restic backs up `/var/lib/docker/volumes/` via direct file access, plus
-`/opt/linumed-os/` (role configuration, secrets). Backups run daily via
+`/opt/linumed-base/` (role configuration, secrets). Backups run daily via
 a systemd timer. The result isn't pushed to Prometheus; it's written as
 a Prometheus textfile metric (the same mechanism the native Node
 Exporter uses) - Prometheus picks it up on its regular scrape, no
@@ -318,16 +318,16 @@ outside the repository and references the roles.
 
 ---
 
-## Scope: Linumed OS vs. Linumed Shifts
+## Scope: Linumed Base vs. Linumed Shifts
 
-| | Linumed OS | Linumed Shifts |
+| | Linumed Base | Linumed Shifts |
 |---|---|---|
 | Type | open-source IaC kit | commercial SaaS application |
 | License | MIT | proprietary |
 | Content | infra stack, integration engine, monitoring | shift scheduling for care wards |
-| Repo | linumed/linumed-os | linumed/shifts (private) |
+| Repo | linumed/linumed-base | linumed/shifts (private) |
 | Audience | IT admins, system integrators | care management, ward leads, nursing staff |
-| Dependency | independent | can run on top of Linumed OS |
+| Dependency | independent | can run on top of Linumed Base |
 
 Linumed Shifts is not in this repository and is not documented here.
 
@@ -352,7 +352,7 @@ Passpin is unaffected by this - it is a separate product and is not
 developed in this repository.
 
 Application software (HIS, DMS, document management) is deliberately
-not part of Linumed OS. The clinic runs its own applications. Linumed
+not part of Linumed Base. The clinic runs its own applications. Linumed
 OS provides the secure, GDPR-compliant base.
 
 Every release is tagged as a git tag. Breaking changes only from v1.0

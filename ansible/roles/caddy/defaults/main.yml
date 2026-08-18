@@ -1,6 +1,6 @@
 ---
 caddy_image: "caddy:2.11.4-alpine"
-caddy_deploy_dir: "/opt/linumed-os/caddy"
+caddy_deploy_dir: "/opt/linumed-base/caddy"
 caddy_http_port: 80
 caddy_https_port: 443
 
@@ -31,4 +31,4 @@ caddy_sites: []
 # without an extra manual step. A fixed literal name, not Compose's default
 # project-derived one, is the whole point: the name has to be a stable constant another,
 # unrelated compose file can reference.
-caddy_external_network_name: "linumed-os-external"
+caddy_external_network_name: "linumed-base-external"

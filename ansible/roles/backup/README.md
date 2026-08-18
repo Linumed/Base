@@ -1,6 +1,6 @@
 # backup
 
-Encrypted backups for Linumed OS with restic, a systemd timer (not cron), and Prometheus
+Encrypted backups for Linumed Base with restic, a systemd timer (not cron), and Prometheus
 textfile-collector metrics (issue #7).
 
 ## Variables
@@ -18,7 +18,7 @@ special-case any backend; picking and reaching one (network access, credentials 
 
 ## What gets backed up
 
-`backup_paths` defaults to `/opt/linumed-os` (every role's deployed config and secrets)
+`backup_paths` defaults to `/opt/linumed-base` (every role's deployed config and secrets)
 and `/var/lib/docker/volumes` (every named Docker volume's data - Prometheus, Loki,
 Grafana, BridgeLink's appdata and its Postgres data, whatever else is running). Direct
 filesystem access, not `docker-volume-backup` or a database-native dump tool.
@@ -56,13 +56,13 @@ backup is invisible" is the same class of bug either way, and the fix is the sam
 ## Restore test (#36)
 
 A backup that has never been restored is not a verified backup. `backup_restore_test_enabled`
-(default `true`) deploys a second script, `linumed-os-restore-test.sh`, on its own weekly
+(default `true`) deploys a second script, `linumed-base-restore-test.sh`, on its own weekly
 systemd timer (`backup_restore_test_schedule`, default Sunday 04:00 - an hour after the
 daily backup, so there's always something recent to restore against):
 
 1. `restic restore latest` into a throwaway `mktemp -d` target.
 2. `diff -rq` between the restored copy and the live source, for every path in
-   `backup_restore_test_diff_paths` (default: `/opt/linumed-os` only, deliberately
+   `backup_restore_test_diff_paths` (default: `/opt/linumed-base` only, deliberately
    narrower than `backup_paths` - diffing `/var/lib/docker/volumes` against a live,
    currently-writing Prometheus/Loki/Postgres would produce spurious differences that
    have nothing to do with whether the backup actually works).

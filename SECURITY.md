@@ -1,6 +1,6 @@
 # Security Policy
 
-Linumed OS provisions infrastructure that healthcare institutions run patient-relevant
+Linumed Base provisions infrastructure that healthcare institutions run patient-relevant
 systems on. A vulnerability here can affect environments where the operator has limited
 freedom to patch quickly, so this document says plainly how to report one and what to
 expect in return.
@@ -47,7 +47,7 @@ saying nothing. Update to the current release before reporting, if you can.
 
 ## Scope
 
-Linumed OS is a set of Ansible roles plus Compose stacks. That shapes what a security
+Linumed Base is a set of Ansible roles plus Compose stacks. That shapes what a security
 report against *this* repository can be about.
 
 **In scope:**
@@ -64,7 +64,7 @@ report against *this* repository can be about.
 - Vulnerabilities in the upstream software this kit deploys - Caddy, Grafana, Prometheus,
   Loki, BridgeLink, PostgreSQL, restic, Docker itself. A *pin* that leaves a known-fixed
   vulnerability in place is in scope; a flaw in the software as such is not ours to fix.
-- Anything the operator runs *on top of* Linumed OS. This kit provides the base; the
+- Anything the operator runs *on top of* Linumed Base. This kit provides the base; the
   applications, their data and their own exposure remain the operator's responsibility.
 
 ## What this kit does and does not protect

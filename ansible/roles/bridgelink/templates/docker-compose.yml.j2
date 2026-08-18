@@ -1,11 +1,11 @@
-# Managed by Ansible (linumed-os, role: bridgelink). Do not edit by hand, changes will be
+# Managed by Ansible (linumed-base, role: bridgelink). Do not edit by hand, changes will be
 # overwritten. Deliberately close to docker/bridgelink/docker-compose.yml (the
 # manual-testing reference), but this one is driven by Ansible variables instead of a
 # .env file - keep both in sync when bumping bridgelink_image.
 services:
   bridgelink:
     image: {{ bridgelink_image }}
-    container_name: linumed-os-bridgelink
+    container_name: linumed-base-bridgelink
     restart: unless-stopped
     # Upstream's launcher drains queues and DB connections for up to 30s on shutdown;
     # Docker's default 10s would cut that short and risk losing in-flight messages.
@@ -44,7 +44,7 @@ services:
 
   bridgelink-db:
     image: {{ bridgelink_postgres_image }}
-    container_name: linumed-os-bridgelink-db
+    container_name: linumed-base-bridgelink-db
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
