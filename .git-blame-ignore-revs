@@ -6,3 +6,4 @@
 #   git config blame.ignoreRevsFile .git-blame-ignore-revs
 #
 # Umbenennung Linumed OS -> Linumed Base (Issue #51, ADR 0006)
+f9c814f20fb4cfdfc83671fd629019224f7ed78e  # Refactor: Linumed OS -> Linumed Base (#51)
