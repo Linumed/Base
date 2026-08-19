@@ -16,6 +16,19 @@ document.addEventListener("DOMContentLoaded", function () {
   if (!window.mermaid) {
     return;
   }
+  // pymdownx.superfences wraps fence content as <pre class="mermaid-diagram"><code>...
+  // </code></pre>. mermaid.run() reads the target element's innerHTML as the diagram
+  // source, so without this it gets the literal string "<code>graph TB...</code>" and
+  // fails with "No diagram type detected" (found 2026-08-19, live site showed the error
+  // bomb on both diagrams in ARCHITECTURE.md). Unwrap the <code> child first so mermaid
+  // sees plain diagram text, matching the bare `<pre class="mermaid">source</pre>` shape
+  // its own docs assume.
+  document.querySelectorAll(".mermaid-diagram").forEach(function (el) {
+    var code = el.querySelector("code");
+    if (code) {
+      el.textContent = code.textContent;
+    }
+  });
   mermaid.initialize({ startOnLoad: false, theme: "default" });
   mermaid.run({ querySelector: ".mermaid-diagram" });
 });
