@@ -12,23 +12,73 @@
 // only less visible, since it is a JS-triggered network request, not a static
 // <link>/<script> tag. Using a different class name here ("mermaid-diagram" instead of
 // "mermaid") keeps Material's own detection from ever firing.
-document.addEventListener("DOMContentLoaded", function () {
-  if (!window.mermaid) {
-    return;
+(function () {
+  // Teal to match the site's own primary color (mkdocs.yml theme.palette primary: teal),
+  // so the diagrams look like part of this site instead of mermaid's stock purple/grey.
+  var themeVariablesLight = {
+    primaryColor: "#e0f2f1",
+    primaryTextColor: "#0f2b2a",
+    primaryBorderColor: "#00897b",
+    lineColor: "#4d7a75",
+    secondaryColor: "#b2dfdb",
+    tertiaryColor: "#ffffff",
+    clusterBkg: "#f3fbfa",
+    clusterBorder: "#4d7a75",
+    fontFamily:
+      "-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif",
+  };
+  var themeVariablesDark = {
+    primaryColor: "#0f3a37",
+    primaryTextColor: "#e8f5f3",
+    primaryBorderColor: "#4db6ac",
+    lineColor: "#7fcac3",
+    secondaryColor: "#123a38",
+    tertiaryColor: "#1b1b1b",
+    clusterBkg: "#132524",
+    clusterBorder: "#4db6ac",
+    fontFamily:
+      "-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif",
+  };
+
+  // Material for MkDocs stores the active palette as data-md-color-scheme on <body>
+  // ("default" = light, "slate" = dark) and updates it live when the reader clicks the
+  // light/dark toggle - see mkdocs.yml theme.palette. Diagrams re-render on that change
+  // too, not just on page load, so switching the toggle doesn't leave them stuck in the
+  // wrong palette.
+  function isDark() {
+    return document.body.getAttribute("data-md-color-scheme") === "slate";
   }
-  // pymdownx.superfences wraps fence content as <pre class="mermaid-diagram"><code>...
-  // </code></pre>. mermaid.run() reads the target element's innerHTML as the diagram
-  // source, so without this it gets the literal string "<code>graph TB...</code>" and
-  // fails with "No diagram type detected" (found 2026-08-19, live site showed the error
-  // bomb on both diagrams in ARCHITECTURE.md). Unwrap the <code> child first so mermaid
-  // sees plain diagram text, matching the bare `<pre class="mermaid">source</pre>` shape
-  // its own docs assume.
-  document.querySelectorAll(".mermaid-diagram").forEach(function (el) {
-    var code = el.querySelector("code");
-    if (code) {
-      el.textContent = code.textContent;
+
+  function renderAll() {
+    if (!window.mermaid) {
+      return;
     }
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: "base",
+      themeVariables: isDark() ? themeVariablesDark : themeVariablesLight,
+      flowchart: { curve: "basis" },
+    });
+    document.querySelectorAll(".mermaid-diagram").forEach(function (el) {
+      // First run: unwrap pymdownx.superfences' <pre class="mermaid-diagram"><code>...
+      // </code></pre>. mermaid.run() reads the target element's innerHTML as the diagram
+      // source, so without this it gets the literal string "<code>graph TB...</code>" and
+      // fails with "No diagram type detected" (found 2026-08-19, Base#59). Cache the real
+      // source in a data attribute so a later theme-change re-render has plain text to
+      // start from again, not the previous run's rendered SVG.
+      if (!el.dataset.mermaidSrc) {
+        var code = el.querySelector("code");
+        el.dataset.mermaidSrc = code ? code.textContent : el.textContent;
+      }
+      el.removeAttribute("data-processed");
+      el.textContent = el.dataset.mermaidSrc;
+    });
+    mermaid.run({ querySelector: ".mermaid-diagram" });
+  }
+
+  document.addEventListener("DOMContentLoaded", renderAll);
+  new MutationObserver(renderAll).observe(document.body, {
+    attributes: true,
+    attributeFilter: ["data-md-color-scheme"],
   });
-  mermaid.initialize({ startOnLoad: false, theme: "default" });
-  mermaid.run({ querySelector: ".mermaid-diagram" });
-});
+})();
