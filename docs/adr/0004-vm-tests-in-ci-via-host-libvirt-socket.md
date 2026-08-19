@@ -4,7 +4,7 @@
 
 ## The question answered here
 
-`CLAUDE.md` states the CI target as "pipelines run locally on the dev server: ansible-lint,
+`CONVENTIONS.md` states the CI target as "pipelines run locally on the dev server: ansible-lint,
 libvirt/KVM VM provisioning (`test/vm-test.sh`), idempotency checks". Only `ansible-lint`
 runs. The VM tests exist, work, and catch real bugs - but only when started by hand.
 

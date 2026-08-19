@@ -106,7 +106,7 @@ survives package upgrades cleanly.
 ### `become: true` on every privileged task, no exceptions
 
 Every task that touches root-owned state (reading `ssh.socket`'s unit state, deploying
-the drop-in, validating, reloading) sets `become: true` individually - `CLAUDE.md` bans
+the drop-in, validating, reloading) sets `become: true` individually - `CONVENTIONS.md` bans
 play-level `become`. This was violated once during development on the "Socket guard" read
 task and the "Reload ssh" handler: `ansible.builtin.systemd_service` silently ran as the
 unprivileged connecting user, systemd routed the call through PolicyKit, and `pkttyagent`

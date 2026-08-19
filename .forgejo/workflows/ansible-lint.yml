@@ -1,6 +1,6 @@
 name: ansible-lint
 
-# Canonical CI (see CLAUDE.md): runs on this project's own Forgejo Runner, registered with
+# Canonical CI (see CONVENTIONS.md): runs on this project's own Forgejo Runner, registered with
 # label "docker" only (no "ubuntu-latest" like GitHub) - runs-on must match that label.
 # .github/workflows/ansible-lint.yml is the GitHub-side interim copy kept in sync
 # manually until the GitHub mirror is retired.

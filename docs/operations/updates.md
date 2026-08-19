@@ -19,7 +19,7 @@ too - that's one of the reasons it isn't containerized (see
 
 ## Container image versions: a deliberate variable bump
 
-Every container image in this kit is pinned to a specific tag - `CLAUDE.md` forbids
+Every container image in this kit is pinned to a specific tag - `CONVENTIONS.md` forbids
 `latest` outright, so nothing updates a container image on its own. Bumping one is a
 conscious action:
 

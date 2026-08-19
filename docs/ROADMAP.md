@@ -5,7 +5,7 @@ issue; the issue holds the detail, this page holds the sequencing and the reason
 it.
 
 Written 2026-08-14, after an audit of the repository against its own stated requirements
-(`CLAUDE.md`, `ARCHITECTURE.md`).
+(`CONVENTIONS.md`, `ARCHITECTURE.md`).
 
 > **Update 2026-08-17: every stage below is done and `v0.2.0` is tagged.** A second pass
 > over the repository afterwards - deliberately looking for what a green test suite does
@@ -27,7 +27,7 @@ The audit found it by measurement rather than assumption:
 
 - The example inventory defines two variables. `site.yml` aborts without seven. Anyone
   following the documented quick start hits a preflight abort (#27).
-- `ansible-vault` appears nowhere in the repository, although `CLAUDE.md` mandates it and
+- `ansible-vault` appears nowhere in the repository, although `CONVENTIONS.md` mandates it and
   the role READMEs point at it (#28).
 - No git tag exists, although `ARCHITECTURE.md` requires releases to be tagged
   (#29).
@@ -61,7 +61,7 @@ run 1 `ok=102 changed=62 failed=0`, run 2 `ok=88 changed=0 failed=0`.
 
 ## Stage 2 - Documentation foundation (done, 2026-08-14)
 
-`CLAUDE.md` had required MkDocs from the beginning; there was no `mkdocs.yml`. The
+`CONVENTIONS.md` had required MkDocs from the beginning; there was no `mkdocs.yml`. The
 documentation sources existed and were good, but nothing built or navigated them.
 
 | | Issue |
@@ -239,4 +239,4 @@ templates despite the issue's concern.
   one is not.
 - **Application software** (HIS, DMS, document management). Out of scope by design.
   Institutions bring their own applications; Linumed Base provides the secure base.
-- **Kubernetes, bootable images, PXE.** Excluded by `CLAUDE.md`, not revisited here.
+- **Kubernetes, bootable images, PXE.** Excluded by `CONVENTIONS.md`, not revisited here.

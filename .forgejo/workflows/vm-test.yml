@@ -1,7 +1,7 @@
 name: vm-test
 
 # VM provisioning + idempotency check (issue #33), the second half of the CI target
-# picture in CLAUDE.md. See ADR 0004 for the reasoning behind running this via the
+# picture in CONVENTIONS.md. See ADR 0004 for the reasoning behind running this via the
 # runner at all, rather than not, or via a nested libvirtd.
 #
 # Triggering is a compromise between two real constraints (issue #45):

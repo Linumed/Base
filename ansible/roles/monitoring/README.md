@@ -52,7 +52,7 @@ time-based retention, so a spike in ingestion volume can't fill the disk on its 
 via Ansible Vault; this role never generates or logs one.
 
 **Grafana telemetry is off by default** (`reporting_enabled`, `check_for_updates`,
-`analytics.enabled`) - matches CLAUDE.md's "no phone-home telemetry" principle; Grafana
+`analytics.enabled`) - matches CONVENTIONS.md's "no phone-home telemetry" principle; Grafana
 phones home by default otherwise.
 
 **Alloy never touches the Docker socket directly (#21).** A `docker-socket-proxy`

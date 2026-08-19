@@ -45,7 +45,7 @@ beide unter MPL 2.0.
 
 Für Linumed Base kollidiert das mit zwei festgeschriebenen Grundsätzen:
 
-- **FOSS-only im Core** (`CLAUDE.md`, `ARCHITECTURE.md`): keine kommerzielle
+- **FOSS-only im Core** (`CONVENTIONS.md`, `ARCHITECTURE.md`): keine kommerzielle
   Software, keine proprietären Lizenzen.
 - **Linumed Base ist der kostenlose Unterbau.** Eine Pflicht zur kommerziellen
   Lizenz für die zentrale Komponente würde den Zweck des Kits aushebeln.

@@ -42,7 +42,7 @@ substantial, and monitoring pulls seven container images.
 
 Every run after that should be fast and change nothing if nothing changed
 (`changed=0` on a second run is a hard requirement for every role in this repo, not a
-nice-to-have - see `CLAUDE.md`). If a routine re-run reports unexpected changes, that's
+nice-to-have - see `CONVENTIONS.md`). If a routine re-run reports unexpected changes, that's
 worth investigating before assuming it's fine; see
 [Troubleshooting](troubleshooting.md).
 
