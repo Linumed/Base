@@ -9,6 +9,12 @@ docs_dir: docs
 
 theme:
   name: material
+  # Material's default pulls Roboto from fonts.googleapis.com/fonts.gstatic.com on every
+  # page load - an external CDN dependency that contradicts this project's own "no
+  # external resources from foreign servers, no tracking" rule (found and fixed while
+  # verifying issue #55, before this build is handed to linumed.com for hosting).
+  # `false` falls back to the visitor's system font stack, no network request at all.
+  font: false
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default

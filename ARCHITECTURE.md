@@ -132,7 +132,7 @@ institution keeps its integration work if it ever wants to switch.
 Full reasoning, including evaluated alternatives (Open Integration
 Engine, licensed Mirth 4.6+, frozen 4.5.2), accepted downsides and
 revision triggers:
-[ADR 0001](docs/adr/0001-bridgelink-statt-mirth-connect.md).
+[ADR 0001](https://github.com/Linumed/Base/blob/main/docs/adr/0001-bridgelink-statt-mirth-connect.md).
 
 Protocols supported out of the box: HL7 v2.x, FHIR R4, DICOM, CSV, XML,
 database connectors.
@@ -203,7 +203,7 @@ been **deliberately dropped** - along with the SSO integration that
 would have been built on top of it. Reasoning, evaluated alternatives
 (reverse proxy with an identity provider, mesh VPN) and the accepted
 downsides:
-[ADR 0003](docs/adr/0003-loopback-only-access-no-bundled-identity-provider.md).
+[ADR 0003](https://github.com/Linumed/Base/blob/main/docs/adr/0003-loopback-only-access-no-bundled-identity-provider.md).
 
 ```
 Internet
@@ -344,7 +344,7 @@ Linumed Shifts is not in this repository and is not documented here.
 
 **No bundled identity provider.** The Authentik role originally planned
 for v0.2 has been dropped
-([ADR 0003](docs/adr/0003-loopback-only-access-no-bundled-identity-provider.md)):
+([ADR 0003](https://github.com/Linumed/Base/blob/main/docs/adr/0003-loopback-only-access-no-bundled-identity-provider.md)):
 it would have required an outward-facing opening that this kit
 deliberately avoids. Instead of shipping an identity provider, Grafana
 gets an optional connection to an **existing** one (OIDC).
