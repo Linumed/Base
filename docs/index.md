@@ -25,7 +25,7 @@ day to day, and why specific decisions were made. For installing it, start with 
   navigation: variables, what gets changed on the host, how to verify it worked, and
   known pitfalls.
 
-## What's in the kit (v0.1)
+## What's in the kit
 
 | Component | Role |
 |---|---|
