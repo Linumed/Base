@@ -13,7 +13,7 @@ Written 2026-08-14, after an audit of the repository against its own stated requ
 > and caught by nobody, because nothing tested it) and four gaps that were closed straight
 > away: the full VM test now triggers itself (#45), the `docker/` references have a smoke
 > test (#46), `SECURITY.md` exists (#47), and there is a `CHANGELOG.md` (#49). The single
-> remaining open issue is [#50](../../issues/50), publication to GitHub - deliberately the
+> remaining open issue is #50, publication to GitHub - deliberately the
 > last step, since publishing a kit that is still being worked on serves nobody. See
 > [CHANGELOG.md](changelog.md) for what shipped.
 
@@ -26,11 +26,11 @@ There is, however, a gap between that and being operable by someone who is not t
 The audit found it by measurement rather than assumption:
 
 - The example inventory defines two variables. `site.yml` aborts without seven. Anyone
-  following the documented quick start hits a preflight abort ([#27](../../issues/27)).
+  following the documented quick start hits a preflight abort (#27).
 - `ansible-vault` appears nowhere in the repository, although `CLAUDE.md` mandates it and
-  the role READMEs point at it ([#28](../../issues/28)).
+  the role READMEs point at it (#28).
 - No git tag exists, although `ARCHITECTURE.md` requires releases to be tagged
-  ([#29](../../issues/29)).
+  (#29).
 
 So the honest description was: **the roles work, the product does not yet onboard anyone.**
 That is what Stage 1 fixed, and it is why SSO was not next despite `ARCHITECTURE.md` naming
@@ -43,9 +43,9 @@ Nothing here was a new feature. This stage made the claim already published in t
 
 | | Issue |
 |---|---|
-| Complete the example inventory, fix the quick start | [#27](../../issues/27) closed |
-| Document the Ansible Vault workflow, add an example vault | [#28](../../issues/28) closed |
-| Tag `v0.1.0` | [#29](../../issues/29) closed, tagged |
+| Complete the example inventory, fix the quick start | #27 closed |
+| Document the Ansible Vault workflow, add an example vault | #28 closed |
+| Tag `v0.1.0` | #29 closed, tagged |
 
 **The acceptance run found two more bugs than the audit had - both from actually
 following the README, not from reading it.** `.gitignore` had kept the entire example
@@ -66,8 +66,8 @@ documentation sources existed and were good, but nothing built or navigated them
 
 | | Issue |
 |---|---|
-| MkDocs setup and operations handbook | [#26](../../issues/26) closed |
-| Translate the existing German docs per ADR 0002 | [#30](../../issues/30) closed |
+| MkDocs setup and operations handbook | #26 closed |
+| Translate the existing German docs per ADR 0002 | #30 closed |
 
 The language question was settled first, deliberately: writing the operations handbook in
 German and then internationalising would have meant writing it twice. See
@@ -105,9 +105,9 @@ What survives from this stage is smaller and unrelated to exposing anything:
 
 | | Issue |
 |---|---|
-| Caddy cannot reach the operator's own containers - no working path documented | [#39](../../issues/39), closed 2026-08-16 |
+| Caddy cannot reach the operator's own containers - no working path documented | #39, closed 2026-08-16 |
 
-**[#39](../../issues/39) is resolved (closed 2026-08-16).** Caddy joins a second Docker
+**#39 is resolved (closed 2026-08-16).** Caddy joins a second Docker
 network, created unconditionally by the role (`caddy_external_network_name`, default
 `linumed-base-external`, fixed literal name rather than Compose's project-derived one). The
 operator's own, entirely separate Compose stack joins that same network as `external: true`
@@ -137,7 +137,7 @@ hands the *host's* libvirtd file paths it opens literally. A second real bug fou
 first live run: `node:24-bookworm`'s own `osinfo-db` package predates both "debian12" and
 "debian13" as entries (Bookworm didn't exist yet when it was frozen), so `virt-install`
 failed with "Unknown OS name 'debian12'" until the workflow re-imports a current
-`osinfo-db` first. [#43](../../issues/43)'s pull-through cache resolved cleanly in the
+`osinfo-db` first. #43's pull-through cache resolved cleanly in the
 same run - the workflow's own log shows it served every Docker Hub image in the stack.
 Verified against two real triggered runs, not just a syntax check: the first caught the
 `osinfo-db` bug, the second completed a full double-run with `changed=0` on the second
@@ -155,10 +155,10 @@ With SSO gone, v0.2 gets the content the audit actually surfaced.
 
 | | Issue |
 |---|---|
-| Tunnel-only SSH users, no shell | [#41](../../issues/41), closed 2026-08-16 |
-| Real Grafana users plus optional OIDC connection | [#42](../../issues/42), closed 2026-08-16 |
+| Tunnel-only SSH users, no shell | #41, closed 2026-08-16 |
+| Real Grafana users plus optional OIDC connection | #42, closed 2026-08-16 |
 
-**[#41](../../issues/41) is resolved (closed 2026-08-16).** New `common_ssh_tunnel_users`
+**#41 is resolved (closed 2026-08-16).** New `common_ssh_tunnel_users`
 variable: shell-less accounts (`/usr/sbin/nologin`, no password) restricted by `sshd`
 itself, via a per-user `Match` block, to exactly the loopback forwards listed in
 `targets`. Deployed as its own drop-in (`90-linumed-tunnel-users.conf`, the
@@ -171,7 +171,7 @@ through the tunnel) and is refused a forward to `127.0.0.1:9090` with `administr
 prohibited`, and gets no shell at all (`ssh ... whoami` -> "This account is currently not
 available."). That is finer granularity than a proxy-level login would have given.
 
-**[#42](../../issues/42) is resolved (closed 2026-08-16).** New `monitoring_grafana_users`
+**#42 is resolved (closed 2026-08-16).** New `monitoring_grafana_users`
 provisions local Grafana accounts (login/name/password/role) idempotently via Grafana's
 own HTTP API against `127.0.0.1`, run after the stack deploy has already waited for the
 healthcheck - confirmed while building this that Grafana's file-based provisioning covers
@@ -200,7 +200,7 @@ as issue #25. Verified against a real VM with both outcomes actually provoked, n
 assumed: a clean restore reports `success=1`, a deliberate post-backup change reports
 `success=0` with the diff counted, not just detected.
 
-[#35](../../issues/35) - re-measuring the system requirements - is closed along with the
+#35 - re-measuring the system requirements - is closed along with the
 Authentik role: without four additional containers there is nothing to re-measure. It
 returns if the stack grows.
 
@@ -235,7 +235,7 @@ templates despite the issue's concern.
 - **A bundled identity provider, a shared `linumed-net`, or a mesh-VPN role.** All three
   evaluated and rejected on 2026-08-14, see
   [ADR 0003](adr/0003-loopback-only-access-no-bundled-identity-provider.md). Connecting
-  Grafana to an *existing* provider via OIDC is in scope ([#42](../../issues/42)); shipping
+  Grafana to an *existing* provider via OIDC is in scope (#42); shipping
   one is not.
 - **Application software** (HIS, DMS, document management). Out of scope by design.
   Institutions bring their own applications; Linumed Base provides the secure base.
