@@ -1,0 +1,12 @@
+/* Minimal styling for the self-hosted mermaid diagrams (see docs/javascripts/mermaid-init.js
+   for why this isn't Material's own .mermaid styling: different class name on purpose). */
+.mermaid-diagram {
+  display: flex;
+  justify-content: center;
+  overflow-x: auto;
+  margin: 1em 0;
+}
+
+.mermaid-diagram svg {
+  max-width: 100%;
+}

@@ -44,30 +44,21 @@ are preferred for CI/CD.
 
 ## Target architecture (v0.1)
 
-```
-┌───────────────────────────────────────────────────────────┐
-│                  Debian 13 (Bare Metal / VM)               │
-│                                                             │
-│  ┌──────────┐   ┌───────────────────────────────────────┐ │
-│  │  Caddy   │   │              Docker Engine             │ │
-│  │ (Proxy,  │   │                                         │ │
-│  │  Container)  │  ┌─────────────┐  ┌───────────────────┐│ │
-│  │  Port    │──▶│  │ BridgeLink  │  │ Prometheus         ││ │
-│  │  80/443  │   │  │ + Postgres  │  │ Grafana (loopback) ││ │
-│  └──────────┘   │  │  (loopback) │  │ Loki, Alertmanager ││ │
-│                 │  └─────────────┘  │ Alloy, cAdvisor    ││ │
-│  ┌──────────┐   │                   └───────────────────┘│ │
-│  │  ufw     │   │                                         │ │
-│  │ fail2ban │   └───────────────────────────────────────┘ │
-│  │  SSH     │                                              │
-│  └──────────┘   ┌───────────────────────────────────────┐ │
-│                  │  Node Exporter (native, Debian package)│ │
-│                  └───────────────────────────────────────┘ │
-│                                                             │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │  restic (Backup - encrypted, scheduled)               │  │
-│  └──────────────────────────────────────────────────────┘  │
-└───────────────────────────────────────────────────────────┘
+```mermaid
+graph TB
+    subgraph host["Debian 13 (bare metal or VM)"]
+        direction TB
+        hardening["ufw · fail2ban · SSH hardening"]
+        node["Node Exporter<br/>(native Debian package)"]
+        backup["restic<br/>(encrypted, scheduled backup)"]
+
+        subgraph docker["Docker Engine"]
+            direction LR
+            caddy["Caddy<br/>reverse proxy<br/>:80 / :443"]
+            bridgelink["BridgeLink + PostgreSQL<br/>(loopback only)"]
+            monitoring["Prometheus · Grafana (loopback)<br/>Loki · Alertmanager · Alloy · cAdvisor"]
+        end
+    end
 ```
 
 ---
@@ -205,17 +196,25 @@ would have been built on top of it. Reasoning, evaluated alternatives
 downsides:
 [ADR 0003](https://github.com/Linumed/Base/blob/main/docs/adr/0003-loopback-only-access-no-bundled-identity-provider.md).
 
-```
-Internet
-   │
-   ├── :80  ──▶ Caddy ──▶ redirect to HTTPS
-   └── :443 ──▶ Caddy ──▶ the operator's own applications
-                          (Linumed Base itself is not behind it)
+```mermaid
+graph LR
+    internet["Internet"]
+    caddy["Caddy"]
+    https["redirect to HTTPS"]
+    apps["the operator's own applications<br/>(Linumed Base itself is not behind it)"]
+    ssh["SSH tunnel (not public)"]
+    grafana["Grafana"]
+    prometheus["Prometheus"]
+    bladmin["BridgeLink admin"]
 
-SSH tunnel (not public)
-   ├── 127.0.0.1:3000 ──▶ Grafana
-   ├── 127.0.0.1:9090 ──▶ Prometheus
-   └── 127.0.0.1:8443 ──▶ BridgeLink admin
+    internet -->|":80"| caddy
+    caddy --> https
+    internet -->|":443"| caddy
+    caddy --> apps
+
+    ssh -->|"127.0.0.1:3000"| grafana
+    ssh -->|"127.0.0.1:9090"| prometheus
+    ssh -->|"127.0.0.1:8443"| bladmin
 ```
 
 Caddy is the reverse proxy for the **institution's own applications**,
