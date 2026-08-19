@@ -1,0 +1,82 @@
+name: docs-site
+
+# Builds the MkDocs operations handbook and publishes it as a Forgejo release asset -
+# the artifact Website#5 pulls from to host it at linumed.com/base/docs/ (issue #55).
+#
+# Deliberately stops at "publish an artifact", not "deploy it". Actually placing the
+# built HTML on linumed.com is a manual pull by cc@prod, same as every other prod change
+# - "Kein Auto-Deploy. Prod-Deploy ist ein manueller Gate" (CLAUDE.md). This workflow
+# only replaces the manual `mkdocs build && tar czf && curl .../releases` steps that were
+# previously run by hand on every doc change (found tedious and error-prone in practice -
+# a stale checksum was nearly handed over once, see issue #55's follow-up).
+#
+# Publishes to a fixed, moving tag (docs-site-latest) rather than a fresh dated tag every
+# run: cc@prod can always pull the same URL and get whatever is current, no need to be
+# told a new tag/checksum after every doc change. The dated one-off releases from before
+# this workflow existed (docs-site-2026-08-19, -19b) are left in place as history, not
+# superseded automatically - a human can prune old releases later if they pile up.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'mkdocs.yml'
+      - 'README.md'
+      - 'ARCHITECTURE.md'
+      - 'CHANGELOG.md'
+  workflow_dispatch:
+
+# Forgejo's auto-generated token defaults to read-only unless a workflow asks for more -
+# needed here to create the release and upload the asset.
+permissions:
+  contents: write
+
+jobs:
+  docs-site:
+    runs-on: docker
+    steps:
+      - uses: actions/checkout@v4
+
+      # Pinned to what's known to build cleanly (verified 2026-08-19) - an unpinned
+      # `pip install mkdocs mkdocs-material` would let an upstream release turn this
+      # workflow red (or worse, green-but-different) without a deliberate version bump.
+      - name: Install MkDocs and Material theme
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq --no-install-recommends python3-pip curl
+          pip install --no-cache-dir --break-system-packages mkdocs==1.6.1 mkdocs-material==9.7.7
+
+      # --strict turns the three link/resource bugs found in #55 (dead ADR links, an
+      # external Google Fonts request, dead ROADMAP issue links) into a hard failure
+      # instead of a warning nobody reads - if a future doc change reintroduces a dead
+      # link, this job fails instead of silently shipping it.
+      - name: Build with mkdocs build --strict
+        run: mkdocs build --strict --site-dir site
+
+      - name: Package the built site
+        id: package
+        run: |
+          tar czf base-docs-site.tar.gz -C site .
+          echo "sha256=$(sha256sum base-docs-site.tar.gz | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
+      # Forgejo has no "update release asset" endpoint that replaces in place - delete
+      # the previous docs-site-latest release (if any) and its tag, then recreate both.
+      # A 404 on the delete calls is expected and fine on the very first run.
+      - name: Replace the docs-site-latest release
+        env:
+          GITEA_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          API="${{ github.api_url }}/repos/${{ github.repository }}"
+          curl -s -X DELETE -H "Authorization: token ${GITEA_TOKEN}" \
+            "${API}/releases/tags/docs-site-latest" || true
+          curl -s -X DELETE -H "Authorization: token ${GITEA_TOKEN}" \
+            "${API}/git/tags/docs-site-latest" || true
+
+          RELEASE_ID=$(curl -s -X POST -H "Authorization: token ${GITEA_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "{\"tag_name\":\"docs-site-latest\",\"target_commitish\":\"${{ github.sha }}\",\"name\":\"Docs site (latest build)\",\"body\":\"Auto-built by .forgejo/workflows/docs-site.yml from commit ${{ github.sha }}. Not a product release - a build artifact for Website#5. sha256: ${{ steps.package.outputs.sha256 }}\",\"draft\":false,\"prerelease\":true}" \
+            "${API}/releases" | python3 -c "import json,sys; print(json.load(sys.stdin)['id'])")
+
+          curl -s -X POST -H "Authorization: token ${GITEA_TOKEN}" \
+            -F "attachment=@base-docs-site.tar.gz" \
+            "${API}/releases/${RELEASE_ID}/assets?name=base-docs-site.tar.gz"
