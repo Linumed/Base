@@ -91,9 +91,13 @@ bridgelink_exporter_enabled: true    # bridgelink role: deploy the sidecar
 monitoring_scrape_bridgelink: true   # monitoring role: scrape it
 ```
 
-They are not derived from each other and neither defaults to true. A scrape job pointing
-at a target that was never deployed sits at `up == 0` and trips the `HostDown` alert
-forever, so the monitoring role does not guess whether BridgeLink exists on this host.
+They are not derived from each other and neither defaults to true, for two separate
+reasons. On this side: a scrape job pointing at a target that was never deployed sits at
+`up == 0` and trips the `HostDown` alert forever, so the monitoring role does not guess
+whether BridgeLink exists on this host. On the other side: the exporter authenticates
+against BridgeLink's own user database, which this kit does not manage - that user only
+exists once someone has logged into the Administrator for the first time, which is after
+the playbook has run. Create it first, then set both switches.
 
 The alert rules (`BridgeLinkDown`, `BridgeLinkChannelNotStarted`,
 `BridgeLinkConnectorNotStarted`, `BridgeLinkQueueBacklog`, `BridgeLinkErrorRate`,
