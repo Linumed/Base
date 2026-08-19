@@ -64,7 +64,7 @@ services:
       retries: 5
       start_period: 30s
 
-{% if bridgelink_exporter_enabled %}
+{% if bridgelink_exporter_enabled | bool %}
   # Prometheus exporter for channel statistics (issue #60). BridgeLink itself serves no
   # /metrics, so without this Prometheus sees only cAdvisor's container CPU/RAM for it and
   # a stopped channel or a filling queue stays invisible.
@@ -93,8 +93,14 @@ services:
     # CONVENTIONS.md's "named volumes only", and the reason no image has to be built here.
     volumes:
       - {{ bridgelink_deploy_dir }}/bridgelink_exporter.py:/opt/exporter/bridgelink_exporter.py:ro
+    # Loopback publish is for debugging by hand; Prometheus does not use it (issue #64).
     ports:
       - "127.0.0.1:{{ bridgelink_exporter_port }}:9151"
+    # default to reach the engine by service name, the metrics network so Prometheus - in
+    # a different Compose project - can reach this container by name.
+    networks:
+      - default
+      - {{ bridgelink_exporter_metrics_network }}
     # /healthz reports the exporter's own liveness and deliberately not BridgeLink's - a
     # down engine must not restart the exporter, or the up=0 metric that says so
     # disappears exactly when it is needed. busybox wget, present in the alpine image.
@@ -108,10 +114,19 @@ services:
       - bridgelink
 {% endif %}
 
+{% if bridgelink_exporter_enabled | bool %}
+networks:
+  # Created by the monitoring role, joined here - hence external. See
+  # bridgelink_exporter_metrics_network in defaults/main.yml for the ordering consequence.
+  {{ bridgelink_exporter_metrics_network }}:
+    external: true
+    name: {{ bridgelink_exporter_metrics_network }}
+{% endif %}
+
 secrets:
   mirth_properties:
     file: ./secrets/mirth.properties
-{% if bridgelink_exporter_enabled %}
+{% if bridgelink_exporter_enabled | bool %}
   exporter_password:
     file: ./secrets/exporter_password
 {% endif %}

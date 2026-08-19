@@ -32,7 +32,12 @@
       BridgeLink's own user database, which this role does not manage - create a
       read-only user in the Administrator first, then supply its credentials via Ansible
       Vault. See docs/roles/bridgelink.md.
-  when: bridgelink_exporter_enabled
+  # | bool everywhere this variable is evaluated, including the templates: a value handed
+  # in with `-e bridgelink_exporter_enabled=false` arrives as the *string* "false", which
+  # Ansible refuses as a conditional and Jinja considers true. Without the filter, asking
+  # for the exporter to be off on the command line switches it on (caught by the vm-test
+  # pass added in #62).
+  when: bridgelink_exporter_enabled | bool
 
 - name: Ensure deploy directory exists
   ansible.builtin.file:
@@ -94,7 +99,7 @@
     mode: "0400"
   become: true
   no_log: true
-  when: bridgelink_exporter_enabled
+  when: bridgelink_exporter_enabled | bool
   notify: Restart bridgelink
 
 - name: Deploy the Prometheus exporter script
@@ -105,7 +110,7 @@
     group: root
     mode: "0755"
   become: true
-  when: bridgelink_exporter_enabled
+  when: bridgelink_exporter_enabled | bool
   notify: Restart bridgelink
 
 - name: Deploy docker-compose.yml

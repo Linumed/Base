@@ -100,6 +100,19 @@ linumed-base/
   don't chase every Ansible-side comment/detail change.
 - Container images must be pinned to a specific version tag, never `latest` - applies to
   both the Ansible templates and any `docker/<role>/` reference.
+- **A container that another Compose stack must reach joins a shared, explicitly named
+  network - it does not get a host port.** A port published on `127.0.0.1` is unreachable
+  from another container, and publishing on all interfaces bypasses ufw, because Docker
+  installs its rules ahead of the firewall. `host.docker.internal` is only valid for
+  *native* services on the host (Node Exporter), where ufw can still protect the port.
+  Precedents: `linumed-base-external` (#39), `linumed-base-metrics` (#64).
+- **A config file that Ansible manages is bind-mounted as its containing directory, never
+  as the individual file.** A single-file bind mount binds the inode; `template`/`copy`
+  write a temp file and rename it into place, creating a new one, so the container keeps
+  reading the orphaned copy and every change after the first deploy silently does nothing.
+  Caddy hit this in #44/#48, Prometheus in #63 - twice is enough to make it a rule. It only
+  shows up where the service is reloaded rather than restarted (a container restart
+  re-resolves the mount), which is exactly where it is hardest to notice.
 - **Health checks required for every service that listens on a port at all** - the broad
   reading, not just services with a published host port. Checked before writing this
   rule down precisely: every image in this repo that looks unable to support one
@@ -172,9 +185,16 @@ Two workflows under `.forgejo/workflows/`:
 
 - `ansible-lint.yml` - every push and pull request to `main`.
 - `vm-test.yml` - the full `site.yml` double-run against a throwaway libvirt/KVM VM, plus
-  Prometheus target health and the `docker/` smoke test. Triggers on pushes touching
-  `ansible/`, `docker/`, `test/` or `scripts/`, and on demand via `workflow_dispatch`.
-  Not on every push: a run takes ~9 minutes and the runner has capacity 1 (issue #45).
+  Prometheus target health, the `docker/` smoke test, and a third `site.yml` pass with the
+  BridgeLink exporter switched on (issue #62). Triggers on pushes touching `ansible/`,
+  `docker/`, `test/` or `scripts/`, and on demand via `workflow_dispatch`. Not on every
+  push: the run was ~9 minutes before the exporter pass and the runner has capacity 1
+  (issue #45).
+
+  The exporter pass exists because opt-in features are invisible to a defaults-only test:
+  `bridgelink_exporter_enabled` defaults to false, so the first two runs prove only that
+  the feature is a no-op while switched off. Anything added behind a default-off flag
+  needs its own pass, or it ships with no coverage at all.
 
 `runs-on: docker`, never `ubuntu-latest` - the runner registers that label only.
 

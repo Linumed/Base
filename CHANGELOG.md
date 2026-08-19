@@ -31,13 +31,57 @@ click away instead of restated here.
   logs into the Administrator for the first time. Set `bridgelink_exporter_enabled` and
   `monitoring_scrape_bridgelink` together once it does; see `docs/roles/bridgelink.md`.
 
+  Prometheus reaches the exporter by container name over a shared Docker network
+  (`linumed-base-metrics`, created by the monitoring role), not over a host port. No port
+  is published for it beyond a loopback one for manual debugging. The Node Exporter job's
+  `host.docker.internal` arrangement deliberately was not copied: it works only because
+  Node Exporter is a native service ufw can protect, and a published container port would
+  bypass the firewall (#64). This does mean the monitoring role has to run before the
+  bridgelink role on a host - `site.yml` already orders them that way.
+
   `prometheus-community/json_exporter` was tested first and rejected: BridgeLink's JSON is
   serialised from its XML model, so a single-channel installation renders a list as an
   object and json_exporter's JSONPath silently matches nothing while still reporting the
   scrape as successful. The exporter reads the XML representation instead, which has no
   such ambiguity.
 
+- **`vm-test` now exercises the BridgeLink exporter with the switch on** (#62). The
+  existing double-run applies `site.yml` with role defaults, and the exporter defaults to
+  off - so it proved the feature is a no-op while disabled, and nothing more. The enable
+  path had never run through Ansible at all. A third pass now creates the BridgeLink user
+  over the REST API (a throwaway VM has no operator to do it), re-applies with the
+  exporter on, and checks the secret's ownership, the container healthcheck,
+  `bridgelink_up`, and that Prometheus's new `bridgelink` job is healthy.
+
+  Worth generalising: anything added behind a default-off flag ships with zero coverage
+  unless a test deliberately turns it on.
+
 ### Fixed
+
+- **Prometheus config changes now actually reach Prometheus** (#63). Since the monitoring
+  role was written, `prometheus.yml` and `alert-rules.yml` were bind-mounted as individual
+  files. A single-file bind mount binds the inode, and Ansible's `template` module writes a
+  temp file and renames it into place - creating a new one. The container went on reading
+  the orphaned old copy, so **every configuration and alert-rule change after the first
+  deploy silently did nothing**: the playbook reported `changed`, validation passed, the
+  `/-/reload` handler answered 200, and Prometheus kept running the config from day one.
+  Nothing reported an error anywhere.
+
+  Both files now live in `{{ monitoring_deploy_dir }}/prometheus/` and that *directory* is
+  mounted, which restores the intended behaviour while keeping the zero-downtime reload.
+  The role also removes the two files from their old top-level location, so the next person
+  debugging a config that "does not apply" cannot find and edit the copy that no longer
+  matters.
+
+  Only Prometheus was affected. Loki, Alloy and Alertmanager are updated by restarting
+  their container, and a restart re-resolves the bind mount - it is Prometheus's
+  deliberate HTTP reload, chosen for zero downtime, that made it the sole victim. Same
+  failure class as the Caddyfile mount in #44/#48; the precedent existed and had simply
+  never been applied here.
+
+  **If you deployed an earlier version:** any Prometheus config or alert-rule change you
+  made since the first deploy never took effect. The next playbook run applies all of them
+  at once.
 
 - **Documented the ownership the BridgeLink secret files actually need** (#60). The role's
   README and the hand-run reference in `docker/bridgelink/` both described

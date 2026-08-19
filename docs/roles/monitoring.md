@@ -35,7 +35,8 @@ All variables are prefixed `monitoring_*` and have sensible defaults in
 | `monitoring_grafana_oidc_client_id` | `""` | Empty = OIDC off. Setting it arms a preflight requiring `client_secret`/`auth_url`/`token_url`/`api_url` too |
 | `monitoring_grafana_oidc_allow_sign_up` | `false` | Whether a first-time OIDC login auto-creates a local Grafana account |
 | `monitoring_scrape_bridgelink` | `false` | Adds the `bridgelink` scrape job - turn on together with `bridgelink_exporter_enabled`, see below |
-| `monitoring_bridgelink_exporter_port` | `9151` | Where that exporter is published on loopback |
+| `monitoring_metrics_network_name` | `linumed-base-metrics` | Docker network shared with exporters in other Compose stacks; Prometheus joins it |
+| `monitoring_bridgelink_exporter_target` | `linumed-base-bridgelink-exporter:9151` | Scrape target - a container name on that network, not a host port |
 
 ### Grafana users (issue #42)
 
@@ -105,14 +106,31 @@ The alert rules (`BridgeLinkDown`, `BridgeLinkChannelNotStarted`,
 same pattern as `BackupStale`: an absent metric produces no series, so the rule neither
 fires nor errors in the meantime.
 
-Prometheus reaches the exporter over `host.docker.internal`, not by service name. The
-BridgeLink and monitoring stacks are separate Compose projects with separate networks by
-design, so this is the same arrangement as the Node Exporter job, for the same reason.
+Prometheus reaches the exporter **by container name over a shared Docker network**
+(`monitoring_metrics_network_name`, created by this role), not over a host port. This is
+deliberately *not* the Node Exporter arrangement, and the difference is the point
+(issue #64): Node Exporter is a native systemd service listening on all interfaces, which
+ufw can protect, so `host.docker.internal` works for it. A container is different - a port
+published on `127.0.0.1` cannot be reached from another container at all, and publishing it
+on all interfaces would bypass ufw, since Docker installs its rules ahead of the firewall.
+
+The shared-network arrangement is the same one the caddy role uses for
+`linumed-base-external` (issue #39), including the fixed literal name: two independent
+Compose projects can only agree on a network name if it is a constant rather than derived
+from a project name.
+
+Consequence for ordering: the exporter's stack joins this network as `external: true`, so
+the monitoring role must run before the bridgelink role on a given host. `site.yml` already
+does that.
 
 ## What gets changed
 
-- `{{ monitoring_deploy_dir }}/` - Prometheus, Loki, Alertmanager and Alloy
-  configuration, Grafana provisioning and the Docker Compose stack.
+- `{{ monitoring_deploy_dir }}/` - Loki, Alertmanager and Alloy configuration, Grafana
+  provisioning and the Docker Compose stack.
+- `{{ monitoring_deploy_dir }}/prometheus/` - `prometheus.yml` and `alert-rules.yml`, in
+  their own directory because that directory is what gets bind-mounted. Mounting the two
+  files individually meant no config change after the first deploy ever reached Prometheus
+  (issue #63); see the pitfall below.
 - `/etc/default/prometheus-node-exporter` - command-line arguments for the native
   service.
 - `/var/lib/prometheus/node-exporter/` - textfile-collector directory (used by the
@@ -220,6 +238,24 @@ docker run --rm --network container:linumed-base-loki curlimages/curl:latest -s 
 - **The org-role assignment runs on every apply, the account creation does not.** So a
   role change in `monitoring_grafana_users` (e.g. `Viewer` -> `Editor`) does take effect
   on the next run, even though the password does not.
+
+### Editing Prometheus config by hand does not survive, and used to not apply at all
+
+The bind mount is the **directory** `{{ monitoring_deploy_dir }}/prometheus/`, not the two
+files inside it. That is not cosmetic: a single-file bind mount binds the inode, and
+Ansible's `template` module writes a temp file and renames it into place, producing a new
+one. With the old per-file mounts the container went on reading the orphaned copy, so
+every change after the first deploy silently did nothing - the playbook said `changed`,
+the validation passed, the `/-/reload` handler answered 200, and Prometheus kept running
+the config from day one. Nothing anywhere reported a problem (issue #63).
+
+The other services in this stack were never affected: they are updated by restarting their
+container, and a restart re-resolves the bind mount. Prometheus is the only one reloaded
+over HTTP, which is worth keeping for zero downtime - hence the directory.
+
+Note the practical consequence for debugging: an *in-place* edit of
+`prometheus/prometheus.yml` on the host does now reach the container, but the next
+playbook run overwrites it. Change the template, not the deployed file.
 
 ## GDPR: what ends up in Loki
 

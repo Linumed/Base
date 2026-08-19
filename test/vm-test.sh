@@ -35,6 +35,8 @@ ANSIBLE_USER="vmtest"
 source "${REPO_ROOT}/test/lib/site-idempotency.sh"
 # shellcheck source=lib/docker-reference-smoke.sh
 source "${REPO_ROOT}/test/lib/docker-reference-smoke.sh"
+# shellcheck source=lib/bridgelink-exporter-check.sh
+source "${REPO_ROOT}/test/lib/bridgelink-exporter-check.sh"
 
 cleanup() {
   virsh destroy "${VM_NAME}" >/dev/null 2>&1 || true
@@ -122,3 +124,9 @@ run_site_idempotency_check
 # and it deliberately reuses this already-provisioned throwaway VM rather than exposing a
 # Docker socket to the CI job container (issue #46).
 run_docker_reference_smoke_check
+
+# Last, and after the idempotency check rather than folded into it: this one deliberately
+# changes the deployed state (it switches the exporter on), so anything asserting on a
+# default-configuration host has to have run already. Covers the enable path from #60,
+# which nothing had ever executed through Ansible (issue #62).
+run_bridgelink_exporter_check

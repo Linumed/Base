@@ -70,10 +70,43 @@
     mode: "0755"
   become: true
 
+# Prometheus's two config files live in their own directory because that directory - not
+# the files - is what gets bind-mounted (issue #63). A single-file bind mount binds the
+# inode, and Ansible's template/copy write a temp file and rename it into place, which
+# creates a new one: the container then keeps reading the orphaned old file forever, and
+# nothing reports an error. The /-/reload handler still answers 200, having reloaded the
+# same stale config. Measured, not assumed - see #63 for the reproduction.
+#
+# Prometheus is the only service in this stack where this bites: the others are updated by
+# restarting their container, and a restart re-resolves the bind mount. Prometheus is
+# reloaded over HTTP for zero downtime, which is worth keeping - hence a directory mount
+# rather than trading the reload for a restart. Same fix as the caddy role's Caddyfile
+# (#44), which hit this first.
+- name: Ensure the Prometheus config directory exists
+  ansible.builtin.file:
+    path: "{{ monitoring_deploy_dir }}/prometheus"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+
+# Deployments made before #63 have these at the top level, where nothing reads them any
+# more. Left in place they are a trap for the next person debugging a config that "does
+# not apply" - the file they would find and edit is the one that no longer matters.
+- name: Remove the pre-#63 top-level Prometheus config files
+  ansible.builtin.file:
+    path: "{{ monitoring_deploy_dir }}/{{ item }}"
+    state: absent
+  loop:
+    - prometheus.yml
+    - alert-rules.yml
+  become: true
+
 - name: Deploy Prometheus config
   ansible.builtin.template:
     src: prometheus.yml.j2
-    dest: "{{ monitoring_deploy_dir }}/prometheus.yml"
+    dest: "{{ monitoring_deploy_dir }}/prometheus/prometheus.yml"
     owner: root
     group: root
     mode: "0644"
@@ -85,7 +118,7 @@
 - name: Deploy Prometheus alert rules
   ansible.builtin.template:
     src: alert-rules.yml.j2
-    dest: "{{ monitoring_deploy_dir }}/alert-rules.yml"
+    dest: "{{ monitoring_deploy_dir }}/prometheus/alert-rules.yml"
     owner: root
     group: root
     mode: "0644"
@@ -101,8 +134,7 @@
 - name: Validate Prometheus config
   ansible.builtin.command: >-
     docker run --rm
-    -v {{ monitoring_deploy_dir }}/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-    -v {{ monitoring_deploy_dir }}/alert-rules.yml:/etc/prometheus/alert-rules.yml:ro
+    -v {{ monitoring_deploy_dir }}/prometheus:/etc/prometheus:ro
     --entrypoint promtool
     {{ monitoring_prometheus_image }}
     check config /etc/prometheus/prometheus.yml
@@ -114,7 +146,7 @@
 - name: Roll back Prometheus config if validation failed and a previous version existed
   ansible.builtin.copy:
     src: "{{ monitoring_prometheus_config.backup_file }}"
-    dest: "{{ monitoring_deploy_dir }}/prometheus.yml"
+    dest: "{{ monitoring_deploy_dir }}/prometheus/prometheus.yml"
     remote_src: true
     owner: root
     group: root
@@ -126,7 +158,7 @@
 
 - name: Remove Prometheus config if validation failed and no previous version existed
   ansible.builtin.file:
-    path: "{{ monitoring_deploy_dir }}/prometheus.yml"
+    path: "{{ monitoring_deploy_dir }}/prometheus/prometheus.yml"
     state: absent
   become: true
   when:
@@ -136,7 +168,7 @@
 - name: Roll back alert rules if validation failed and a previous version existed
   ansible.builtin.copy:
     src: "{{ monitoring_alert_rules.backup_file }}"
-    dest: "{{ monitoring_deploy_dir }}/alert-rules.yml"
+    dest: "{{ monitoring_deploy_dir }}/prometheus/alert-rules.yml"
     remote_src: true
     owner: root
     group: root
@@ -148,7 +180,7 @@
 
 - name: Remove alert rules if validation failed and no previous version existed
   ansible.builtin.file:
-    path: "{{ monitoring_deploy_dir }}/alert-rules.yml"
+    path: "{{ monitoring_deploy_dir }}/prometheus/alert-rules.yml"
     state: absent
   become: true
   when:

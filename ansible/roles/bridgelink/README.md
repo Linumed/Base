@@ -83,6 +83,13 @@ runs as an opt-in sidecar and translates the REST API into metrics. Why a script
 than `json_exporter` or one of the community exporters, and the measurements behind that
 choice: `docs/roles/bridgelink.md`, section "Monitoring".
 
+Prometheus reaches it by container name over `linumed-base-metrics`, a network the
+monitoring role creates and this stack joins as `external: true` - not over a host port.
+A loopback-published container port is unreachable from another container, and an
+all-interfaces one bypasses ufw; `host.docker.internal` is valid only for native services
+like Node Exporter (issue #64). Consequence: with the exporter enabled, the monitoring role
+must have run on the host first.
+
 ## Exposure
 
 Only the admin/API port and, when enabled, the exporter port are published, and only on
