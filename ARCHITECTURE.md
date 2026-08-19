@@ -347,13 +347,11 @@ for v0.2 has been dropped
 ([ADR 0003](docs/adr/0003-loopback-only-access-no-bundled-identity-provider.md)):
 it would have required an outward-facing opening that this kit
 deliberately avoids. Instead of shipping an identity provider, Grafana
-gets an optional connection to an **existing** one (OIDC). Linumed
-Passpin is unaffected by this - it is a separate product and is not
-developed in this repository.
+gets an optional connection to an **existing** one (OIDC).
 
 Application software (HIS, DMS, document management) is deliberately
 not part of Linumed Base. The clinic runs its own applications. Linumed
-OS provides the secure, GDPR-compliant base.
+Base provides the secure, GDPR-compliant foundation.
 
 Every release is tagged as a git tag. Breaking changes only from v1.0
 onward.
