@@ -58,6 +58,11 @@ graph TB
             bridgelink["BridgeLink + PostgreSQL<br/>(loopback only)"]
             monitoring["Prometheus · Grafana (loopback)<br/>Loki · Alertmanager · Alloy · cAdvisor"]
         end
+
+        hardening -->|protects| docker
+        node -->|host metrics| monitoring
+        docker -->|container metrics| monitoring
+        backup -->|backs up volumes| docker
     end
 ```
 
