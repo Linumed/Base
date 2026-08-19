@@ -74,10 +74,23 @@ bridgelink_exporter_enabled: false
 # the documented exception to the "named volumes only" rule in CONVENTIONS.md.
 bridgelink_exporter_image: "python:3.13-alpine"
 
-# Loopback only, same reasoning as every other port in this repo. Prometheus reaches it
-# via host.docker.internal because it runs in the monitoring stack's own Compose network -
-# identical to how the node exporter is scraped.
+# Loopback only, same reasoning as every other port in this repo. This port is for a human
+# with curl, NOT the path Prometheus uses: a container port published on 127.0.0.1 is not
+# reachable from another container, and publishing it on all interfaces would bypass ufw
+# (issue #64). Prometheus reaches the exporter by container name over the shared network
+# below.
 bridgelink_exporter_port: 9151
+
+# The monitoring role creates this network and Prometheus sits on it; the exporter joins it
+# as `external: true`. Must match monitoring_metrics_network_name - it is a fixed literal
+# on both sides precisely so two independent Compose projects can agree on it (issue #39's
+# pattern, applied again in #64).
+#
+# Consequence worth knowing: with the exporter enabled, the monitoring role has to have run
+# on this host first, or Compose fails on a missing external network. site.yml already
+# orders monitoring before bridgelink; running playbooks/bridgelink.yml on its own against
+# a host without monitoring does not work with the exporter switched on.
+bridgelink_exporter_metrics_network: "linumed-base-metrics"
 
 # A BridgeLink user with read access, NOT the admin account. The exporter only ever issues
 # GETs against /api/channels/statuses and /api/system/stats.

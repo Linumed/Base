@@ -192,9 +192,19 @@ services:
       - "host.docker.internal:host-gateway"
     ports:
       - "127.0.0.1:{{ monitoring_prometheus_port }}:9090"
+    # Both networks, explicitly: naming any network at all opts a service out of joining
+    # `default` implicitly, and Prometheus still has to reach cadvisor and alertmanager
+    # there. The second one is where exporters from other Compose stacks are found
+    # (issue #64).
+    networks:
+      - default
+      - {{ monitoring_metrics_network_name }}
     volumes:
-      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      - ./alert-rules.yml:/etc/prometheus/alert-rules.yml:ro
+      # The directory, not the two files individually: a single-file bind mount binds the
+      # inode, and Ansible replaces these files by atomic rename, so the container would
+      # keep reading the orphaned old copy and every config change after the first deploy
+      # would silently do nothing (issue #63).
+      - ./prometheus:/etc/prometheus:ro
       - prometheus_data:/prometheus
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:9090/-/healthy"]
@@ -202,6 +212,13 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+
+# Declared here, not `external: true`: this stack owns the network and creates it, and the
+# bridgelink role's exporter joins it as external. Same arrangement, and same reason for a
+# fixed literal name, as the caddy role's linumed-base-external (issue #39).
+networks:
+  {{ monitoring_metrics_network_name }}:
+    name: {{ monitoring_metrics_network_name }}
 
 volumes:
   prometheus_data:

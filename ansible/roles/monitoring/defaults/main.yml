@@ -138,4 +138,21 @@ monitoring_alertmanager_repeat_interval: "4h"
 # a scrape job pointing at a target that was never deployed sits at up == 0 and trips the
 # HostDown alert forever. Turn this on together with bridgelink_exporter_enabled.
 monitoring_scrape_bridgelink: false
-monitoring_bridgelink_exporter_port: 9151
+
+# Docker network Prometheus shares with exporters that live in other Compose stacks.
+# A fixed literal name, not Compose's project-derived default, for the same reason as the
+# caddy role's linumed-base-external (issue #39): another stack has to reference it as
+# `external: true`, so the name must be a stable constant.
+#
+# Why a shared network and not a published port: a container port published on 127.0.0.1
+# is not reachable from another container via host.docker.internal (measured), and
+# publishing on all interfaces would bypass ufw entirely - Docker inserts its own rules
+# ahead of it. The Node Exporter job gets away with host.docker.internal only because it
+# is a *native* systemd service that ufw can actually protect. That pattern does not
+# transfer to containers (issue #64).
+monitoring_metrics_network_name: "linumed-base-metrics"
+
+# Scrape target for the BridgeLink exporter: a container name on the shared network above,
+# so no host port is involved at all. The exporter still publishes 9151 on loopback, but
+# that is for a human with curl, not for Prometheus.
+monitoring_bridgelink_exporter_target: "linumed-base-bridgelink-exporter:9151"

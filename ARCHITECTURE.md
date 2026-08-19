@@ -175,12 +175,17 @@ of the process, and nothing about whether messages are actually moving.
 A stopped channel or a queue that stops draining looks identical to an
 idle, healthy engine from the outside. BridgeLink exposes no `/metrics`
 of its own, so the `bridgelink` role ships an opt-in exporter sidecar
-that translates its REST API into channel-level metrics; Prometheus
-scrapes it over `host.docker.internal`, the same way it reaches Node
-Exporter, because the two Compose stacks have separate networks by
-design. Both switches (`bridgelink_exporter_enabled`,
-`monitoring_scrape_bridgelink`) are off by default - see
-`docs/roles/bridgelink.md`.
+that translates its REST API into channel-level metrics.
+
+Prometheus reaches that sidecar by container name over a shared Docker
+network (`linumed-base-metrics`), not over a host port - the two stacks
+are separate Compose projects, and neither a loopback-published port
+(unreachable from another container) nor an all-interfaces one
+(bypasses ufw) is an option. The Node Exporter job's
+`host.docker.internal` works only because Node Exporter is a native
+service, not a container. Both switches
+(`bridgelink_exporter_enabled`, `monitoring_scrape_bridgelink`) are off
+by default - see `docs/roles/bridgelink.md`.
 
 Retention is split by data kind, not a single global value: metrics
 (`monitoring_metrics_retention_days`, default 90) and logs
