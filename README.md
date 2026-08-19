@@ -93,7 +93,7 @@ cloud image, or a host you've set up before).
 
 ```bash
 git clone https://github.com/Linumed/Base.git
-cd linumed-base/ansible
+cd Base/ansible
 # Every ansible-playbook/ansible-vault/ansible-lint command in this repo runs from here,
 # not the repo root - ansible.cfg (roles_path, default inventory) lives in this
 # directory and Ansible only picks up an ansible.cfg from the current working directory.
