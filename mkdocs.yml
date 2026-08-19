@@ -39,7 +39,20 @@ theme:
 markdown_extensions:
   - admonition
   - pymdownx.details
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      # Renders ```mermaid fences as diagrams instead of plain code blocks - the same
+      # fence syntax GitHub and Forgejo already render natively (confirmed against
+      # Forgejo's own markdown API before switching architecture.md's ASCII diagrams).
+      #
+      # class is deliberately "mermaid-diagram", not Material's own default "mermaid" -
+      # see docs/javascripts/mermaid-init.js for why: Material's built-in Mermaid
+      # support pulls its renderer from unpkg.com at runtime, an external CDN dependency
+      # this project's own rules forbid. This repo vendors mermaid.min.js instead and
+      # renders it with a few lines of local JS below.
+      custom_fences:
+        - name: mermaid
+          class: mermaid-diagram
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.highlight
   - tables
   - toc:
@@ -78,3 +91,12 @@ nav:
       - "0004: VM tests in CI via the host's libvirt socket": adr/0004-vm-tests-in-ci-via-host-libvirt-socket.md
       - "0005: docker/ is a manual-testing reference": adr/0005-docker-directory-is-a-manual-testing-reference-not-a-mirror.md
       - "0006: Linumed Base, not Linumed OS": adr/0006-linumed-base-not-linumed-os.md
+
+# Vendored, not CDN - see docs/javascripts/mermaid-init.js for why. mermaid.min.js must
+# load before mermaid-init.js; MkDocs preserves list order in the generated <script> tags.
+extra_javascript:
+  - javascripts/mermaid.min.js
+  - javascripts/mermaid-init.js
+
+extra_css:
+  - stylesheets/mermaid.css
