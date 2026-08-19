@@ -10,3 +10,17 @@
 .mermaid-diagram svg {
   max-width: 100%;
 }
+
+/* Mermaid's flowchart nodes are square by default; the "base" theme + themeVariables
+   set in mermaid-init.js control color, this covers the shape - rounded corners and a
+   visible border read less like a wireframe placeholder. */
+.mermaid-diagram svg .node rect,
+.mermaid-diagram svg .cluster rect {
+  rx: 6px;
+  ry: 6px;
+  stroke-width: 1.5px;
+}
+
+.mermaid-diagram svg .edgeLabel {
+  border-radius: 3px;
+}
