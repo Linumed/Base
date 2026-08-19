@@ -231,8 +231,7 @@ templates despite the issue's concern.
 
 ## Deliberately not on this roadmap
 
-- **v0.3 (Orthanc/DICOM)** and **Linumed Passpin** - named in `ARCHITECTURE.md`, no work
-  started, no issues. Passpin is a separate product and is not developed in this repository.
+- **v0.3 (Orthanc/DICOM)** - named in `ARCHITECTURE.md`, no work started, no issue yet.
 - **A bundled identity provider, a shared `linumed-net`, or a mesh-VPN role.** All three
   evaluated and rejected on 2026-08-14, see
   [ADR 0003](adr/0003-loopback-only-access-no-bundled-identity-provider.md). Connecting
