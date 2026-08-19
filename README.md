@@ -22,7 +22,7 @@ HL7/FHIR integration, monitoring, reverse proxy, and encrypted backups.
 | Debian 13 hardening | SSH, ufw, fail2ban, unattended-upgrades |
 | Caddy | Reverse proxy with automatic TLS |
 | BridgeLink | HL7 v2 / FHIR R4 integration engine (MPL-2.0 fork of Mirth Connect) |
-| Prometheus + Grafana + Loki + Alertmanager | Observability stack (log shipping via Grafana Alloy, host metrics via native Node Exporter) |
+| Prometheus + Grafana + Loki + Alertmanager | Observability stack (log shipping via Grafana Alloy, host metrics via native Node Exporter, optional BridgeLink channel metrics) |
 | restic | Encrypted backups |
 
 ## Status
@@ -67,6 +67,10 @@ A few things worth knowing before sizing a real host:
   engine (`bridgelink_max_heap_mb: 512` default) with no channels configured - real HL7
   traffic and channel-side JavaScript transformers use more. Size the JVM heap for your
   actual channel load, not this baseline.
+- **The optional BridgeLink exporter is not in these numbers.** Enabling
+  `bridgelink_exporter_enabled` adds one more container (a pinned `python:3.13-alpine`
+  running a standard-library script, no extra image built by this repo). Small next to the
+  JVM, but it is one container and one image more than the table was measured with.
 - **`/var/lib/docker/volumes` starts small and grows.** 51-100 MB here is a fresh
   install; Loki and Prometheus retention (30/90 days by default, see
   `docs/roles/monitoring.md`) and BridgeLink's message storage are what actually
