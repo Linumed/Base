@@ -5,7 +5,10 @@
   /run/secrets/mirth_properties), NOT passed as environment variables: env vars are
   visible to anyone who can run `docker inspect` and end up in the container's config
   JSON on disk. Everything in this file gets merged into mirth.properties at startup.
-  File mode 0600, root-owned - see tasks/main.yml.
+  Deployed as mode 0400 owned by UID 65532 (bridgelink_uid), NOT root: a file-based
+  Docker secret keeps the host's ownership when Compose mounts it, and the -dhi image
+  runs unprivileged, so a root-owned file makes the bootstrap die with
+  AccessDeniedException in a restart loop. See tasks/main.yml and issue #61.
 #}
 database.password = {{ bridgelink_db_password }}
 keystore.storepass = {{ bridgelink_keystore_storepass }}
