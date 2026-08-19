@@ -60,7 +60,8 @@ All variables are prefixed `bridgelink_*` and live in
 | `bridgelink_stop_grace_period` | `35` | Seconds before a hard kill - deliberately above Docker's 10s default |
 | `bridgelink_exporter_enabled` | `false` | Prometheus exporter sidecar - opt-in, see [Monitoring](#monitoring) |
 | `bridgelink_exporter_image` | `python:3.13-alpine` | Pinned upstream image; the exporter script is bind-mounted into it |
-| `bridgelink_exporter_port` | `9151` | Bound to `127.0.0.1` only, scraped via `host.docker.internal` |
+| `bridgelink_exporter_port` | `9151` | Bound to `127.0.0.1` only - for debugging by hand, **not** how Prometheus scrapes it |
+| `bridgelink_exporter_metrics_network` | `linumed-base-metrics` | Shared Docker network created by the monitoring role; must match `monitoring_metrics_network_name` |
 | `bridgelink_exporter_user` | `""` (required if enabled) | A **read-only** BridgeLink user, not `admin` |
 | `bridgelink_exporter_password` | `""` (required if enabled) | Ansible Vault |
 | `bridgelink_exporter_verify_tls` | `false` | Only set true if the keystore holds a certificate that validates |
@@ -153,6 +154,12 @@ the Administrator, after this role has run. There is no credential the role coul
    monitoring_scrape_bridgelink: true
    ```
 
+**Order matters here.** Prometheus reaches the exporter over a Docker network that the
+*monitoring* role creates, so monitoring has to have run on this host before BridgeLink
+does. `site.yml` already orders them that way; running `playbooks/bridgelink.yml` on its
+own against a host with no monitoring stack fails on a missing external network once the
+exporter is enabled.
+
 ### Metrics
 
 | Metric | Type | Labels | Meaning |
@@ -209,6 +216,32 @@ have to build, scan and host a container image of its own for it. The read-only 
 of a repo-managed file is the documented exception to CONVENTIONS.md's "named volumes
 only" rule.
 
+### How Prometheus reaches it
+
+By **container name over a shared Docker network**, not over the published port. The
+exporter joins `linumed-base-metrics`, which the monitoring role creates and Prometheus
+sits on, and the scrape target is `linumed-base-bridgelink-exporter:9151`.
+
+The obvious alternative - publish a host port and scrape `host.docker.internal` like the
+Node Exporter job does - does not work here, and the reason is worth understanding before
+anyone "simplifies" it back (issue #64):
+
+- A container port published on `127.0.0.1` is **not** reachable from another container
+  via the host gateway. Measured: the request simply times out.
+- Publishing it on all interfaces instead would make it reachable - and would bypass ufw
+  completely, because Docker inserts its own rules ahead of the firewall's. That is the
+  one thing this repo's network doctrine does not permit.
+- The Node Exporter job gets away with `host.docker.internal` only because Node Exporter
+  is a **native systemd service**, not a container, so ufw can actually protect its port.
+  That is the half of the pattern that does not transfer.
+
+The same reasoning applies in reverse, which is why moving the exporter into the monitoring
+stack is not a way out either: BridgeLink's own admin port is on loopback for the same
+doctrine. A shared network is the only arrangement that needs no host port at all.
+
+`bridgelink_exporter_port` still publishes 9151 on loopback - for a human with `curl`, not
+for Prometheus.
+
 ### Verification
 
 ```bash
@@ -219,6 +252,13 @@ curl -s http://127.0.0.1:9151/metrics | grep bridgelink_up
 curl -s http://127.0.0.1:9090/api/v1/targets \
   | grep -o '"job":"bridgelink"[^}]*"health":"[a-z]*"'
 ```
+
+Automated coverage: `test/vm-test.sh` runs a third `site.yml` pass with the exporter
+switched on (issue #62). It creates a BridgeLink user over the REST API first - a
+throwaway VM has no operator to do it - then checks the secret's ownership, the container
+healthcheck, `bridgelink_up`, and that Prometheus's `bridgelink` job is healthy. The two
+default-off runs before it cannot see any of this, which is the general point: a feature
+behind a default-off flag has no coverage until a test turns it on.
 
 `bridgelink_up 0` means the exporter is alive but the engine is not answering - that is a
 deliberate distinction. The exporter reports the failure as data rather than failing the

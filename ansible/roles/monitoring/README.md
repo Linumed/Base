@@ -5,8 +5,41 @@ Alloy, Alertmanager, cAdvisor as a Docker Compose stack, plus a native Node Expo
 
 ## Variables
 
-See `defaults/main.yml`, all prefixed `monitoring_*`. German user-facing writeup with
+See `defaults/main.yml`, all prefixed `monitoring_*`. User-facing writeup with
 verification steps: `docs/roles/monitoring.md`.
+
+## Prometheus config is mounted as a directory, not as two files
+
+`prometheus.yml` and `alert-rules.yml` are deployed into
+`{{ monitoring_deploy_dir }}/prometheus/`, and that directory is what the Compose file
+bind-mounts. Mounting the two files individually - which is what this role did until
+issue #63 - binds their inodes, and Ansible replaces them by atomic rename. The container
+then reads the orphaned old copies forever: playbook `changed`, validation green,
+`/-/reload` answering 200, and Prometheus still running the config from the first deploy,
+with nothing reporting an error.
+
+Only Prometheus was affected, because it is the only service here that is reloaded over
+HTTP instead of restarted - a `docker restart` re-resolves the bind mount, so Loki, Alloy
+and Alertmanager were always fine. The zero-downtime reload is worth keeping, hence the
+directory rather than swapping the reload for a restart.
+
+The role also deletes the pre-#63 files at the old top-level location, so nobody debugs
+the copy that no longer counts.
+
+## Exporters in other Compose stacks join linumed-base-metrics
+
+Prometheus sits on a second network besides the stack's default one, named by
+`monitoring_metrics_network_name`. Exporters that live in other Compose projects - the
+BridgeLink one today - join it as `external: true` and are scraped by container name.
+
+Not a host port, deliberately: one published on `127.0.0.1` cannot be reached from another
+container, and one on all interfaces bypasses ufw, since Docker installs its rules ahead of
+the firewall. The Node Exporter job's `host.docker.internal` is not a counterexample - that
+one is a native systemd service, which is exactly why ufw can protect it (issue #64).
+
+The fixed literal name is the same reasoning as the caddy role's `linumed-base-external`
+(#39): two independent Compose projects can only agree on a network name that is a
+constant, not one derived from a project name.
 
 ## Decisions and why
 
