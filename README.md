@@ -15,7 +15,7 @@ Ansible playbooks and roles that configure a standard Debian 13 (Trixie)
 server into a production-ready healthcare infrastructure stack - including
 HL7/FHIR integration, monitoring, reverse proxy, and encrypted backups.
 
-## What it includes (v0.1)
+## What it includes
 
 | Component | Role |
 |---|---|
