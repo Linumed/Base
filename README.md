@@ -131,6 +131,5 @@ MIT - see [LICENSE](LICENSE)
 
 - **Linumed Base** (this repo) - open source infrastructure platform
 - **Linumed Shifts** - nurse shift scheduling SaaS (commercial)
-- **Linumed Passpin** - identity and secrets management (in development)
 
 [linumed.com](https://linumed.com)
