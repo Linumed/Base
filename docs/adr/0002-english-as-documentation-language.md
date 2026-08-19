@@ -1,6 +1,6 @@
 # ADR 0002: English as the documentation language
 
-**Status:** accepted · **Date:** 2026-08-14 · **Affects:** `docs/`, `README.md`, `ARCHITECTURE.md`, `CLAUDE.md`, issue #26
+**Status:** accepted · **Date:** 2026-08-14 · **Affects:** `docs/`, `README.md`, `ARCHITECTURE.md`, `CONVENTIONS.md`, issue #26
 
 ## The question answered here
 
@@ -33,8 +33,8 @@ serving clinics, not clinic IT staff directly - they find projects through GitHu
 through a vendor landing page. GitHub discovery is an English-language channel.
 
 There is a third, smaller fact: **the repository does not currently obey its own rule.**
-`CLAUDE.md` says "German for end-user docs, English for technical/developer docs", but
-`README.md` is English, `ARCHITECTURE.md` is German, `CLAUDE.md` is English, ADR 0001 is
+`CONVENTIONS.md` says "German for end-user docs, English for technical/developer docs", but
+`README.md` is English, `ARCHITECTURE.md` is German, `CONVENTIONS.md` is English, ADR 0001 is
 German although ADRs are developer documentation, and `docs/roles/*.md` are German. The
 split was never applied consistently, so "keep the current convention" is not actually
 an available option - there is no single current convention to keep.
@@ -49,7 +49,7 @@ option, not the cheapest.
 
 **Bilingual, German and English side by side.** Serves both audiences. Rejected: two
 copies of every document drift, and this project is maintained by one person. The repo
-already demonstrates what happens - the `CLAUDE.md` language rule itself drifted from
+already demonstrates what happens - the `CONVENTIONS.md` language rule itself drifted from
 reality without anyone noticing. Doubling the surface makes that worse, not better.
 
 **English for new documents, keep existing German ones.** Pragmatic, no rewrite. Partly
@@ -62,7 +62,7 @@ German documents German *permanently*, which would make the mixed state the end 
 ## Decision
 
 English is the documentation language for this repository, for both end-user and
-developer documentation. This supersedes the split rule in `CLAUDE.md`.
+developer documentation. This supersedes the split rule in `CONVENTIONS.md`.
 
 German remains correct for:
 
@@ -112,6 +112,6 @@ style of the file they are in, as before.
 - Positioning decision of 2026-08-13, recorded in the project memory
   (`project_linumed_os_international_gtm`) - Linumed Base to be positioned internationally,
   decoupled from Shifts.
-- `CLAUDE.md`, "Documentation" - the split rule this ADR supersedes.
+- `CONVENTIONS.md`, "Documentation" - the split rule this ADR supersedes.
 - Issue #26 - operations handbook and MkDocs setup, the first document written under this
   decision.

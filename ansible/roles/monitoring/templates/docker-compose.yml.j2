@@ -137,7 +137,7 @@ services:
     environment:
       GF_SECURITY_ADMIN_USER: "{{ monitoring_grafana_admin_user }}"
       GF_SECURITY_ADMIN_PASSWORD: "{{ monitoring_grafana_admin_password }}"
-      # Telemetry off - matches CLAUDE.md's "no phone-home telemetry" principle. Grafana
+      # Telemetry off - matches CONVENTIONS.md's "no phone-home telemetry" principle. Grafana
       # phones home by default otherwise (usage stats, update checks).
       GF_ANALYTICS_REPORTING_ENABLED: "{{ monitoring_grafana_reporting_enabled | string | lower }}"
       GF_ANALYTICS_CHECK_FOR_UPDATES: "{{ monitoring_grafana_check_for_updates | string | lower }}"

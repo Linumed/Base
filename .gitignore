@@ -73,3 +73,11 @@ site/
 
 # Logs
 *.log
+
+# Local-only redirect stub for this project's AI-agent instructions file. The real,
+# public content lives in CONVENTIONS.md (renamed 2026-08-19, see the commit that did
+# it) - kept out of the public repo deliberately, not left off as an oversight. This
+# stub just tells Claude Code (which specifically auto-loads a file named exactly
+# CLAUDE.md) where the real content is, so per-machine auto-loading keeps working
+# without ever committing that literal filename again.
+CLAUDE.md

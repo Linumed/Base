@@ -1,4 +1,4 @@
-# CLAUDE.md - Linumed Base
+# CONVENTIONS.md - Linumed Base
 
 This file defines the rules, architecture, and constraints for this project.
 Always read this file before making any changes.
@@ -64,7 +64,7 @@ linumed-base/
 ├── scripts/                 # Bootstrap and utility scripts (bootstrap.sh - see scripts/README.md)
 ├── test/                    # Local test environment (libvirt/KVM, see below)
 ├── ARCHITECTURE.md          # Architecture reference
-├── CLAUDE.md                # This file
+├── CONVENTIONS.md            # This file
 └── README.md
 ```
 
