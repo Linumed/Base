@@ -3,10 +3,9 @@
 ## Problem
 
 A freshly installed Debian has no active firewall - any service that later opens a port
-(Docker containers included, see the trap for that in `CLAUDE.md` and the dev machine's
-own `~/.claude/CLAUDE.md`) is immediately visible across the whole reachable network.
-This role sets up `ufw` with default-deny for incoming traffic and opens only the ports
-actually needed.
+(Docker containers included - see the `docker` role, "Docker bypasses ufw") is
+immediately visible across the whole reachable network. This role sets up `ufw` with
+default-deny for incoming traffic and opens only the ports actually needed.
 
 ## Variables
 
