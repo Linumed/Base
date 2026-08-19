@@ -55,3 +55,37 @@ bridgelink_max_heap_mb: 512
 # drains queues and DB connections for up to 30s; Docker's default of 10s would cut that
 # short, so this is deliberately above it.
 bridgelink_stop_grace_period: 35
+
+# --- Prometheus exporter (issue #60) ---------------------------------------------------
+# BridgeLink has no /metrics endpoint of its own (verified against 26.6.0-dhi-slim: GET
+# /metrics is a 404), so without this sidecar Prometheus only ever sees cAdvisor's
+# container-level CPU/RAM for it - numbers that cannot show a stopped channel or a filling
+# queue, which are the failure modes that matter for an integration engine.
+#
+# Off by default, and that is not laziness: the exporter needs a BridgeLink login, and
+# BridgeLink's user database belongs to the operator - it is created on first login to the
+# Administrator, after this role has run. There is no credential this role could invent.
+# Turn it on once a read-only user exists, see docs/roles/bridgelink.md.
+bridgelink_exporter_enabled: false
+
+# Pinned upstream image with the exporter script bind-mounted read-only, rather than an
+# image built from this repo: the script is standard library only precisely so that no
+# image has to be built, scanned and hosted for it. Bind mount of a repo-managed file is
+# the documented exception to the "named volumes only" rule in CONVENTIONS.md.
+bridgelink_exporter_image: "python:3.13-alpine"
+
+# Loopback only, same reasoning as every other port in this repo. Prometheus reaches it
+# via host.docker.internal because it runs in the monitoring stack's own Compose network -
+# identical to how the node exporter is scraped.
+bridgelink_exporter_port: 9151
+
+# A BridgeLink user with read access, NOT the admin account. The exporter only ever issues
+# GETs against /api/channels/statuses and /api/system/stats.
+bridgelink_exporter_user: ""
+# No default - the preflight refuses to enable the exporter without it. Ansible Vault.
+bridgelink_exporter_password: ""
+
+# BridgeLink serves its API with the self-signed keystore it generates on first start, and
+# this connection never leaves the Compose network. Set to true only if the keystore holds
+# a certificate that actually validates.
+bridgelink_exporter_verify_tls: false

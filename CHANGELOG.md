@@ -11,6 +11,43 @@ click away instead of restated here.
 
 ## [Unreleased]
 
+### Added
+
+- **BridgeLink now reports application metrics to Prometheus** (#60). Until now the only
+  BridgeLink data Prometheus held came from cAdvisor - CPU, RAM and network of the
+  container. Those cannot distinguish a busy engine from a stalled one: a channel that is
+  deployed but stopped, or a destination queue that has stopped draining, looks exactly
+  like an idle healthy container. For an HL7/FHIR integration engine that is the failure
+  mode that matters most, because it is silent.
+
+  BridgeLink serves no `/metrics` endpoint of its own, so the `bridgelink` role gained a
+  small exporter sidecar that queries the engine's REST API: per-channel and per-connector
+  state, message counters by outcome, queue depth, JVM heap. Six alert rules ship with it
+  in the monitoring role, dormant until the metrics appear (the same pattern as the backup
+  rules).
+
+  **Opt-in, and it stays that way**: the exporter authenticates against BridgeLink's own
+  user database, which this kit does not manage - that user only exists after the operator
+  logs into the Administrator for the first time. Set `bridgelink_exporter_enabled` and
+  `monitoring_scrape_bridgelink` together once it does; see `docs/roles/bridgelink.md`.
+
+  `prometheus-community/json_exporter` was tested first and rejected: BridgeLink's JSON is
+  serialised from its XML model, so a single-channel installation renders a list as an
+  object and json_exporter's JSONPath silently matches nothing while still reporting the
+  scrape as successful. The exporter reads the XML representation instead, which has no
+  such ambiguity.
+
+### Fixed
+
+- **Documented the ownership the BridgeLink secret files actually need** (#60). The role's
+  README and the hand-run reference in `docker/bridgelink/` both described
+  `secrets/mirth.properties` as root-owned `0600`. A file-based Docker secret keeps the
+  host's ownership when it is mounted, and the hardened image runs as UID 65532, so
+  following that instruction produces `AccessDeniedException: /run/secrets/mirth_properties`
+  and a restart loop - which, because the image supports no healthcheck, Compose still
+  reports as a successfully started stack. The Ansible role always set the ownership
+  correctly; only the documentation was wrong, and only the manual path was affected.
+
 ### Changed
 
 - **The product is now called Linumed Base.** It was released as "Linumed OS" through

@@ -47,6 +47,10 @@ Four have **no default** and the role's preflight refuses to run without them:
 `bridgelink_db_password`, `bridgelink_keystore_storepass`, `bridgelink_keystore_keypass`,
 `bridgelink_server_id`. Supply via Ansible Vault.
 
+`bridgelink_exporter_user` and `bridgelink_exporter_password` join that list only when
+`bridgelink_exporter_enabled` is true - a second, separate preflight, so the error message
+can name the switch that actually caused it.
+
 `docker/bridgelink/docker-compose.yml` is a static, `.env`-driven reference for spinning
 BridgeLink up manually without Ansible - a hand-maintained testing convenience, not a
 guaranteed mirror (see [ADR 0005](../../../docs/adr/0005-docker-directory-is-a-manual-testing-reference-not-a-mirror.md)).
@@ -54,17 +58,35 @@ Bump `bridgelink_image` here *and* the image tag in `docker/bridgelink/` togethe
 
 ## Secrets are files, not environment variables
 
-Database and keystore passwords go into `{{ bridgelink_deploy_dir }}/secrets/` (mode
-0600, root-owned, directory 0700) and reach the container as Docker secrets. They are
-deliberately **not** passed as environment variables: env vars are readable by anyone who
-can run `docker inspect` and are written into the container's config JSON on disk.
+Database and keystore passwords go into `{{ bridgelink_deploy_dir }}/secrets/` (directory
+0700, root-owned) and reach the container as Docker secrets. `mirth.properties` and
+`exporter_password` are owned by **UID 65532, mode 0400** - not root: Compose bind-mounts
+a file-based secret with the host's ownership intact, and the `-dhi` image runs
+unprivileged, so a root-owned 0600 file makes the container die with
+`AccessDeniedException on /run/secrets/mirth_properties` in a restart loop. `db_password`
+stays root-owned 0600 because the Postgres entrypoint reads it before dropping
+privileges.
+
+None of them are passed as environment variables, deliberately: env vars are readable by
+anyone who can run `docker inspect` and are written into the container's config JSON on
+disk.
 
 `.gitignore` excludes `docker/*/secrets/` so a local test run can never accidentally
 commit credentials.
 
+## Monitoring
+
+BridgeLink serves no `/metrics` of its own (verified: `GET /metrics` is a 404 on
+`26.6.0-dhi-slim`), so cAdvisor's container CPU/RAM was the only signal Prometheus had for
+it - which cannot show a stopped channel or a filling queue. `files/bridgelink_exporter.py`
+runs as an opt-in sidecar and translates the REST API into metrics. Why a script rather
+than `json_exporter` or one of the community exporters, and the measurements behind that
+choice: `docs/roles/bridgelink.md`, section "Monitoring".
+
 ## Exposure
 
-Only the admin/API port is published, and only on `127.0.0.1` - reachable through an SSH
+Only the admin/API port and, when enabled, the exporter port are published, and only on
+`127.0.0.1` - reachable through an SSH
 tunnel, not from the network. PostgreSQL gets no host port at all; only BridgeLink talks
 to it, over the stack's own Compose network.
 
@@ -83,3 +105,6 @@ operator, deliberately.
   the clinic's own integration work.
 - Does not publish channel ports (see above).
 - Does not put BridgeLink behind Caddy - same reasoning as monitoring in v0.1.
+- Does not create the BridgeLink user the Prometheus exporter authenticates as. That user
+  database belongs to the operator and only exists after the first Administrator login,
+  which is why the exporter is opt-in (issue #60).

@@ -27,3 +27,12 @@ scrape_configs:
   - job_name: cadvisor
     static_configs:
       - targets: ["cadvisor:8080"]
+
+{% if monitoring_scrape_bridgelink %}
+  # BridgeLink application metrics via the exporter sidecar deployed by the bridgelink
+  # role (issue #60). host.docker.internal for the same reason as the node job above:
+  # the exporter lives in a different Compose network and is published on loopback.
+  - job_name: bridgelink
+    static_configs:
+      - targets: ["host.docker.internal:{{ monitoring_bridgelink_exporter_port }}"]
+{% endif %}
