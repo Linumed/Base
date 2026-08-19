@@ -122,10 +122,10 @@ otherwise ACME HTTP-01 fails silently in the background.
   detect a plain file change in the bind mount as a service change. Changing
   `caddy_image` or the ports, by contrast, goes through the normal Compose apply and can
   recreate the container.
-- **Don't bind to `127.0.0.1`**: unlike purely internal services on the Linumed dev
-  machine (see that machine's own `CLAUDE.md`), the whole point of Caddy here is to be
-  reachable from outside. `caddy_http_port`/`caddy_https_port` deliberately bind to all
-  interfaces.
+- **Don't bind to `127.0.0.1`**: unlike the loopback-only convention this kit uses for
+  purely internal management interfaces (see ADR 0003), the whole point of Caddy is to
+  be reachable from outside. `caddy_http_port`/`caddy_https_port` deliberately bind to
+  all interfaces.
 - **The Caddyfile is bind-mounted as a directory (`./conf:/etc/caddy`), not a single
   file** (issue #44). A single-file bind mount attaches to the file's inode at container
   start; Ansible's `template` module rewrites atomically (temp file + rename), which would
