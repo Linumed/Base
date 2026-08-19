@@ -1,10 +1,10 @@
 # ADR 0005: `docker/` is a manual-testing reference, not a required mirror
 
-**Status:** accepted · **Date:** 2026-08-16 · **Affects:** `docker/`, `CLAUDE.md`, issue #37
+**Status:** accepted · **Date:** 2026-08-16 · **Affects:** `docker/`, `CONVENTIONS.md`, issue #37
 
 ## The question answered here
 
-`CLAUDE.md` said "one Compose file per service stack under `docker/`" as if it were a
+`CONVENTIONS.md` said "one Compose file per service stack under `docker/`" as if it were a
 hard rule. Two of six Docker-based roles have one (`caddy`, `bridgelink`); `monitoring`
 never got one; `backup` was named as missing in issue #37 even though it isn't Docker at
 all. The rule existed, wasn't followed, and nothing said whether that was a bug or the

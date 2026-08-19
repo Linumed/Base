@@ -1,7 +1,7 @@
 ---
 monitoring_deploy_dir: "/opt/linumed-base/monitoring"
 
-# Container images, all pinned (checked 2026-08-10, no "latest" per CLAUDE.md).
+# Container images, all pinned (checked 2026-08-10, no "latest" per CONVENTIONS.md).
 monitoring_prometheus_image: "prom/prometheus:v3.13.2"
 monitoring_grafana_image: "grafana/grafana:13.1.3"
 monitoring_loki_image: "grafana/loki:3.7.6"
@@ -23,7 +23,7 @@ monitoring_prometheus_port: 9090
 monitoring_grafana_admin_user: "admin"
 monitoring_grafana_admin_password: ""
 
-# Grafana phone-home, off - matches CLAUDE.md's "no phone-home telemetry" principle.
+# Grafana phone-home, off - matches CONVENTIONS.md's "no phone-home telemetry" principle.
 monitoring_grafana_reporting_enabled: false
 monitoring_grafana_check_for_updates: false
 monitoring_grafana_analytics_enabled: false
@@ -103,7 +103,7 @@ monitoring_node_exporter_allow_from: "172.16.0.0/12"
 # the raw socket itself (#21) - a docker-socket-proxy sits in between, mounts the socket
 # read-only, and only forwards GET /containers* (container list + log streaming), nothing
 # else (no exec, no build, no networks, no POST at all). Pinned to a version tag, not
-# "latest" or "edge", per CLAUDE.md.
+# "latest" or "edge", per CONVENTIONS.md.
 monitoring_docker_socket_proxy_image: "tecnativa/docker-socket-proxy:0.3.0"
 
 # Alertmanager delivery (#22). Empty smarthost means "no delivery configured" - the role

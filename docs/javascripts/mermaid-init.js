@@ -8,7 +8,7 @@
 // dependency invisible to a static asset scan, confirmed by grepping Material's own
 // bundle.*.min.js for "unpkg.com/mermaid" (found while building this, 2026-08-19).
 // That breaks this project's own "no external resources from foreign servers, no
-// phone-home" rule (CLAUDE.md) exactly like the Google Fonts CDN load fixed in #55 -
+// phone-home" rule (CONVENTIONS.md) exactly like the Google Fonts CDN load fixed in #55 -
 // only less visible, since it is a JS-triggered network request, not a static
 // <link>/<script> tag. Using a different class name here ("mermaid-diagram" instead of
 // "mermaid") keeps Material's own detection from ever firing.

@@ -51,7 +51,7 @@ If it's specifically the `node` job: this is issue #40's exact symptom
 
 ## A second playbook run reports changes when nothing should have changed
 
-A hard requirement for every role in this repo (`CLAUDE.md`), so this is worth treating
+A hard requirement for every role in this repo (`CONVENTIONS.md`), so this is worth treating
 as a real bug, not routine noise. Known historical causes, in case one matches: a
 container with no `command:` override not being pre-pulled before the Compose apply
 computes its config hash (hit twice - Grafana/cAdvisor originally, docker-socket-proxy

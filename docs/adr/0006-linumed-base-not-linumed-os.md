@@ -17,7 +17,7 @@ package repository. It does not replace, fork, or patch any part of the operatin
 system it runs on.
 
 The strongest evidence that the name was wrong is in this repository's own files. Both
-`README.md` and `CLAUDE.md` opened their product definition with a denial:
+`README.md` and `CONVENTIONS.md` opened their product definition with a denial:
 
 > It is NOT a custom Linux distribution and does NOT produce a bootable ISO.
 
@@ -144,7 +144,7 @@ prevent.
 ## Sources
 
 - Issue #51 - the rename, with the full measured blast radius.
-- `README.md` and `CLAUDE.md` before this change - both opened their product definition
+- `README.md` and `CONVENTIONS.md` before this change - both opened their product definition
   with a denial of the name.
 - ADR 0002 - the audience argument (international, GitHub-first) that makes the
   precision of the name matter to exactly the readers the project is written for.
