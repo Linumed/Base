@@ -100,3 +100,92 @@ groups:
           description: >-
             The last successful backup restore test on {{ '{{ $labels.instance }}' }} was
             more than 9 days ago - the weekly schedule expects one every 7.
+
+  # Same dormant-until-the-metric-exists pattern as the backup rules above: with the
+  # bridgelink exporter switched off these expressions match no series, so they never fire
+  # and never error. They activate on their own once bridgelink_exporter_enabled and
+  # monitoring_scrape_bridgelink are both on (issue #60).
+  - name: linumed-base-bridgelink
+    rules:
+      - alert: BridgeLinkDown
+        # The exporter answers with bridgelink_up 0 rather than failing the scrape, so
+        # this stays distinguishable from "the exporter itself is gone" (HostDown).
+        expr: bridgelink_up == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "BridgeLink API not answering"
+          description: >-
+            The exporter has been unable to query the BridgeLink API for 5 minutes.
+            Message routing is likely down.
+
+      # The failure this whole exporter exists for: a channel that is deployed but not
+      # running. cAdvisor cannot see this - the container is healthy, the CPU is idle, and
+      # messages silently stop being processed.
+      - alert: BridgeLinkChannelNotStarted
+        expr: bridgelink_channel_state{state="STARTED"} == 0 and on(channel_id) bridgelink_channel_state{state="UNDEPLOYED"} == 0
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Channel {{ '{{ $labels.channel }}' }} is deployed but not started"
+          description: >-
+            {{ '{{ $labels.channel }}' }} has not been in STARTED state for 10 minutes.
+
+      - alert: BridgeLinkConnectorNotStarted
+        expr: bridgelink_connector_state{state="STOPPED"} == 1
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: >-
+            Connector {{ '{{ $labels.connector }}' }} on {{ '{{ $labels.channel }}' }}
+            is stopped
+          description: >-
+            A stopped destination connector means messages reach the channel but are not
+            delivered onwards.
+
+      # Absolute threshold rather than a rate: a queue that is draining slowly is normal,
+      # a queue this deep is not, whatever its trend.
+      - alert: BridgeLinkQueueBacklog
+        expr: bridgelink_connector_queued_messages > 1000
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: >-
+            {{ '{{ $value }}' }} messages queued on {{ '{{ $labels.connector }}' }}
+            ({{ '{{ $labels.channel }}' }})
+          description: >-
+            The destination has been unable to drain its queue for 15 minutes - the
+            receiving system is usually the cause.
+
+      - alert: BridgeLinkErrorRate
+        # increase() over 15m, not the raw counter: lifetime error totals only grow, so a
+        # threshold on the counter itself would latch on forever after a single bad day.
+        expr: increase(bridgelink_channel_messages_total{status="error"}[15m]) > 10
+        labels:
+          severity: warning
+        annotations:
+          summary: >-
+            {{ '{{ $labels.channel }}' }} produced
+            {{ '{{ $value | printf "%.0f" }}' }} errors in 15 minutes
+          description: >-
+            Messages are failing in the channel's filter, transformer or destination.
+
+      # -Xmx is bridgelink_max_heap_mb (512 MB by default), which is easy to outgrow once
+      # real channels with attachments run. cAdvisor shows the JVM's RSS, which says
+      # nothing about how close the heap is to its ceiling.
+      - alert: BridgeLinkHeapHigh
+        expr: >-
+          (bridgelink_jvm_memory_allocated_bytes - bridgelink_jvm_memory_free_bytes)
+          / bridgelink_jvm_memory_max_bytes > 0.9
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "BridgeLink JVM heap above 90% of its ceiling"
+          description: >-
+            Raise bridgelink_max_heap_mb or reduce channel throughput; an exhausted heap
+            makes the engine stall rather than crash cleanly.

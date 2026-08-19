@@ -18,6 +18,22 @@
       `uuidgen` and keep it stable; changing it later makes BridgeLink consider itself a
       different server.
 
+# Separate from the preflight above so the message can say which switch caused it: the
+# exporter is opt-in, and being told "set bridgelink_db_password" when the actual problem
+# is a missing exporter login would send the operator to the wrong variable.
+- name: Preflight - abort if the exporter is enabled without credentials
+  ansible.builtin.assert:
+    that:
+      - bridgelink_exporter_user | length > 0
+      - bridgelink_exporter_password | length > 0
+    fail_msg: >-
+      bridgelink_exporter_enabled is true but bridgelink_exporter_user and/or
+      bridgelink_exporter_password are empty. The exporter authenticates against
+      BridgeLink's own user database, which this role does not manage - create a
+      read-only user in the Administrator first, then supply its credentials via Ansible
+      Vault. See docs/roles/bridgelink.md.
+  when: bridgelink_exporter_enabled
+
 - name: Ensure deploy directory exists
   ansible.builtin.file:
     path: "{{ bridgelink_deploy_dir }}"
@@ -64,6 +80,32 @@
     mode: "0600"
   become: true
   no_log: true
+  notify: Restart bridgelink
+
+# Owned by the exporter container's UID for the same reason as mirth.properties above -
+# a Docker file secret keeps the host's ownership, and the python image runs as a
+# non-root user when told to.
+- name: Deploy the exporter password secret
+  ansible.builtin.copy:
+    content: "{{ bridgelink_exporter_password }}"
+    dest: "{{ bridgelink_deploy_dir }}/secrets/exporter_password"
+    owner: "{{ bridgelink_uid }}"
+    group: "{{ bridgelink_gid }}"
+    mode: "0400"
+  become: true
+  no_log: true
+  when: bridgelink_exporter_enabled
+  notify: Restart bridgelink
+
+- name: Deploy the Prometheus exporter script
+  ansible.builtin.copy:
+    src: bridgelink_exporter.py
+    dest: "{{ bridgelink_deploy_dir }}/bridgelink_exporter.py"
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+  when: bridgelink_exporter_enabled
   notify: Restart bridgelink
 
 - name: Deploy docker-compose.yml

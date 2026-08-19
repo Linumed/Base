@@ -58,6 +58,12 @@ All variables are prefixed `bridgelink_*` and live in
 | `bridgelink_server_id` | `""` (required) | Generate once with `uuidgen` and keep it stable permanently |
 | `bridgelink_max_heap_mb` | `512` | JVM maximum heap |
 | `bridgelink_stop_grace_period` | `35` | Seconds before a hard kill - deliberately above Docker's 10s default |
+| `bridgelink_exporter_enabled` | `false` | Prometheus exporter sidecar - opt-in, see [Monitoring](#monitoring) |
+| `bridgelink_exporter_image` | `python:3.13-alpine` | Pinned upstream image; the exporter script is bind-mounted into it |
+| `bridgelink_exporter_port` | `9151` | Bound to `127.0.0.1` only, scraped via `host.docker.internal` |
+| `bridgelink_exporter_user` | `""` (required if enabled) | A **read-only** BridgeLink user, not `admin` |
+| `bridgelink_exporter_password` | `""` (required if enabled) | Ansible Vault |
+| `bridgelink_exporter_verify_tls` | `false` | Only set true if the keystore holds a certificate that validates |
 
 The four required values belong in **Ansible Vault**, never in plaintext in a checked-in
 inventory.
@@ -71,6 +77,10 @@ inventory.
   read it.
 - Containers `linumed-base-bridgelink` and `linumed-base-bridgelink-db`, volumes for app
   data, custom extensions and the database.
+- With `bridgelink_exporter_enabled`: additionally
+  `{{ bridgelink_deploy_dir }}/bridgelink_exporter.py`, the
+  `secrets/exporter_password` file (UID 65532, 0400) and the container
+  `linumed-base-bridgelink-exporter`.
 
 ## Access
 
@@ -105,6 +115,117 @@ docker logs linumed-base-bridgelink 2>&1 | grep -i "postgres"
 The role runs this same check itself right after deployment and aborts if the engine
 doesn't respond within five minutes.
 
+## Monitoring
+
+BridgeLink serves **no `/metrics` endpoint** - verified against `26.6.0-dhi-slim`, `GET
+/metrics` is a 404. Without the exporter described here, the only thing Prometheus ever
+sees for it is cAdvisor's container-level CPU, RAM and network. Those numbers cannot show
+a stopped channel or a filling queue, which are precisely the failure modes that matter
+for an integration engine: the container stays healthy, the CPU stays idle, and messages
+quietly stop being delivered.
+
+The role ships a small exporter (`ansible/roles/bridgelink/files/bridgelink_exporter.py`)
+that runs as a sidecar in the BridgeLink stack, queries the engine's REST API and
+translates it into Prometheus metrics.
+
+### Enabling it
+
+The exporter is **off by default**, and not out of caution: it needs a BridgeLink login,
+and BridgeLink's user database belongs to the operator - it is created on first login to
+the Administrator, after this role has run. There is no credential the role could invent.
+
+1. Log into the Administrator once and create a user for monitoring. Give it read access
+   only; the exporter issues nothing but `GET /api/channels/statuses` and
+   `GET /api/system/stats`.
+2. Put its credentials in Vault and set:
+
+   ```yaml
+   bridgelink_exporter_enabled: true
+   bridgelink_exporter_user: "metrics"
+   bridgelink_exporter_password: "{{ vault_bridgelink_exporter_password }}"
+   ```
+
+3. Turn on the matching scrape job in the monitoring role - **both switches are needed**,
+   they are deliberately separate so a scrape job never points at a target that was never
+   deployed:
+
+   ```yaml
+   monitoring_scrape_bridgelink: true
+   ```
+
+### Metrics
+
+| Metric | Type | Labels | Meaning |
+|---|---|---|---|
+| `bridgelink_up` | gauge | - | 1 if the API answered this scrape |
+| `bridgelink_channel_state` | gauge | `channel`, `channel_id`, `state` | 1 on the active state, 0 on the rest |
+| `bridgelink_connector_state` | gauge | + `connector`, `connector_type` | Same, per connector |
+| `bridgelink_channel_messages_total` | counter | + `status` | `received` / `sent` / `filtered` / `error` |
+| `bridgelink_connector_messages_total` | counter | + `status` | Same, per connector |
+| `bridgelink_channel_queued_messages` | gauge | `channel`, `channel_id` | Queue depth |
+| `bridgelink_connector_queued_messages` | gauge | + `connector` | Queue depth per connector |
+| `bridgelink_channels_deployed` | gauge | - | Number of deployed channels |
+| `bridgelink_jvm_memory_*_bytes` | gauge | - | Heap allocated / free / ceiling, from the engine's own view |
+| `bridgelink_cpu_usage_ratio` | gauge | - | Process CPU as the engine reports it |
+| `bridgelink_disk_*_bytes` | gauge | - | Free / total on the engine's data filesystem |
+
+The counters come from Mirth's **lifetime** statistics, not the resettable ones shown in
+the Administrator's dashboard. "Clear statistics" and a redeploy both zero the latter,
+which would make a Prometheus counter run backwards and produce phantom spikes in
+`rate()`.
+
+Alert rules for these ship in the monitoring role and are dormant until the metrics exist
+(same pattern as the backup rules): `BridgeLinkDown`, `BridgeLinkChannelNotStarted`,
+`BridgeLinkConnectorNotStarted`, `BridgeLinkQueueBacklog`, `BridgeLinkErrorRate`,
+`BridgeLinkHeapHigh`.
+
+### Why a script instead of an off-the-shelf exporter
+
+`prometheus-community/json_exporter` was the first candidate and was **rejected after
+testing it against a real instance**. BridgeLink's JSON output is produced by
+XStream/Jettison from its XML model, so a list containing exactly one entry serialises as
+an object and a list of two or more as an array:
+
+```
+1 channel  -> {"list": {"channelStatistics": { ...single object... }}}
+2 channels -> {"list": {"channelStatistics": [ ..., ... ]}}
+```
+
+json_exporter's JSONPath therefore matches nothing at all on a single-channel
+installation - and it reports the scrape as successful while emitting zero metrics. A
+monitoring gap that announces itself as healthy is worse than no monitoring. Measured with
+`{.list.channelStatistics[*]}`, `{.list.channelStatistics}` and `{..channelStatistics}`;
+all three produce metrics for two channels and silence for one. The XML representation has
+no such ambiguity, which is why the exporter asks for `Accept: application/xml`.
+
+The existing community exporters (`vynca/mirth_exporter`,
+`teamzerolabs/mirth_channel_exporter`, `feathersct/mirth-prometheus-exporter`) target
+Mirth 3.3-3.7, are unmaintained, and publish no pinned container image. `vynca`'s shells
+out to the Mirth CLI, which does not exist in the `-dhi-slim` image at all.
+
+The script is **standard library only** by design. That is what allows it to run inside a
+pinned upstream `python` image with the file bind-mounted read-only, so this repo does not
+have to build, scan and host a container image of its own for it. The read-only bind mount
+of a repo-managed file is the documented exception to CONVENTIONS.md's "named volumes
+only" rule.
+
+### Verification
+
+```bash
+# From the host - the exporter is on loopback
+curl -s http://127.0.0.1:9151/metrics | grep bridgelink_up
+
+# Is Prometheus actually scraping it?
+curl -s http://127.0.0.1:9090/api/v1/targets \
+  | grep -o '"job":"bridgelink"[^}]*"health":"[a-z]*"'
+```
+
+`bridgelink_up 0` means the exporter is alive but the engine is not answering - that is a
+deliberate distinction. The exporter reports the failure as data rather than failing the
+scrape, so "BridgeLink is down" stays separate from "the exporter is gone", and its
+container healthcheck checks only its own liveness. Restarting the exporter because the
+engine it watches is down would delete the metric that says so, exactly when it is needed.
+
 ## Pitfalls
 
 - **"Container running" doesn't mean "engine running" here.** The hardened image can't
@@ -124,6 +245,10 @@ doesn't respond within five minutes.
   consequences, and a published container port bypasses ufw entirely (see
   `docs/roles/common-ufw.md`). Anyone opening channels to the outside has to do it, and
   secure it, themselves.
+- **The exporter needs its own BridgeLink user, and the role cannot create it.**
+  BridgeLink's user database is the operator's, and it only exists after the first
+  Administrator login. Enabling `bridgelink_exporter_enabled` without credentials aborts
+  in the preflight rather than deploying an exporter that authenticates as nobody.
 - **Passwords are deliberately not in environment variables.** Env vars are readable by
   anyone allowed to run `docker inspect` and end up in the container config on disk.
   Hence file-based Docker secrets.

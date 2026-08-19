@@ -34,6 +34,8 @@ All variables are prefixed `monitoring_*` and have sensible defaults in
 | `monitoring_grafana_users` | `[]` | List of `{login, name, password, role}` - local Grafana accounts beyond the shared admin, see below |
 | `monitoring_grafana_oidc_client_id` | `""` | Empty = OIDC off. Setting it arms a preflight requiring `client_secret`/`auth_url`/`token_url`/`api_url` too |
 | `monitoring_grafana_oidc_allow_sign_up` | `false` | Whether a first-time OIDC login auto-creates a local Grafana account |
+| `monitoring_scrape_bridgelink` | `false` | Adds the `bridgelink` scrape job - turn on together with `bridgelink_exporter_enabled`, see below |
+| `monitoring_bridgelink_exporter_port` | `9151` | Where that exporter is published on loopback |
 
 ### Grafana users (issue #42)
 
@@ -71,6 +73,37 @@ monitoring_grafana_oidc_api_url: "https://idp.example-clinic.org/oauth2/userinfo
 
 Costs zero extra containers - the difference to the Authentik role that was evaluated and
 dropped (ADR 0003).
+
+### BridgeLink application metrics (issue #60)
+
+cAdvisor reports CPU, RAM and network for every container including BridgeLink, which
+makes the gap easy to overlook: none of that says whether messages are actually moving. A
+channel that is deployed but stopped, or a destination queue that stops draining, looks
+exactly like an idle healthy engine from the outside. BridgeLink itself serves no
+`/metrics` (verified against `26.6.0-dhi-slim`), so the `bridgelink` role ships an exporter
+sidecar - see `docs/roles/bridgelink.md` for what it exports and why it is a script rather
+than `json_exporter`.
+
+Two switches, deliberately separate:
+
+```yaml
+bridgelink_exporter_enabled: true    # bridgelink role: deploy the sidecar
+monitoring_scrape_bridgelink: true   # monitoring role: scrape it
+```
+
+They are not derived from each other and neither defaults to true. A scrape job pointing
+at a target that was never deployed sits at `up == 0` and trips the `HostDown` alert
+forever, so the monitoring role does not guess whether BridgeLink exists on this host.
+
+The alert rules (`BridgeLinkDown`, `BridgeLinkChannelNotStarted`,
+`BridgeLinkConnectorNotStarted`, `BridgeLinkQueueBacklog`, `BridgeLinkErrorRate`,
+`BridgeLinkHeapHigh`) ship unconditionally and are dormant until the metrics exist - the
+same pattern as `BackupStale`: an absent metric produces no series, so the rule neither
+fires nor errors in the meantime.
+
+Prometheus reaches the exporter over `host.docker.internal`, not by service name. The
+BridgeLink and monitoring stacks are separate Compose projects with separate networks by
+design, so this is the same arrangement as the Node Exporter job, for the same reason.
 
 ## What gets changed
 
