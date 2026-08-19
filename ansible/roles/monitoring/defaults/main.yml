@@ -128,3 +128,14 @@ monitoring_alertmanager_receivers: []
 monitoring_alertmanager_group_wait: "30s"
 monitoring_alertmanager_group_interval: "5m"
 monitoring_alertmanager_repeat_interval: "4h"
+
+# BridgeLink's application metrics (issue #60). The bridgelink role runs its exporter as a
+# sidecar in its own Compose stack, published on loopback, so Prometheus reaches it the
+# same way it reaches the node exporter: via host.docker.internal, not by service name -
+# the two stacks have separate Compose networks by design.
+#
+# Off by default and deliberately not derived from "is the bridgelink role in the play":
+# a scrape job pointing at a target that was never deployed sits at up == 0 and trips the
+# HostDown alert forever. Turn this on together with bridgelink_exporter_enabled.
+monitoring_scrape_bridgelink: false
+monitoring_bridgelink_exporter_port: 9151

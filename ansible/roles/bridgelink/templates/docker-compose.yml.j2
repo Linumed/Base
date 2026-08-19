@@ -64,9 +64,57 @@ services:
       retries: 5
       start_period: 30s
 
+{% if bridgelink_exporter_enabled %}
+  # Prometheus exporter for channel statistics (issue #60). BridgeLink itself serves no
+  # /metrics, so without this Prometheus sees only cAdvisor's container CPU/RAM for it and
+  # a stopped channel or a filling queue stays invisible.
+  bridgelink-exporter:
+    image: {{ bridgelink_exporter_image }}
+    container_name: linumed-base-bridgelink-exporter
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    # The pinned upstream python image runs as root by default; nothing here needs it.
+    user: "{{ bridgelink_uid }}:{{ bridgelink_gid }}"
+    command: ["python", "/opt/exporter/bridgelink_exporter.py"]
+    environment:
+      # Service name on this stack's network - the exporter does not go through the
+      # published loopback port.
+      BRIDGELINK_URL: "https://bridgelink:8443"
+      BRIDGELINK_EXPORTER_USER: "{{ bridgelink_exporter_user }}"
+      # Password comes from the secret file below, never from an env var - `docker inspect`
+      # would show it otherwise.
+      BRIDGELINK_EXPORTER_PASSWORD_FILE: /run/secrets/exporter_password
+      BRIDGELINK_EXPORTER_PORT: "9151"
+      BRIDGELINK_EXPORTER_VERIFY_TLS: "{{ bridgelink_exporter_verify_tls | string | lower }}"
+    secrets:
+      - exporter_password
+    # Read-only bind mount of a repo-managed script - the documented exception to
+    # CONVENTIONS.md's "named volumes only", and the reason no image has to be built here.
+    volumes:
+      - {{ bridgelink_deploy_dir }}/bridgelink_exporter.py:/opt/exporter/bridgelink_exporter.py:ro
+    ports:
+      - "127.0.0.1:{{ bridgelink_exporter_port }}:9151"
+    # /healthz reports the exporter's own liveness and deliberately not BridgeLink's - a
+    # down engine must not restart the exporter, or the up=0 metric that says so
+    # disappears exactly when it is needed. busybox wget, present in the alpine image.
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:9151/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      - bridgelink
+{% endif %}
+
 secrets:
   mirth_properties:
     file: ./secrets/mirth.properties
+{% if bridgelink_exporter_enabled %}
+  exporter_password:
+    file: ./secrets/exporter_password
+{% endif %}
   db_password:
     file: ./secrets/db_password
 

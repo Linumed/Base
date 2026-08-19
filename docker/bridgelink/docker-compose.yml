@@ -7,6 +7,19 @@
 #   printf 'database.password = ...\nkeystore.storepass = ...\nkeystore.keypass = ...\n' > secrets/mirth.properties
 #   printf '...' > secrets/db_password
 #   chmod 600 secrets/*
+#   sudo chown 65532:65532 secrets/mirth.properties   # <- not optional
+#
+# That chown is what makes the difference between a running engine and a restart loop.
+# Compose bind-mounts a file-based secret with the host's ownership intact and the -dhi
+# image runs as UID 65532, so a root- or user-owned 0600 file makes the bootstrap die with
+# `AccessDeniedException: /run/secrets/mirth_properties` - and because the image has no
+# healthcheck, Compose still reports the stack as up. The Ansible role sets this ownership
+# itself; only this hand-run reference needs the manual step.
+#
+# The Prometheus exporter sidecar (bridgelink_exporter_enabled, issue #60) is deliberately
+# not mirrored here - it needs a BridgeLink user that only exists after first login. See
+# docs/roles/bridgelink.md and ADR 0005 for why this file is a testing convenience rather
+# than a mirror.
 services:
   bridgelink:
     image: innovarhealthcare/bridgelink:26.6.0-dhi-slim
