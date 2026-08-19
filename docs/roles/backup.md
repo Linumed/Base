@@ -118,8 +118,10 @@ rm -rf /tmp/restore-test
   can't accept that should add a regular `pg_dump` to `backup_paths` as well.
 - **Without the restic password, everything is lost.** There is no recovery mechanism.
   Keep the password at a second, physically separate location in addition to the local
-  vault (see the dev machine's own `~/.claude/CLAUDE.md`, the section on total loss at
-  the site - the same logic applies to any installation built with this kit).
+  vault - the storage target itself can survive a total loss at the primary site
+  (fire, theft), but without the password separately, it is nothing but encrypted
+  noise. That applies to any installation built with this kit, not only the one it was
+  developed on.
 - **The trap makes sure a failure stays visible**, not that it disappears. If `restic
   backup`, `forget` or `check` fails, a metric is still written (`backup_success 0`) - a
   silent failure that only surfaces once a restore is needed is the real nightmare with
