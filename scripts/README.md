@@ -63,6 +63,39 @@ Needs Node (for `npx`) and downloads a Chromium once into `PUPPETEER_CACHE_DIR`
 (`/var/tmp/puppeteer` by default - deliberately not `/tmp`, which is a tmpfs on the
 development machine).
 
+## scan-images.py
+
+Scans every image pinned in a role's `defaults/main.yml` for known vulnerabilities, and
+checks that the `docker/` references pin the same versions.
+
+```bash
+./scripts/scan-images.py            # exits non-zero on an actionable finding
+./scripts/scan-images.py --report   # same output, always exits 0
+```
+
+Uses `trivy` from PATH if present, otherwise runs it in a container. CI uses the binary,
+because the runner deliberately has no broad Docker socket access.
+
+**Why it is not a plain `trivy && exit $?`** (issue #67): a finding is only actionable if a
+newer tag would clear it, and that is not the same as the pin being behind. Measured on
+2026-08-20: bumping Grafana 13.1.3 to 13.1.4 cleared 5 of 18 findings, while bumping
+Postgres 17.10 to 17.11 cleared none. So the script scans the candidate before demanding
+the bump, and distinguishes three cases:
+
+- **behind, and the bump measurably helps** - failure, fix it
+- **already newest, findings remain** - must be recorded in
+  `security/accepted-image-findings.txt` with a reason and a date; unrecorded ones fail
+- **newer series available** (13.1 -> 13.2, v0.33 -> v0.34) - reported, never enforced.
+  That is a decision, not a security patch.
+
+The alternative, failing on any finding at all, would leave the check permanently red -
+and a check that always says the same thing stops being read. This repository has hit that
+failure mode three times (#40, #48, #63).
+
+Entries in the accepted-findings file older than 90 days are reported, not failed:
+re-check them rather than refreshing the date, because an ageing entry usually means an
+upstream has stopped rebuilding.
+
 ## test/vm-test-netinst.sh
 
 Not in this directory (lives under `test/`) but exercises `bootstrap.sh` end-to-end

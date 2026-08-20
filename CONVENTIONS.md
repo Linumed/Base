@@ -105,8 +105,15 @@ linumed-base/
   except for explicitly documented exceptions; include a `.env.example` alongside the
   Compose file; keep the image tag manually in sync with the role's default on touch, but
   don't chase every Ansible-side comment/detail change.
-- Container images must be pinned to a specific version tag, never `latest` - applies to
-  both the Ansible templates and any `docker/<role>/` reference.
+- Container images must be pinned to a **specific version**, never `latest` and never a
+  floating series tag - applies to both the Ansible templates and any `docker/<role>/`
+  reference. `python:3.13-alpine` looks pinned and is not: it points at whatever patch
+  release is current and moves without any change here. Use `python:3.13.15-alpine`.
+- **Pins are scanned, not just set.** `scripts/scan-images.py` checks every pinned image
+  for known vulnerabilities and runs weekly in CI. A finding that a newer patch would clear
+  is fixed by bumping; one on an image already at its newest tag is recorded with a reason
+  and a date in `security/accepted-image-findings.txt`. Setting a pin and never looking at
+  it again is how `SECURITY.md`'s own promise went unkept for months.
 - **Diagrams are Mermaid sources under `docs/diagrams/`, rendered to committed SVGs.**
   Edit the `.mmd`, run `scripts/render-diagrams.sh`, commit both. They are not rendered in
   the reader's browser: the same file is displayed by the MkDocs site, GitHub and Forgejo,
@@ -194,7 +201,7 @@ split setup - Forgejo on a remote VPS, runner at home, mesh VPN in between. That
 plan, it is not what got built. Corrected 2026-08-18 after checking against the running
 system rather than trusting this file.)
 
-Three workflows under `.forgejo/workflows/`:
+Four workflows under `.forgejo/workflows/`:
 
 - `ansible-lint.yml` - every push and pull request to `main`.
 - `vm-test.yml` - the full `site.yml` double-run against a throwaway libvirt/KVM VM, plus
@@ -221,6 +228,14 @@ Three workflows under `.forgejo/workflows/`:
   gap. Treat `CHANGELOG.md` as part of every user-visible change, not as an afterthought -
   it is the entry most easily forgotten and it ships on the site via the `docs/changelog.md`
   symlink.
+
+- `image-scan.yml` - scans every pinned container image for known vulnerabilities
+  (issue #67). Weekly on a schedule plus on changes to the pins, because an image ages
+  without anything in this repository changing. Fails when a pin is behind a patch release
+  that demonstrably clears findings, when a finding is not recorded with a reason in
+  `security/accepted-image-findings.txt`, or when the `docker/` references have drifted
+  from the roles. Uses the trivy binary rather than a container: the runner deliberately
+  has no broad Docker socket access.
 
 `runs-on: docker`, never `ubuntu-latest` - the runner registers that label only.
 

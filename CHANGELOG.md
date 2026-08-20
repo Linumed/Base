@@ -13,6 +13,25 @@ click away instead of restated here.
 
 ### Added
 
+- **Pinned container images are now scanned for known vulnerabilities** (#67).
+  `SECURITY.md` has always listed "pinned image versions with known vulnerabilities that
+  have a fixed version available" as in scope for a security report, and nothing in the
+  repository ever checked. On the day the scanner was written, all eleven pinned images
+  carried fixable HIGH/CRITICAL findings - 129 distinct image/CVE pairs.
+
+  `scripts/scan-images.py` runs weekly in CI, and deliberately is not a plain
+  `trivy && exit $?`. A finding is only actionable if a newer tag would clear it, and being
+  behind does not guarantee that: bumping Grafana 13.1.3 to 13.1.4 cleared 5 of 18
+  findings, bumping Postgres 17.10 to 17.11 cleared none. So the script scans the candidate
+  before demanding the bump, treats a newer *series* (13.1 to 13.2) as a decision rather
+  than a security patch, and requires anything remaining on an already-current image to be
+  recorded with a reason and a date in `security/accepted-image-findings.txt`. A check that
+  is permanently red stops being read.
+
+  Two pins were bumped as a result (Grafana, PostgreSQL), and the exporter's image pin was
+  corrected: `python:3.13-alpine` looks pinned but is a floating series tag that moves on
+  its own. It is now `python:3.13.15-alpine`.
+
 - **ADR 0007 records why there is no Kubernetes support** - and says what that costs. The
   exclusion existed in three places and gave a reason in none of them: the roadmap deferred
   to `CONVENTIONS.md`, and `CONVENTIONS.md` simply asserted it. An exclusion without

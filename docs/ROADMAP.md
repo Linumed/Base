@@ -336,7 +336,9 @@ decide whether an evaluator tries the kit at all.
 scanning (#67) is the uncomfortable one. `SECURITY.md` lists "pinned image versions with
 known vulnerabilities that have a fixed version available" as in scope - and nothing in
 this repository has ever checked. Measured on 2026-08-20: all eleven pinned images carry
-fixable HIGH/CRITICAL findings, 192 in total. Some are simply behind (Alertmanager and
+fixable HIGH/CRITICAL findings - 129 distinct image/CVE pairs. (An earlier count of 192 in
+this section came from summing per-package occurrences, which counts the same CVE several
+times when it affects several packages in one image. The scanner deduplicates.) Some are simply behind (Alertmanager and
 Grafana both have newer tags), others are already on the newest tag and carry findings
 from their upstream base image, which no version bump here can clear. That difference is
 the whole design problem: a gate that goes red on any finding is permanently red, and a
@@ -352,7 +354,7 @@ them is how a rejected idea quietly comes back.
 
 | | Issue |
 |---|---|
-| Scan the pinned images, and act on the difference between "behind" and "upstream's problem" | #67 |
+| Scan the pinned images, and act on the difference between "behind" and "upstream's problem" | #67, **done 2026-08-20** |
 | Orthanc as the DICOM role | #69 |
 | Lifecycle: Debian major upgrade, teardown, the single-host assumption | #68 |
 
