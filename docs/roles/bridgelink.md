@@ -156,8 +156,9 @@ the Administrator, after this role has run. There is no credential the role coul
 
 **Order matters here.** Prometheus reaches the exporter over a Docker network that the
 *monitoring* role creates, so monitoring has to have run on this host before BridgeLink
-does. `site.yml` already orders them that way; running `playbooks/bridgelink.yml` on its
-own against a host with no monitoring stack fails on a missing external network once the
+does. `site.yml` already orders them that way - and it is the only playbook in the repo -
+but applying just this role (with a playbook of your own - there are no Ansible tags to
+select on) to a host with no monitoring stack fails on a missing external network once the
 exporter is enabled.
 
 ### Metrics
