@@ -1,0 +1,32 @@
+%% Rendered to docs/img/01-what-runs-where.svg by scripts/render-diagrams.sh (issue #65).
+%% Edit this file, then re-run that script - CI fails if the SVG is out of date.
+%% -
+%% Containment only, deliberately no edges: this diagram answers "what runs where",
+%% and nothing else. The previous version mixed containment with three different kinds
+%% of arrow (a security property, a data flow, a backup operation) and drew two of them
+%% at the Docker subgraph - which mermaid renders as a label with no arrow at all.
+%% Flows live in 02-what-reports-to-whom.mmd.
+graph TB
+    subgraph host["Debian 13 host (bare metal or VM)"]
+        direction TB
+
+        subgraph docker["Docker Engine - one Compose stack per role"]
+            direction TB
+            caddy["Caddy<br/><small>:80 / :443 - the only public ports</small>"]
+            bridgelink["BridgeLink + PostgreSQL<br/><small>loopback only</small>"]
+            monitoring["Prometheus · Grafana · Loki<br/>Alertmanager · Alloy · cAdvisor<br/><small>loopback only</small>"]
+        end
+
+        subgraph native["Runs natively on the host"]
+            direction TB
+            hardening["ufw · fail2ban<br/>SSH hardening"]
+            node["Node Exporter"]
+            backup["restic<br/><small>encrypted, scheduled</small>"]
+        end
+    end
+
+    %% - Invisible link, the only reason it exists: with no edges at all every sibling
+    %% - sits at the same rank, and mermaid lays the two groups out side by side into a
+    %% - very wide, very short figure. This stacks them without claiming a relationship
+    %% - that does not exist - which is exactly the mistake the old diagram made.
+    docker ~~~ native
