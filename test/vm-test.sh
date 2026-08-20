@@ -37,6 +37,8 @@ source "${REPO_ROOT}/test/lib/site-idempotency.sh"
 source "${REPO_ROOT}/test/lib/docker-reference-smoke.sh"
 # shellcheck source=lib/bridgelink-exporter-check.sh
 source "${REPO_ROOT}/test/lib/bridgelink-exporter-check.sh"
+# shellcheck source=lib/teardown-check.sh
+source "${REPO_ROOT}/test/lib/teardown-check.sh"
 
 cleanup() {
   virsh destroy "${VM_NAME}" >/dev/null 2>&1 || true
@@ -130,3 +132,9 @@ run_docker_reference_smoke_check
 # default-configuration host has to have run already. Covers the enable path from #60,
 # which nothing had ever executed through Ansible (issue #62).
 run_bridgelink_exporter_check
+
+# Absolutely last: it removes the installation everything above depends on. The VM is
+# destroyed straight afterwards, so exercising the documented teardown here is nearly free -
+# and it is the only way that page is anything more than a plausible-looking description
+# (issue #68).
+run_teardown_check
