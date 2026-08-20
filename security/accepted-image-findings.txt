@@ -17,7 +17,9 @@
 # Review: entries older than 90 days are reported by the scanner. Re-check them rather than
 # refreshing the date - the point is to notice when an upstream has stopped rebuilding.
 #
-# Every entry below was created on 2026-08-20, the day the scanner first ran (issue #67).
+# Note that the finding set depends on the scanner version, which is why TRIVY_VERSION in
+# scripts/scan-images.py is pinned and checked against the CI workflow. This list was
+# produced with trivy 0.74.0 on 2026-08-20 (issue #67).
 
 
 # caddy:2.11.4-alpine - alpine base image, caddy is already on its newest tag
@@ -105,29 +107,29 @@ innovarhealthcare/bridgelink:26.6.0-dhi-slim  CVE-2026-56819  # bridgelink is al
 innovarhealthcare/bridgelink:26.6.0-dhi-slim  CVE-2026-59901  # bridgelink is already on its newest tag; upstream gates its own build on fixable OS findings, so these are what its gate lets through (2026-08-20)
 innovarhealthcare/bridgelink:26.6.0-dhi-slim  GHSA-r7wm-3cxj-wff9  # bridgelink is already on its newest tag; upstream gates its own build on fixable OS findings, so these are what its gate lets through (2026-08-20)
 
-# postgres:17.11-alpine - remains after bumping to the newest patch (17.11); the bump cleared none of them, measured
-postgres:17.11-alpine  CVE-2025-61726  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
-postgres:17.11-alpine  CVE-2025-61729  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
-postgres:17.11-alpine  CVE-2025-68121  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
-postgres:17.11-alpine  CVE-2026-25679  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
-postgres:17.11-alpine  CVE-2026-27145  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
-postgres:17.11-alpine  CVE-2026-32280  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
-postgres:17.11-alpine  CVE-2026-32281  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
-postgres:17.11-alpine  CVE-2026-32283  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
-postgres:17.11-alpine  CVE-2026-33811  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
-postgres:17.11-alpine  CVE-2026-33814  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
-postgres:17.11-alpine  CVE-2026-33818  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
-postgres:17.11-alpine  CVE-2026-39820  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
-postgres:17.11-alpine  CVE-2026-39821  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
-postgres:17.11-alpine  CVE-2026-39822  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
-postgres:17.11-alpine  CVE-2026-39836  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
-postgres:17.11-alpine  CVE-2026-42499  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
-postgres:17.11-alpine  CVE-2026-42504  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
-postgres:17.11-alpine  CVE-2026-56853  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
-postgres:17.11-alpine  CVE-2026-56858  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
-postgres:17.11-alpine  CVE-2026-56859  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
-postgres:17.11-alpine  CVE-2026-56860  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
-postgres:17.11-alpine  CVE-2026-56862  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
+# postgres:17.11-alpine - remains after bumping to the newest patch (17.11); measured, the bump cleared none of them
+postgres:17.11-alpine  CVE-2025-61726  # remains after bumping to the newest patch (17.11); measured, the bump cleared none of them (2026-08-20)
+postgres:17.11-alpine  CVE-2025-61729  # remains after bumping to the newest patch (17.11); measured, the bump cleared none of them (2026-08-20)
+postgres:17.11-alpine  CVE-2025-68121  # remains after bumping to the newest patch (17.11); measured, the bump cleared none of them (2026-08-20)
+postgres:17.11-alpine  CVE-2026-25679  # remains after bumping to the newest patch (17.11); measured, the bump cleared none of them (2026-08-20)
+postgres:17.11-alpine  CVE-2026-27145  # remains after bumping to the newest patch (17.11); measured, the bump cleared none of them (2026-08-20)
+postgres:17.11-alpine  CVE-2026-32280  # remains after bumping to the newest patch (17.11); measured, the bump cleared none of them (2026-08-20)
+postgres:17.11-alpine  CVE-2026-32281  # remains after bumping to the newest patch (17.11); measured, the bump cleared none of them (2026-08-20)
+postgres:17.11-alpine  CVE-2026-32283  # remains after bumping to the newest patch (17.11); measured, the bump cleared none of them (2026-08-20)
+postgres:17.11-alpine  CVE-2026-33811  # remains after bumping to the newest patch (17.11); measured, the bump cleared none of them (2026-08-20)
+postgres:17.11-alpine  CVE-2026-33814  # remains after bumping to the newest patch (17.11); measured, the bump cleared none of them (2026-08-20)
+postgres:17.11-alpine  CVE-2026-33818  # remains after bumping to the newest patch (17.11); measured, the bump cleared none of them (2026-08-20)
+postgres:17.11-alpine  CVE-2026-39820  # remains after bumping to the newest patch (17.11); measured, the bump cleared none of them (2026-08-20)
+postgres:17.11-alpine  CVE-2026-39821  # remains after bumping to the newest patch (17.11); measured, the bump cleared none of them (2026-08-20)
+postgres:17.11-alpine  CVE-2026-39822  # remains after bumping to the newest patch (17.11); measured, the bump cleared none of them (2026-08-20)
+postgres:17.11-alpine  CVE-2026-39836  # remains after bumping to the newest patch (17.11); measured, the bump cleared none of them (2026-08-20)
+postgres:17.11-alpine  CVE-2026-42499  # remains after bumping to the newest patch (17.11); measured, the bump cleared none of them (2026-08-20)
+postgres:17.11-alpine  CVE-2026-42504  # remains after bumping to the newest patch (17.11); measured, the bump cleared none of them (2026-08-20)
+postgres:17.11-alpine  CVE-2026-56853  # remains after bumping to the newest patch (17.11); measured, the bump cleared none of them (2026-08-20)
+postgres:17.11-alpine  CVE-2026-56858  # remains after bumping to the newest patch (17.11); measured, the bump cleared none of them (2026-08-20)
+postgres:17.11-alpine  CVE-2026-56859  # remains after bumping to the newest patch (17.11); measured, the bump cleared none of them (2026-08-20)
+postgres:17.11-alpine  CVE-2026-56860  # remains after bumping to the newest patch (17.11); measured, the bump cleared none of them (2026-08-20)
+postgres:17.11-alpine  CVE-2026-56862  # remains after bumping to the newest patch (17.11); measured, the bump cleared none of them (2026-08-20)
 
 # prom/alertmanager:v0.33.1 - already on the newest 0.33 patch; v0.34 is a series bump and a separate decision
 prom/alertmanager:v0.33.1  CVE-2026-33818  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-08-20)
@@ -156,7 +158,6 @@ prom/alertmanager:v0.33.1  GHSA-hrxh-6v49-42gf  # already on the newest 0.33 pat
 # prom/prometheus:v3.13.2 - already on the newest 3.13 patch; v3.14 is a series bump and a separate decision
 prom/prometheus:v3.13.2  CVE-2026-33818  # already on the newest 3.13 patch; v3.14 is a series bump and a separate decision (2026-08-20)
 prom/prometheus:v3.13.2  CVE-2026-39821  # already on the newest 3.13 patch; v3.14 is a series bump and a separate decision (2026-08-20)
-prom/prometheus:v3.13.2  CVE-2026-42154  # already on the newest 3.13 patch; v3.14 is a series bump and a separate decision (2026-08-20)
 prom/prometheus:v3.13.2  CVE-2026-46600  # already on the newest 3.13 patch; v3.14 is a series bump and a separate decision (2026-08-20)
 prom/prometheus:v3.13.2  CVE-2026-56853  # already on the newest 3.13 patch; v3.14 is a series bump and a separate decision (2026-08-20)
 prom/prometheus:v3.13.2  CVE-2026-56858  # already on the newest 3.13 patch; v3.14 is a series bump and a separate decision (2026-08-20)
