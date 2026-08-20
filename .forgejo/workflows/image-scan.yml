@@ -40,10 +40,17 @@ jobs:
 
       # Pinned for the same reason the scanner pins its own version constant: an unpinned
       # scanner changes its verdict without this repository changing, and a verdict nobody
-      # caused is a verdict nobody trusts.
+      # caused is a verdict nobody trusts. Keep this in step with TRIVY_VERSION in
+      # scripts/scan-images.py, or a local run and a CI run can disagree.
+      #
+      # Verify the asset URL when bumping, do not assume it. The first version of this
+      # workflow pinned 0.58.2 - a real trivy version whose container image pulls fine, but
+      # whose release does not carry an asset under this name. CI found it with a bare
+      # `curl: (22) ... 404`, which is exactly the kind of thing that should have been
+      # tested locally first.
       - name: Install trivy
         run: |
-          TRIVY_VERSION=0.58.2
+          TRIVY_VERSION=0.74.0
           curl -sSfL -o /tmp/trivy.tar.gz \
             "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
           tar -xzf /tmp/trivy.tar.gz -C /usr/local/bin trivy
