@@ -21,10 +21,18 @@ Written 2026-08-14, after an audit of the repository against its own stated requ
 
 ## Where this actually stands
 
-All six v0.1 roles are implemented, VM-tested and idempotent: `common`, `docker`, `caddy`,
-`monitoring`, `bridgelink`, `backup`. There are no open bugs.
+**As of 2026-08-20, `v0.3.0`:** all six v0.1 roles are implemented, VM-tested and
+idempotent - `common`, `docker`, `caddy`, `monitoring`, `bridgelink`, `backup`. The
+repository is public, the documentation site is built and published from it, and there are
+no known defects. What *is* open is listed under
+[What is still open](#what-is-still-open-and-why-it-was-not-built-earlier) further down,
+with the reason each item is open rather than only the fact that it is.
 
-There is, however, a gap between that and being operable by someone who is not the author.
+The rest of this section is the audit that produced Stages 1-5, kept because the reasoning
+still explains why the order was what it was.
+
+There was a gap between roles that work and a product operable by someone who is not the
+author.
 The audit found it by measurement rather than assumption:
 
 - The example inventory defines two variables. `site.yml` aborts without seven. Anyone
@@ -302,6 +310,78 @@ reference whose only job is manual smoke-testing - not worth it for a single mai
 Checked rather than assumed before deciding: the two existing references
 (`docker/caddy/`, `docker/bridgelink/`) had not actually drifted from their Ansible
 templates despite the issue's concern.
+
+## What is still open, and why it was not built earlier
+
+Everything above is done. This section is the part that is not, and it exists because
+"what is left?" and "why wasn't that in v0.1?" are the two questions a reader of a public
+infrastructure kit actually has. Answering only the first reads like a wish list.
+
+Nothing here is a feature someone forgot. Each item is open for one of three reasons, and
+the reason determines how urgent it is:
+
+**1. It could not have been built earlier without guessing.** The stability guarantee
+(#66) is the clearest case: a promise about which names and paths will not change is
+worthless before those names have survived contact with real use. v0.3.0 renamed every
+identifier; had 1.0 been declared in July, that rename would have been a broken promise
+instead of a normal release.
+
+**2. It only becomes visible once someone else operates it.** The lifecycle questions
+(#68) - what happens at a Debian major upgrade, how to remove the kit again, whether it
+assumes a single host - are invisible while the author is the only operator, because the
+author knows the answers without writing them down. They are also the questions that
+decide whether an evaluator tries the kit at all.
+
+**3. It was an accepted responsibility with no mechanism behind it.** Container image
+scanning (#67) is the uncomfortable one. `SECURITY.md` lists "pinned image versions with
+known vulnerabilities that have a fixed version available" as in scope - and nothing in
+this repository has ever checked. Measured on 2026-08-20: all eleven pinned images carry
+fixable HIGH/CRITICAL findings, 192 in total. Some are simply behind (Alertmanager and
+Grafana both have newer tags), others are already on the newest tag and carry findings
+from their upstream base image, which no version bump here can clear. That difference is
+the whole design problem: a gate that goes red on any finding is permanently red, and a
+check that always says the same thing stops being read - the exact failure mode this
+repository already hit three times (#40, #48, #63).
+
+There is a fourth category worth naming because it is *not* on this list: things that were
+evaluated and rejected. Those live under "Deliberately not on this roadmap" below, with
+their ADRs. An open question and a closed decision are different states, and conflating
+them is how a rejected idea quietly comes back.
+
+## Stage 6 - v0.4: the last named service, and the maintenance the kit does not yet do
+
+| | Issue |
+|---|---|
+| Scan the pinned images, and act on the difference between "behind" and "upstream's problem" | #67 |
+| Orthanc as the DICOM role | #69 |
+| Lifecycle: Debian major upgrade, teardown, the single-host assumption | #68 |
+
+**Ordering, and it matters:** #67 comes before #69. Adding a role means adding two more
+pinned images, and until something checks whether pins go stale, every new role widens a
+gap that has already been measured. Building the scanner second would mean building it
+against a larger problem than necessary.
+
+Orthanc (#69) is the last service named in `ARCHITECTURE.md` that does not exist. It moves
+the claim "healthcare infrastructure stack" from integration (HL7/FHIR, via BridgeLink)
+to imaging. It was not built earlier because the order was deliberate: the role set first,
+then operability, then the name and observability. A DICOM role on an untested foundation
+would have been the wrong sequence, and it is also the role with the sharpest data
+protection profile in the kit - DICOM metadata routinely carries names and dates of birth
+alongside the images.
+
+## Stage 7 - v1.0: the promise, and what it covers
+
+v1.0 is not a quality label and does not arrive by itself. It is the point from which a
+breaking change requires a major version bump - and that promise cannot be made before
+someone writes down **what it applies to** (#66): variable names, deploy paths, container
+and network names, the metric names of this kit's own exporters, the alert rule names an
+operator routes on.
+
+One thing to resolve rather than inherit: `ARCHITECTURE.md`'s v1.0 line mentions
+"certification prep". The term appears exactly once in the entire repository and is
+defined nowhere. Either it means something specific - ISO 27001, BSI-Grundschutz, KRITIS -
+or it should go. An undefined reference to certification in a public healthcare repository
+raises an expectation nobody has committed to.
 
 ## Deliberately not on this roadmap
 

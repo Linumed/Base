@@ -11,6 +11,23 @@ click away instead of restated here.
 
 ## [Unreleased]
 
+### Changed
+
+- **The roadmap now says what is still open and why** (#66, #67, #68, #69). It was
+  entirely retrospective: every stage described work already finished, so "what is left?"
+  had no answer in the repository at all. It now names the open items, and for each the
+  reason it is open - something that could not be decided earlier without guessing,
+  something only visible once a second person operates the kit, or a responsibility
+  `SECURITY.md` accepts with no mechanism behind it.
+
+  The most consequential of those is the third: nothing here has ever checked the pinned
+  container images for known vulnerabilities, although `SECURITY.md` lists exactly that as
+  in scope. Measured on 2026-08-20, all eleven pinned images carry fixable HIGH/CRITICAL
+  findings.
+
+  v0.4 also gained content beyond Orthanc, and `ARCHITECTURE.md`'s versioning strategy was
+  updated to match.
+
 ## [0.3.0] - 2026-08-20
 
 The release where the product got its own name, and where the monitoring stack started
