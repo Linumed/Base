@@ -58,6 +58,7 @@ nav:
       - Access: operations/access.md
       - Updates: operations/updates.md
       - Backup & Restore: operations/backup-restore.md
+      - Teardown: operations/teardown.md
       - Troubleshooting: operations/troubleshooting.md
   - Roles:
       - common:

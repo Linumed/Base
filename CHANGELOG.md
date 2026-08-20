@@ -13,6 +13,30 @@ click away instead of restated here.
 
 ### Added
 
+- **The lifecycle questions now have answers** (#68). Three things a service provider asks
+  before deploying anything, and which this repository could not answer:
+
+  **How do you remove it?** New page `docs/operations/teardown.md`, with a complete,
+  measured inventory of what the kit leaves on a host - 17 paths, six packages, the Docker
+  volumes, ufw rules and tunnel users. There is deliberately no uninstall playbook: `ufw`,
+  `fail2ban` and Docker may have been there beforehand, and an automated teardown would be
+  guessing on a production host.
+
+  The procedure is **executed, not just written** - `test/vm-test.sh` runs it against the
+  throwaway VM as its last act and asserts the page's own verification commands. That
+  caught a dangerous error on the first run: the page told operators to find the data
+  volumes with `grep linumed-base`, which matches nothing, because Compose names volumes
+  after the project and not after `container_name`. Followed literally, it would have read
+  as "there is no data here" while every volume was still in place.
+
+  **What happens at a Debian major release?** The supported path is a reinstall and a
+  restore, not an in-place `dist-upgrade` - stated as a position, with the reasoning, in
+  `docs/operations/updates.md`. Debian 13 has support until August 2028, so this is a
+  question with runway; it just needed an answer.
+
+  **One host or several?** One. `docs/operations/deployment.md` now says so, with the
+  specific reasons, and states the consequence plainly: no high availability.
+
 - **ADR 0008 defines what the v1.0 stability guarantee will cover** (#66). Correcting the
   old "breaking changes only from v1.0 onward" fixed *when* the promise starts; this fixes
   *what it applies to*, which is the half that matters. Tagging 1.0 without it would mean

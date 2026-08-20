@@ -37,6 +37,43 @@ isn't the documented path for a first install, and isn't as convenient as it sou
 `--tags` has nothing to select on. Write a throwaway playbook with just the roles you want,
 and mind the dependency in point 3.
 
+## One host, and what that means
+
+**Linumed Base deploys to a single host.** Not a limitation that was discovered late - it
+follows from the design - but it was never written down, which meant an evaluator had no way
+to find out except by trying (issue #68).
+
+What makes it a single-host kit, concretely:
+
+- `site.yml` applies all six roles to the same machine.
+- Prometheus reaches the Node Exporter over `host.docker.internal`, which resolves to *this*
+  host's gateway, and reaches the BridgeLink exporter over a Docker network that exists on
+  *this* host (issue #64).
+- BridgeLink and its PostgreSQL are one Compose stack, communicating over that stack's own
+  network.
+- The `backup` role backs up `/var/lib/docker/volumes` on the machine it runs on.
+
+Running the roles against several hosts in an inventory works - each one gets its own
+complete, independent installation. What does **not** work is splitting the kit across
+hosts: monitoring on one machine and BridgeLink on another is not a supported arrangement,
+and with `bridgelink_exporter_enabled` it fails outright, because the exporter joins a
+network the monitoring role creates locally.
+
+### The consequences worth knowing before choosing this kit
+
+- **No high availability.** One host is a single point of failure. If an HL7 interface has to
+  survive the loss of a machine, this kit does not provide that - see
+  [ADR 0007](../adr/0007-docker-compose-not-kubernetes.md), which states the same thing from
+  the Kubernetes side.
+- **Capacity is one machine's capacity.** Four Compose stacks sit comfortably on one server
+  today; that is a fact about the current service set, not a promise about a future one.
+- **A central monitoring stack across sites is not what this is.** Each host monitors
+  itself. Feeding several installations into one Grafana is possible - it is the operator's
+  own federation problem, not something the kit sets up.
+
+None of this is a step towards a distributed version. It is the shape the kit has, stated so
+it can be evaluated.
+
 ## First run vs. every run after
 
 The first run on a host does more work than every subsequent one: package installs,
