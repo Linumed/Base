@@ -33,6 +33,36 @@ attempt one. Get console access first, or include `openssh-server` in the Debian
 installer's own package selection (`pkgsel/include` in a preseed, or the installer's task
 selection) so the host is reachable before `bootstrap.sh` ever needs to run.
 
+## render-diagrams.sh
+
+Renders every `docs/diagrams/*.mmd` to `docs/img/*.svg` with a pinned `mermaid-cli`.
+Run it after editing a diagram and commit both the source and the SVG; CI re-renders and
+fails if they disagree (`docs-site.yml`).
+
+```bash
+./scripts/render-diagrams.sh
+```
+
+**Why the diagrams are pre-rendered rather than drawn in the browser** (issue #65): they
+appear on three surfaces - the MkDocs site, GitHub and Forgejo - each with its own Mermaid
+theme, so styling only ever reached one of the three. A committed SVG looks the same
+everywhere and needs no JavaScript, which also removed the vendored `mermaid.min.js` and
+the class-name workaround that existed purely to stop Material from fetching its renderer
+off a CDN at runtime.
+
+Two things to know before editing a `.mmd`:
+
+- **A line containing only `%%` is a parse error**, and the message points at line 1
+  regardless of where the offending line actually is. Comment lines need at least one
+  character after the marker; these sources use `%% -` as a blank separator.
+- **Do not draw edges to or from a `subgraph`.** That is what made the previous diagram
+  unreadable: an arrow from a group to a node inside itself renders as a floating label
+  with no arrow at all. Keep containment and flow in separate figures.
+
+Needs Node (for `npx`) and downloads a Chromium once into `PUPPETEER_CACHE_DIR`
+(`/var/tmp/puppeteer` by default - deliberately not `/tmp`, which is a tmpfs on the
+development machine).
+
 ## test/vm-test-netinst.sh
 
 Not in this directory (lives under `test/`) but exercises `bootstrap.sh` end-to-end

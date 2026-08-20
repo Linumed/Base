@@ -1,0 +1,15 @@
+%% Rendered to docs/img/02-what-reports-to-whom.svg by scripts/render-diagrams.sh (#65).
+%% -
+%% Flows only, and deliberately flat - no subgraphs, so no edge ever crosses a cluster
+%% boundary, which is the one thing mermaid reliably gets wrong.
+graph LR
+    restic["restic<br/><small>textfile metrics</small>"] --> nodeexp
+    nodeexp["Node Exporter<br/><small>host CPU, RAM, disk</small>"] --> prom
+    cadvisor["cAdvisor<br/><small>every container</small>"] --> prom
+    blexp["BridgeLink exporter<br/><small>channels, queues, errors</small>"] --> prom
+
+    alloy["Alloy<br/><small>container logs</small>"] --> loki["Loki"]
+
+    prom["Prometheus"] --> grafana["Grafana<br/><small>dashboards</small>"]
+    loki --> grafana
+    prom --> alertmanager["Alertmanager<br/><small>e-mail</small>"]

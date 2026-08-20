@@ -56,6 +56,28 @@ click away instead of restated here.
   Worth generalising: anything added behind a default-off flag ships with zero coverage
   unless a test deliberately turns it on.
 
+- **Architecture diagrams are pre-rendered SVGs and were redrawn** (#65). The Mermaid
+  diagrams in `ARCHITECTURE.md` were rendered by JavaScript in the reader's browser, which
+  meant the site's theme reached the MkDocs build and nothing else - the same diagram
+  looked different on GitHub and in Forgejo. They are now committed SVGs under `docs/img/`,
+  rendered from sources in `docs/diagrams/` by `scripts/render-diagrams.sh`, and identical
+  everywhere. The vendored `mermaid.min.js`, its init script and its stylesheet are gone,
+  and with them the class-name workaround that only existed to stop the theme from
+  fetching a renderer off a CDN at runtime.
+
+  The target-architecture figure was also redrawn, because no amount of theming was going
+  to fix it: it drew arrows at the boundary of the Docker group, including one from that
+  group to a node inside itself, which renders as a label with no arrow attached. It is now
+  two figures - what runs where, and what reports to whom - and the second says more than
+  the original did, since the metric paths are actually visible.
+
+  A trade-off worth stating: a static SVG cannot follow the site's light/dark toggle the
+  way runtime rendering did. The diagrams render as a light card that stays legible on
+  either background, which is the price of looking the same on all three surfaces.
+
+  CI re-renders the diagrams on every docs build and fails if the committed SVGs are out of
+  date, so a source edited without re-rendering cannot ship.
+
 ### Fixed
 
 - **Prometheus config changes now actually reach Prometheus** (#63). Since the monitoring

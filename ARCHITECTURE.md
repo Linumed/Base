@@ -44,28 +44,20 @@ are preferred for CI/CD.
 
 ## Target architecture (v0.1)
 
-```mermaid
-graph TB
-    subgraph host["Debian 13 (bare metal or VM)"]
-        direction TB
-        hardening["ufw · fail2ban · SSH hardening"]
-        node["Node Exporter<br/>(native Debian package)"]
-        backup["restic<br/>(encrypted, scheduled backup)"]
+![What runs where on a Linumed Base host: a Docker Engine group holding the Caddy,
+BridgeLink and monitoring stacks, and a second group of services that run natively -
+ufw/fail2ban/SSH hardening, Node Exporter and restic.](docs/img/01-what-runs-where.svg)
 
-        subgraph docker["Docker Engine"]
-            direction LR
-            caddy["Caddy<br/>reverse proxy<br/>:80 / :443"]
-            bridgelink["BridgeLink + PostgreSQL<br/>(loopback only)"]
-            monitoring["Prometheus · Grafana (loopback)<br/>Loki · Alertmanager · Alloy · cAdvisor"]
-        end
+Deliberately two figures rather than one. This one answers *what runs where* and carries
+no arrows at all; the flows are the next one. The previous single diagram mixed
+containment with three different kinds of arrow - a security property, a data flow and a
+backup operation - and drew two of them at the Docker group's boundary, which is the one
+thing the renderer reliably gets wrong (issue #65).
 
-        hardening -->|protects| docker
-        node -->|host metrics| monitoring
-        docker -->|container metrics| monitoring
-        bridgelink -->|channel metrics<br/>via exporter sidecar| monitoring
-        backup -->|backs up volumes| docker
-    end
-```
+![What reports to whom: restic feeds the Node Exporter's textfile collector; Node
+Exporter, cAdvisor and the BridgeLink exporter all scrape into Prometheus; Alloy ships
+logs to Loki; Prometheus and Loki both feed Grafana, and Prometheus also feeds
+Alertmanager.](docs/img/02-what-reports-to-whom.svg)
 
 ---
 
@@ -230,26 +222,10 @@ would have been built on top of it. Reasoning, evaluated alternatives
 downsides:
 [ADR 0003](https://github.com/Linumed/Base/blob/main/docs/adr/0003-loopback-only-access-no-bundled-identity-provider.md).
 
-```mermaid
-graph LR
-    internet["Internet"]
-    caddy["Caddy"]
-    https["redirect to HTTPS"]
-    apps["the operator's own applications<br/>(Linumed Base itself is not behind it)"]
-    ssh["SSH tunnel (not public)"]
-    grafana["Grafana"]
-    prometheus["Prometheus"]
-    bladmin["BridgeLink admin"]
-
-    internet -->|":80"| caddy
-    caddy --> https
-    internet -->|":443"| caddy
-    caddy --> apps
-
-    ssh -->|"127.0.0.1:3000"| grafana
-    ssh -->|"127.0.0.1:9090"| prometheus
-    ssh -->|"127.0.0.1:8443"| bladmin
-```
+![Access paths: the internet reaches Caddy on :80 and :443 only, which redirects to
+HTTPS and proxies the operator's own applications. Grafana, Prometheus and the BridgeLink
+admin interface are reachable exclusively through an SSH tunnel on
+127.0.0.1.](docs/img/03-access-paths.svg)
 
 Caddy is the reverse proxy for the **institution's own applications**,
 not for this kit's management interfaces. It joins a second Docker
