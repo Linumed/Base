@@ -374,10 +374,28 @@ alongside the images.
 ## Stage 7 - v1.0: the promise, and what it covers
 
 v1.0 is not a quality label and does not arrive by itself. It is the point from which a
-breaking change requires a major version bump - and that promise cannot be made before
-someone writes down **what it applies to** (#66): variable names, deploy paths, container
-and network names, the metric names of this kit's own exporters, the alert rule names an
-operator routes on.
+breaking change requires a major version bump - and that promise could not be made before
+someone wrote down what it applies to.
+
+**That is now written down (#66, closed 2026-08-20):**
+[ADR 0008](adr/0008-what-the-v1-0-stability-guarantee-covers.md) names the covered surface,
+measured rather than estimated - 125 role variables, deploy paths, 11 container names, two
+shared networks, this kit's own metric names, 13 alert rule names, four systemd units, the
+six variables with no default, and the Grafana dashboard and datasource UIDs that every
+operator-built panel references. It also names what is deliberately *not* covered: pinned
+image versions have to keep moving, and #67 exists to make them move.
+
+What remains for v1.0 is therefore not definition but **removal**, because the tag freezes
+whatever exists at that moment:
+
+- Audit the 125 variables for ones that should not be carried forever.
+  `monitoring_retention_days` is the known example - an escape hatch that exists only so a
+  variable name from an old documentation draft would not dangle.
+- Decide whether some variables are internal rather than interface. Ansible has no
+  visibility mechanism, so that needs a convention or an explicit list, and it has to exist
+  before the freeze.
+- Close the lifecycle questions (#68). Promising stability while being unable to say what
+  happens at a Debian major upgrade is a promise about the wrong thing.
 
 `ARCHITECTURE.md`'s v1.0 line used to also name "certification prep". That term appeared
 exactly once in the whole repository and was defined nowhere, so it was **removed on

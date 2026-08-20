@@ -13,6 +13,26 @@ click away instead of restated here.
 
 ### Added
 
+- **ADR 0008 defines what the v1.0 stability guarantee will cover** (#66). Correcting the
+  old "breaking changes only from v1.0 onward" fixed *when* the promise starts; this fixes
+  *what it applies to*, which is the half that matters. Tagging 1.0 without it would mean
+  committing to an obligation of unknown size - and unlike a bug, an over-broad promise
+  cannot be quietly fixed afterwards.
+
+  The surface was measured, not estimated: 125 role variables, deploy paths, 11 container
+  names, two shared Docker networks, this kit's own metric names, 13 alert rule names, four
+  systemd units, the six variables that have no default, and the Grafana dashboard and
+  datasource UIDs. That last one was nearly missed - every panel in an operator's own
+  dashboard references a datasource by UID, so renaming `prometheus` or `loki` would break
+  work this kit never sees.
+
+  Deliberately not covered: pinned image versions, which have to keep moving. A default
+  value may change without a major bump but must be called out as breaking if it changes
+  behaviour on an existing host.
+
+  What remains before the tag is **removal, not addition**, because 1.0 freezes whatever
+  exists at that moment - starting with variables that should not be carried forever.
+
 - **Pinned container images are now scanned for known vulnerabilities** (#67).
   `SECURITY.md` has always listed "pinned image versions with known vulnerabilities that
   have a fixed version available" as in scope for a security report, and nothing in the

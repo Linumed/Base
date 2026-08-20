@@ -80,6 +80,7 @@ nav:
       - "0005: docker/ is a manual-testing reference": adr/0005-docker-directory-is-a-manual-testing-reference-not-a-mirror.md
       - "0006: Linumed Base, not Linumed OS": adr/0006-linumed-base-not-linumed-os.md
       - "0007: Docker Compose, not Kubernetes": adr/0007-docker-compose-not-kubernetes.md
+      - "0008: What the v1.0 stability guarantee covers": adr/0008-what-the-v1-0-stability-guarantee-covers.md
 
 # Diagrams are pre-rendered to SVG by scripts/render-diagrams.sh and committed under
 # docs/img/ (issue #65), so no JavaScript renderer is loaded at all any more. That removed
