@@ -210,7 +210,17 @@ restic results are pushed to Prometheus as metrics.
 **Decided, not open:** no Linumed Base management interface is reachable
 from outside. Every component binds to `127.0.0.1` or publishes no
 host port at all; access goes through an SSH tunnel. Each Compose stack
-has its own, isolated Docker network.
+has its own Docker network by default.
+
+Two shared networks exist, and neither weakens that: `linumed-base-external`
+lets the operator's own stacks be reached by Caddy (issue #39), and
+`linumed-base-metrics` lets Prometheus scrape an exporter that lives in
+another stack (issue #64). Both are internal Docker networks with no
+host port and no route from outside; they exist so that container A can
+reach container B *without* publishing anything, which is the opposite
+of an exposure. This is explicitly **not** a return of the `linumed-net`
+idea below - that one was about routing this kit's own management UIs
+through a reverse proxy, which remains dropped.
 
 A shared network (`linumed-net`) through which Caddy would route the
 kit's own services was originally planned as the target picture and has

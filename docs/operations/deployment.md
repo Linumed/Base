@@ -21,17 +21,21 @@ Each step depends on the one before it:
    its own sequencing internally (SSH rule before `ufw enable`).
 2. **docker** installs Docker Engine and the Compose plugin. Every role after this one
    is a Docker Compose stack.
-3. **caddy**, **monitoring**, **bridgelink** are independent of each other and could in
-   principle run in any order relative to one another - the order here is roughly
-   "smallest blast radius first". None of them currently depend on another being present
-   (see [Architecture: network design](../architecture.md#network-design) for why - they
-   don't share a network).
+3. **caddy**, **monitoring**, **bridgelink** are independent of each other with one
+   exception, and the order here is otherwise roughly "smallest blast radius first".
+   The exception: with `bridgelink_exporter_enabled`, the bridgelink stack joins a Docker
+   network the **monitoring** role creates, so monitoring has to have run on the host
+   first or Compose fails on a missing external network (issue #64). With the exporter off
+   - the default - they are genuinely independent. See
+   [Architecture: network design](../architecture.md#network-design).
 4. **backup** runs last because it backs up `/var/lib/docker/volumes`, which only has
    meaningful content once the other roles have created their volumes.
 
-A partial deployment (running only some roles) is supported for maintenance or testing -
-see the `roles:` list in `site.yml`, or point `ansible-playbook` at a single role with
-`--tags` or a custom playbook - but isn't the documented path for a first install.
+A partial deployment (running only some roles) is possible for maintenance or testing, but
+isn't the documented path for a first install, and isn't as convenient as it sounds:
+`site.yml` is the only playbook in this repo and **no task carries an Ansible tag**, so
+`--tags` has nothing to select on. Write a throwaway playbook with just the roles you want,
+and mind the dependency in point 3.
 
 ## First run vs. every run after
 

@@ -54,9 +54,10 @@ linumed-base/
 │   │   ├── caddy/           # Reverse proxy with automatic TLS
 │   │   └── backup/          # restic-based backup (local + optional S3)
 │   ├── playbooks/
-│   │   ├── site.yml         # Full stack deployment
-│   │   ├── monitoring.yml   # Monitoring stack only
-│   │   └── bridgelink.yml   # BridgeLink only
+│   │   └── site.yml         # Full stack deployment - the only playbook there is.
+│   │                        # Per-role playbooks were listed here for a long time and
+│   │                        # never existed. No task carries an Ansible tag either, so
+│   │                        # --tags selects nothing; see the note below.
 │   └── inventory/
 │       └── example/         # Example inventory, never real hosts
 ├── docker/                  # Docker Compose files per service
@@ -73,6 +74,10 @@ linumed-base/
 ## Ansible conventions
 
 - Every role has: tasks/main.yml, defaults/main.yml, meta/main.yml, README.md
+- **`site.yml` is the only playbook.** Roles are not independently deployable in general -
+  the bridgelink exporter joins a Docker network the monitoring role creates, for instance -
+  so a per-role playbook would be a promise this repo does not keep. Anything that assumes
+  one role can run alone on a fresh host has to say so and be tested that way.
 - Variables use the role name as prefix: `common_ssh_port`, `monitoring_retention_days`
 - Secrets are never in defaults. Use Ansible Vault or reference `.env` files.
 - Handlers go in handlers/main.yml, not inline.
@@ -181,7 +186,7 @@ split setup - Forgejo on a remote VPS, runner at home, mesh VPN in between. That
 plan, it is not what got built. Corrected 2026-08-18 after checking against the running
 system rather than trusting this file.)
 
-Two workflows under `.forgejo/workflows/`:
+Three workflows under `.forgejo/workflows/`:
 
 - `ansible-lint.yml` - every push and pull request to `main`.
 - `vm-test.yml` - the full `site.yml` double-run against a throwaway libvirt/KVM VM, plus
@@ -195,6 +200,18 @@ Two workflows under `.forgejo/workflows/`:
   `bridgelink_exporter_enabled` defaults to false, so the first two runs prove only that
   the feature is a no-op while switched off. Anything added behind a default-off flag
   needs its own pass, or it ships with no coverage at all.
+
+- `docs-site.yml` - builds the MkDocs handbook with `--strict` and publishes it as the
+  `docs-site-latest` release asset, which Website#5 pulls to host at `linumed.com/base/docs/`
+  (issue #55). Triggers on `docs/**`, `mkdocs.yml`, `README.md`, `ARCHITECTURE.md`,
+  `CHANGELOG.md`. It deliberately stops at publishing an artifact - putting the built HTML
+  on the website is a manual pull, because prod deploys are a manual gate.
+
+  **The docs are a published artifact, not a byproduct.** The repository is public and the
+  website is built from it, so a change without its documentation is a publicly visible
+  gap. Treat `CHANGELOG.md` as part of every user-visible change, not as an afterthought -
+  it is the entry most easily forgotten and it ships on the site via the `docs/changelog.md`
+  symlink.
 
 `runs-on: docker`, never `ubuntu-latest` - the runner registers that label only.
 
