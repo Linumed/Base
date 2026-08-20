@@ -92,6 +92,18 @@ The alternative, failing on any finding at all, would leave the check permanentl
 and a check that always says the same thing stops being read. This repository has hit that
 failure mode three times (#40, #48, #63).
 
+The scanner version is pinned in both the script and the workflow, and the script checks
+that the two agree. Different trivy versions produce different finding sets - 0.58.2 and
+0.74.0 disagreed on Prometheus and on the total - so a drift between the pins would make a
+local run and a CI run disagree about whether the accepted list is complete, and that
+disagreement would look like a real finding.
+
+**When bumping the scanner, verify the download URL rather than assuming it.** The first
+version of the workflow pinned 0.58.2: a real trivy version whose container image pulls
+normally, but whose GitHub release carries no asset under the expected name. CI found it
+with a bare `curl: (22) ... 404`. Bumping the scanner also means regenerating the
+accepted-findings list, because the finding set moves with it.
+
 Entries in the accepted-findings file older than 90 days are reported, not failed:
 re-check them rather than refreshing the date, because an ageing entry usually means an
 upstream has stopped rebuilding.

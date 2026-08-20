@@ -58,7 +58,7 @@ ACCEPTED_FILE = REPO_ROOT / "security" / "accepted-image-findings.txt"
 
 # Pinned to keep results comparable between runs; an unpinned scanner would change its
 # verdict without anything in this repository changing.
-TRIVY_VERSION = "0.58.2"
+TRIVY_VERSION = "0.74.0"
 TRIVY_IMAGE = f"aquasec/trivy:{TRIVY_VERSION}"
 TRIVY_CACHE = "/var/tmp/trivy-cache"
 
@@ -251,6 +251,29 @@ def stale_entries(accepted: dict[str, str]) -> list[tuple[str, str]]:
     return sorted(out, key=lambda x: x[1])
 
 
+WORKFLOW = REPO_ROOT / ".forgejo" / "workflows" / "image-scan.yml"
+
+
+def check_scanner_pin() -> str | None:
+    """The workflow and this script must ask for the same trivy.
+
+    Different scanner versions produce different finding sets - measured while building
+    this: 0.58.2 and 0.74.0 disagreed on Prometheus (9 vs 8) and on the total (129 vs 128).
+    If the two pins drift, a local run and a CI run disagree about whether the accepted list
+    is complete, and the disagreement looks like a real finding. Same idea as the ruff pin
+    check in the sibling repository.
+    """
+    if not WORKFLOW.exists():
+        return None
+    found = re.search(r"TRIVY_VERSION=([0-9.]+)", WORKFLOW.read_text(encoding="utf-8"))
+    if not found:
+        return f"no TRIVY_VERSION found in {WORKFLOW.name}"
+    if found.group(1) != TRIVY_VERSION:
+        return (f"{WORKFLOW.name} pins trivy {found.group(1)}, this script pins "
+                f"{TRIVY_VERSION} - they must match")
+    return None
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--report", action="store_true",
@@ -263,6 +286,7 @@ def main() -> int:
         return 2
 
     drift = check_reference_drift(pinned)
+    pin_problem = check_scanner_pin()
     accepted = load_accepted()
 
     print(f"Scanning {len(pinned)} pinned images with trivy {TRIVY_VERSION}\n")
@@ -308,6 +332,10 @@ def main() -> int:
 
     print()
     exit_code = 0
+
+    if pin_problem:
+        print(f"Scanner pin mismatch: {pin_problem}")
+        exit_code = 1
 
     if drift:
         print("Reference drift (docker/ must pin what the roles pin):")
