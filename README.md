@@ -27,7 +27,7 @@ HL7/FHIR integration, monitoring, reverse proxy, and encrypted backups.
 
 ## Status
 
-**`v0.2.0` is tagged** - see [CHANGELOG.md](CHANGELOG.md). Every role passed a full
+**`v0.3.0` is tagged** - see [CHANGELOG.md](CHANGELOG.md). Every role passed a full
 `site.yml` double-run against a throwaway VM (idempotent - `changed=0` on the second run)
 and, separately, against a real Debian 13 netinst/preseed install via
 `scripts/bootstrap.sh` and `test/vm-test-netinst.sh` (issues #13/#14). That double-run now

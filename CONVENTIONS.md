@@ -154,7 +154,7 @@ linumed-base/
 | Node Exporter | ansible/roles/monitoring | Host metrics - native Debian package, not a container |
 | restic | ansible/roles/backup | Encrypted backup |
 
-Out of scope for v0.1: Orthanc (DICOM, v0.3).
+Out of scope for v0.1: Orthanc (DICOM, v0.4 - see the versioning strategy in ARCHITECTURE.md).
 
 **No identity provider is bundled, ever** - Authentik was planned for v0.2 and is dropped,
 see `docs/adr/0003-loopback-only-access-no-bundled-identity-provider.md`. Every management

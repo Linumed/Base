@@ -11,6 +11,17 @@ click away instead of restated here.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-08-20
+
+The release where the product got its own name, and where the monitoring stack started
+observing the one component it had been blind to. No new role.
+
+Two of the defects below were found by a test written *for* the new feature rather than by
+the feature itself, and neither was in the feature: one had been silently breaking every
+Prometheus configuration change since the monitoring role was written, the other made the
+new exporter unreachable. Both are recorded as rules in `CONVENTIONS.md`, because both had
+a precedent in this repository that had simply never been carried over.
+
 ### Added
 
 - **BridgeLink now reports application metrics to Prometheus** (#60). Until now the only
