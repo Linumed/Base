@@ -4,6 +4,9 @@ Three separate things get updated here, on different schedules and through diffe
 mechanisms. Conflating them is the easiest way to either miss a security fix or
 accidentally roll a service version you didn't mean to touch.
 
+A fourth thing - moving the host to the next Debian major release - is not an update in the
+same sense and has its own section at the end.
+
 ## Host security patches: automatic, no action needed
 
 The `common` role's `unattended-upgrades` configuration installs security updates on
@@ -70,3 +73,59 @@ The same rule applies here as after a first deployment - see
 [Deployment: verifying a deployment actually worked](deployment.md#verifying-a-deployment-actually-worked).
 A version bump that applies cleanly isn't the same as a version bump that still works;
 run each role's verification commands afterward.
+
+---
+
+## Moving to the next Debian major release
+
+**The supported path is a reinstall and a restore, not an in-place `dist-upgrade`.**
+
+This is a stated position rather than a tested procedure, and the distinction matters. The
+kit targets Debian stable and only Debian stable (`CONVENTIONS.md`). Debian 13 has full
+security support until **9 August 2028** and LTS until **30 June 2030**; Debian 14 (Forky)
+is in testing with no announced release date, and Debian's cadence has been roughly two
+years. So this is a question with years of runway - but it needed an answer, because
+without one an operator reaches Debian 13's end of life and discovers there is no guidance
+at all.
+
+### Why reinstall rather than upgrade in place
+
+Not dogma - it follows from what this kit actually does to a host:
+
+- **The roles configure through drop-ins, and a major upgrade rewrites the files they drop
+  into.** `sshd_config.d/`, `apt.conf.d/`, `timesyncd.conf.d/`, `ssh.socket.d/` all survive
+  in principle, but a `dist-upgrade` prompts about changed configuration files and the
+  outcome depends on how those prompts are answered. That is not a path anyone should be
+  taking on a clinic's integration host at 2am.
+- **Docker comes from Docker's own repository**, keyed on the Debian codename. The role
+  already anticipates the lag - it probes whether Docker publishes a suite for the running
+  codename and falls back to the previous one (`docker_apt_release_fallback`, today
+  `bookworm`). So this does not block an upgrade, but it does mean a freshly upgraded host
+  may run Docker packages built for the *older* Debian for a while, and that fallback
+  codename will need revisiting rather than being left at `bookworm` forever.
+- **Nothing here has been tested across a major upgrade**, because there has not been one
+  to test against.
+
+A reinstall, by contrast, exercises paths that *are* tested on every change: the bootstrap
+script, `site.yml` against a fresh host, and a restic restore. `test/vm-test.sh` proves the
+first two on every relevant push, and the `backup` role's weekly restore test (#36) proves
+the third on a real host.
+
+### The procedure, in outline
+
+1. Verify the backup restores - **before** touching anything. `restore_test_success` should
+   be 1; see [Backup & Restore](backup-restore.md).
+2. Install Debian 14 fresh on the target.
+3. Run `scripts/bootstrap.sh`, then `site.yml` with the **same inventory and vault**.
+4. Restore the data from restic.
+5. Verify as described under "After any update" above, plus the role-specific checks.
+
+The inventory and vault are what carry a deployment's identity across the move. Keeping
+`bridgelink_server_id` stable matters especially - BridgeLink treats a changed ID as a
+different server.
+
+### When this gets revisited
+
+When Debian 14 is released and there is something to test against. If an in-place upgrade
+turns out to work reliably, it becomes a documented option; until it has been exercised
+against a real host, presenting it as supported would be a guess dressed as guidance.

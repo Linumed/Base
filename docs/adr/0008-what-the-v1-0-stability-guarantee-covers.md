@@ -31,6 +31,7 @@ The surface was measured rather than estimated (2026-08-20):
 | systemd units | 4 (`backup`, `restore-test`, each `.service` and `.timer`) |
 | Vault variables with no default | 6 |
 | Grafana dashboard and datasource UIDs | 3 dashboards, plus `prometheus` and `loki` |
+| Docker volume names | 9, project-derived rather than `linumed-base-*` |
 
 Not all of these are equally exposed. The distinguishing question is not "is it visible?"
 but **"can an operator have built something on it that silently stops working?"** Two
@@ -72,7 +73,13 @@ called out under `### Breaking` in `CHANGELOG.md`:
 6. **Grafana dashboard UIDs and datasource UIDs.** They appear in URLs and in every
    operator-built panel.
 7. **systemd unit names.** Operators write drop-in overrides against them.
-8. **The set of variables that have no default** - the six vault variables. Adding a
+8. **Docker volume names.** They hold the data, and an operator's own backup or migration
+   tooling addresses them by name. Note they are *not* `linumed-base-*` - Compose derives
+   them from the project, so they are `monitoring_prometheus_data`,
+   `bridgelink_bridgelink_db_data` and so on. This item was missing from the first version
+   of this list and was found by the teardown test in #68, which is a second illustration
+   of why the surface had to be measured rather than recalled.
+9. **The set of variables that have no default** - the six vault variables. Adding a
    seventh breaks every existing inventory, so it is a breaking change even though nothing
    was removed.
 

@@ -211,8 +211,11 @@ Four workflows under `.forgejo/workflows/`:
 
 - `ansible-lint.yml` - every push and pull request to `main`.
 - `vm-test.yml` - the full `site.yml` double-run against a throwaway libvirt/KVM VM, plus
-  Prometheus target health, the `docker/` smoke test, and a third `site.yml` pass with the
-  BridgeLink exporter switched on (issue #62). Triggers on pushes touching `ansible/`,
+  Prometheus target health, the `docker/` smoke test, a third `site.yml` pass with the
+  BridgeLink exporter switched on (issue #62), and finally the documented teardown
+  (issue #68) - the VM is destroyed straight afterwards, so removing the kit from it first
+  costs almost nothing and is the only thing that keeps
+  `docs/operations/teardown.md` honest. Triggers on pushes touching `ansible/`,
   `docker/`, `test/` or `scripts/`, and on demand via `workflow_dispatch`. Not on every
   push: the run was ~9 minutes before the exporter pass and the runner has capacity 1
   (issue #45).
