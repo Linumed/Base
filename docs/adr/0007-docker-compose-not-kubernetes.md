@@ -109,9 +109,13 @@ scope" does not mean "there is nothing here for you" - it means the *service sta
 Compose. The node baseline is not, and a Kubernetes shop can use it for the machines under
 its cluster.
 
-That subset is not yet cleanly deployable on its own: `site.yml` is the only playbook and
-no task carries an Ansible tag. Making it usable and testing it is tracked separately -
-without that, the paragraph above is a claim rather than a feature.
+That subset has its own playbook since 2026-08-20: `ansible/playbooks/node-baseline.yml`
+(issue #70). It is applied to the pristine VM on every relevant push, checked for
+idempotency, and checked for **effect** - ufw active, password authentication off, Docker
+running, backup timer enabled, and no service container started. Until that existed, the
+paragraph above was a claim rather than a feature, and it is worth noting that the claim
+came first: it was written from counting which roles ship a Compose file, which is the same
+shape of reasoning that produced the volume-name error in #68.
 
 ### What transfers even though the code does not
 

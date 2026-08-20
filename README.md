@@ -41,7 +41,9 @@ is the wrong one. Each of these is a recorded decision with its reasoning, not a
   If you run Kubernetes, half of this kit is still yours: `common` (SSH hardening, ufw,
   fail2ban, unattended-upgrades, NTP), `docker` and `backup` are runtime-agnostic and work
   on the nodes under your cluster. Only `caddy`, `monitoring` and `bridgelink` are
-  Compose-coupled.
+  Compose-coupled. That subset has its own playbook -
+  `ansible-playbook playbooks/node-baseline.yml` - which is applied to a fresh VM on every
+  relevant change and checked for effect, not just for exit code.
 
 - **No bundled identity provider, and no admin interface on the public internet.** Every
   management UI binds to `127.0.0.1` and is reached through an SSH tunnel. Grafana can be

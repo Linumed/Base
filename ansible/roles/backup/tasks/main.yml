@@ -13,6 +13,35 @@
       password later makes every snapshot permanently unreadable, restic has no recovery
       mechanism for it - keep it somewhere outside this host too.
 
+# Checked at deploy time rather than left to the timer. restic fails on a path that does
+# not exist, but that failure lands at 03:00 in a log nobody is reading, and the metric it
+# writes is the only signal - see #36 for how much care went into making that signal
+# reliable. Backing up nothing is worth catching earlier than that.
+#
+# "none of them exist" rather than "all of them exist" on purpose: in site.yml the backup
+# role runs last, so this kit's own directories are present by then, while an operator may
+# legitimately list a path that a service will create later. None existing at all, though,
+# is always wrong - and it is exactly what happens if the default is left alone on a node
+# that does not run this kit's service stacks (issue #70).
+- name: Check which of the configured backup paths exist
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  loop: "{{ backup_paths }}"
+  register: backup_path_stat
+  changed_when: false
+  become: true
+
+- name: Preflight - abort if none of the backup paths exist
+  ansible.builtin.assert:
+    that:
+      - backup_path_stat.results | selectattr('stat.exists') | list | length > 0
+    fail_msg: >-
+      None of the paths in backup_paths exists on this host
+      ({{ backup_paths | join(', ') }}) - refusing to deploy a backup that would archive
+      nothing. The default covers this kit's own state (/opt/linumed-base,
+      /var/lib/docker/volumes); on a host that does not run the service stacks, set
+      backup_paths to whatever actually holds the data.
+
 - name: Install restic
   ansible.builtin.apt:
     name: restic

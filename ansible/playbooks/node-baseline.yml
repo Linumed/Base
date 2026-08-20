@@ -1,0 +1,35 @@
+---
+# The part of Linumed Base that does not care what runs on top of it (issue #70).
+#
+# `common` hardens the host, `docker` installs the container runtime, `backup` takes
+# encrypted snapshots. None of the three deploys a Compose stack, and none depends on
+# another role being present - verified by counting rather than assuming: only `caddy`,
+# `monitoring` and `bridgelink` ship a docker-compose.yml.j2.
+#
+# Who this is for:
+#
+#   * A site running Kubernetes. Kubernetes is deliberately out of scope for the service
+#     stacks (ADR 0007) - but a cluster still runs on Debian nodes, and those nodes still
+#     need SSH hardening, a firewall, automatic security updates and backups. Until this
+#     playbook existed, the README told those readers half the kit was theirs while
+#     offering no way to deploy it.
+#   * Anyone who wants the hardening on an existing server without also placing an
+#     integration engine and a monitoring stack on it.
+#
+# This is NOT a way to install the roles one at a time in general. The service roles are
+# not independently deployable - the BridgeLink exporter joins a Docker network the
+# monitoring role creates (#64) - and no task in this repository carries an Ansible tag,
+# so `--tags` selects nothing. These three are the exception, and they are the exception
+# because it was tested, not because it seems plausible.
+#
+# `backup_paths` almost certainly needs setting for this use. Its default covers this
+# kit's own state (`/opt/linumed-base`, `/var/lib/docker/volumes`), which is the wrong
+# answer on a node whose data lives in cluster volumes. The backup role refuses to deploy
+# if none of the configured paths exist, so a wrong value fails at deploy time rather than
+# at 03:00.
+- name: Linumed Base - node baseline (no service stacks)
+  hosts: linumed
+  roles:
+    - common
+    - docker
+    - backup

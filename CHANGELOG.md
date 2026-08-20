@@ -23,6 +23,25 @@ click away instead of restated here.
 
 ### Added
 
+- **`node-baseline.yml`: the runtime-agnostic part of the kit is now deployable on its
+  own** (#70). Since ADR 0007 the README told operators running Kubernetes that `common`,
+  `docker` and `backup` were theirs to use on their cluster's nodes - true, but with no way
+  to actually deploy them, because `site.yml` was the only playbook and no task carries an
+  Ansible tag. It was a claim derived from counting which roles ship a Compose file, which
+  is the same shape of reasoning that produced the volume-name error in #68.
+
+  It is now applied to the pristine VM on every relevant push, checked for idempotency, and
+  checked for **effect** rather than exit code: ufw active, password authentication off,
+  Docker running, backup timer enabled - and no service container started, which is the
+  other half of the claim.
+
+  The backup role gained a preflight that refuses to deploy when **none** of the configured
+  `backup_paths` exists. The default covers this kit's own state, which is the wrong answer
+  on a node whose data lives elsewhere; without the check, that mistake would first surface
+  as a failed backup at 03:00. Deliberately "none" rather than "all": in `site.yml` the
+  backup role runs last, and an operator may legitimately list a path a service creates
+  later.
+
 - **The lifecycle questions now have answers** (#68). Three things a service provider asks
   before deploying anything, and which this repository could not answer:
 
