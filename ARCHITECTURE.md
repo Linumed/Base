@@ -351,10 +351,12 @@ Linumed Shifts is not in this repository and is not documented here.
 - v0.3: the product's own name (Linumed Base, ADR 0006), BridgeLink
   application metrics, and the diagram/documentation work that came with
   them. No new role. See `docs/ROADMAP.md`.
-- v0.4: DICOM stack (Orthanc). Earmarked as v0.3 until 2026-08-20, moved
-  when v0.3 turned out to be the rename plus observability rather than a
-  new service - the number was reserved for whatever came next, not for
-  Orthanc specifically.
+- v0.4: the DICOM stack (Orthanc), plus the maintenance the kit does not
+  yet do - scanning the pinned images for known vulnerabilities, and
+  answering the lifecycle questions (Debian major upgrade, teardown, the
+  single-host assumption). See `docs/ROADMAP.md`, Stage 6. Orthanc was
+  earmarked as v0.3 until 2026-08-20; that number went to the rename and
+  the observability work instead.
 - v1.0: complete documentation, CI-tested roles, certification prep
 
 **No bundled identity provider.** The Authentik role originally planned
