@@ -24,8 +24,10 @@ repository.
 - Debian stable is the only supported target OS. Currently Debian 13 (Trixie). No Ubuntu, no Rocky, no RHEL.
 - All services in this repo must be FOSS. No commercial software, no
   proprietary licenses.
-- Docker Compose is used for service stacks. Kubernetes/Helm is out of scope
-  for this repo.
+- Docker Compose is used for service stacks on a single host. Kubernetes and Helm are out
+  of scope, and the reasoning is written down rather than asserted:
+  [ADR 0007](docs/adr/0007-docker-compose-not-kubernetes.md). It also records what this
+  costs (no high availability) and which roles are runtime-agnostic anyway.
 - EU infrastructure wherever possible: no US-only dependencies, no
   phone-home telemetry, no cloud lock-in.
 - DSGVO compliance is a design constraint, not an afterthought. Any service
@@ -252,7 +254,8 @@ the workflow design.
 ## What NOT to do
 
 - Do not build or reference a bootable ISO or PXE boot setup
-- Do not add Kubernetes, Helm, or k8s manifests to this repo
+- Do not add Kubernetes, Helm, or k8s manifests to this repo - see ADR 0007, including
+  the conditions under which that would be reopened (and then as a separate repository)
 - Do not add Linumed Shifts application code here
 - Do not use `become: yes` globally - only where explicitly required
 - Do not commit any file containing passwords, tokens, or private keys
