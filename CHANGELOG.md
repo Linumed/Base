@@ -11,7 +11,34 @@ click away instead of restated here.
 
 ## [Unreleased]
 
+### Added
+
+- **ADR 0007 records why there is no Kubernetes support** - and says what that costs. The
+  exclusion existed in three places and gave a reason in none of them: the roadmap deferred
+  to `CONVENTIONS.md`, and `CONVENTIONS.md` simply asserted it. An exclusion without
+  recorded reasoning cannot be defended when asked about, and cannot be revisited
+  intelligently later.
+
+  The decision stands, on the same criterion that removed SSO and a mesh-VPN role in
+  ADR 0003: a cluster is a subsystem the institution has to supply, and this kit has to
+  work after the playbook runs on a machine the operator already has. The ADR states the
+  cost plainly - **one host means no high availability** - and names the conditions under
+  which it would be reopened, as a separate repository rather than a flag in this one.
+
+  It also records something previously invisible: `common`, `docker` and `backup` are
+  runtime-agnostic, so a Kubernetes shop can use the node baseline for the machines under
+  its cluster. Only `caddy`, `monitoring` and `bridgelink` are Compose-coupled.
+
+  The README gained a **"What it deliberately does not do"** section covering this, the
+  access model, and the FOSS-only rule - up front, because the fastest way to evaluate a
+  kit is to find out early whether it is the wrong one.
+
 ### Changed
+
+- **`ARCHITECTURE.md` no longer promises "certification prep" for v1.0.** The term appeared
+  exactly once in the entire repository and was defined nowhere - an undefined reference to
+  certification in a public healthcare repository raises an expectation nobody committed
+  to. If a specific certification becomes a goal, it gets named, scoped and given an issue.
 
 - **The roadmap now says what is still open and why** (#66, #67, #68, #69). It was
   entirely retrospective: every stage described work already finished, so "what is left?"

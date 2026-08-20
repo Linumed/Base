@@ -19,8 +19,16 @@ day to day, and why specific decisions were made. For installing it, start with 
 - **Something's broken?** [Troubleshooting](operations/troubleshooting.md) is the
   cross-role index; each role's own page has a more detailed pitfalls section.
 - **Wondering why a specific choice was made?** [Architecture Decision
-  Records](adr/README.md) - BridgeLink over Mirth Connect, English as the documentation
-  language, why nothing is exposed to the internet, how CI gets to run VM tests.
+  Records](adr/README.md) - BridgeLink over Mirth Connect, why there is no Kubernetes and
+  what that costs, why nothing is exposed to the internet, English as the documentation
+  language, how CI gets to run VM tests.
+- **Evaluating whether this kit fits at all?** The decisions most likely to rule it in or
+  out are [no Kubernetes and therefore no high
+  availability](adr/0007-docker-compose-not-kubernetes.md) and [no bundled identity
+  provider, no admin UI on the
+  internet](adr/0003-loopback-only-access-no-bundled-identity-provider.md). Both name what
+  they cost, not only what they buy - and the first one also lists the parts of the kit
+  that work on Kubernetes nodes anyway.
 - **Working on a specific role?** Every role has its own page under **Roles** in the
   navigation: variables, what gets changed on the host, how to verify it worked, and
   known pitfalls.

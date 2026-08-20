@@ -357,7 +357,13 @@ Linumed Shifts is not in this repository and is not documented here.
   single-host assumption). See `docs/ROADMAP.md`, Stage 6. Orthanc was
   earmarked as v0.3 until 2026-08-20; that number went to the rename and
   the observability work instead.
-- v1.0: complete documentation, CI-tested roles, certification prep
+- v1.0: the point from which breaking changes require a major version
+  bump - see the paragraph on versioning below for what that promise
+  will cover. An earlier version of this line also named "certification
+  prep"; that term appeared exactly once in the entire repository and was
+  defined nowhere, so it was removed rather than left as an expectation
+  nobody had committed to. If a specific certification ever becomes a
+  goal, it gets named, scoped and given its own issue.
 
 **No bundled identity provider.** The Authentik role originally planned
 for v0.2 has been dropped

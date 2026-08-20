@@ -377,11 +377,12 @@ someone writes down **what it applies to** (#66): variable names, deploy paths, 
 and network names, the metric names of this kit's own exporters, the alert rule names an
 operator routes on.
 
-One thing to resolve rather than inherit: `ARCHITECTURE.md`'s v1.0 line mentions
-"certification prep". The term appears exactly once in the entire repository and is
-defined nowhere. Either it means something specific - ISO 27001, BSI-Grundschutz, KRITIS -
-or it should go. An undefined reference to certification in a public healthcare repository
-raises an expectation nobody has committed to.
+`ARCHITECTURE.md`'s v1.0 line used to also name "certification prep". That term appeared
+exactly once in the whole repository and was defined nowhere, so it was **removed on
+2026-08-20** rather than left standing: an undefined reference to certification in a public
+healthcare repository raises an expectation nobody has committed to. If a specific
+certification ever becomes a goal - ISO 27001, BSI-Grundschutz, KRITIS - it gets named,
+scoped and given its own issue.
 
 ## Deliberately not on this roadmap
 
@@ -395,4 +396,10 @@ raises an expectation nobody has committed to.
   one is not.
 - **Application software** (HIS, DMS, document management). Out of scope by design.
   Institutions bring their own applications; Linumed Base provides the secure base.
-- **Kubernetes, bootable images, PXE.** Excluded by `CONVENTIONS.md`, not revisited here.
+- **Kubernetes.** Deliberately out of scope, with the reasoning recorded in
+  [ADR 0007](adr/0007-docker-compose-not-kubernetes.md) - including what it costs (no high
+  availability), the criterion it fails (the same one that removed SSO in ADR 0003: a
+  cluster is a subsystem the institution has to supply), and the conditions under which it
+  would be reopened. Note that `common`, `docker` and `backup` are runtime-agnostic, so a
+  Kubernetes shop can still use the node baseline.
+- **Bootable images, PXE.** Excluded by `CONVENTIONS.md`, not revisited here.
