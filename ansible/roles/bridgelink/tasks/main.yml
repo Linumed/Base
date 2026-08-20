@@ -168,6 +168,13 @@
 # command into the container config-hash, and an image that is not fully local yet at
 # first apply produces a different hash than the second run computes - a spurious
 # recreate that breaks idempotency.
+# Retried, because a failed pull here fails the whole playbook and pull failures are a
+# measured, recurring problem on this infrastructure rather than a theoretical one: issue
+# #43 was opened after half the full-stack VM runs on 2026-08-14 failed pulling from
+# Docker Hub, and a CI run on 2026-08-20 failed with "invalid tar header" while the
+# pull-through cache was fetching a freshly bumped Grafana tag for the first time. The
+# same pull succeeded immediately afterwards. Three attempts turn that class of failure
+# into a slower run instead of a red build; a genuinely missing image still fails.
 - name: Pull BridgeLink images ahead of the compose apply
   community.docker.docker_image:
     name: "{{ item }}"
@@ -176,6 +183,10 @@
   loop:
     - "{{ bridgelink_image }}"
     - "{{ bridgelink_postgres_image }}"
+  register: bridgelink_image_pull
+  until: bridgelink_image_pull is succeeded
+  retries: 3
+  delay: 10
 
 - name: Deploy the BridgeLink stack
   community.docker.docker_compose_v2:

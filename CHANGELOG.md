@@ -11,6 +11,16 @@ click away instead of restated here.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Image pulls are retried instead of failing the playbook on the first hiccup.** A pull
+  failure here fails the whole run, and on this infrastructure that is a measured recurring
+  problem rather than a theoretical one: issue #43 was opened after half the full-stack VM
+  runs on one day failed pulling from Docker Hub, and a CI run on 2026-08-20 died with
+  `invalid tar header` while the pull-through cache fetched a freshly bumped Grafana tag for
+  the first time - the same pull succeeded seconds later. Both pre-pull tasks now retry
+  three times. A genuinely missing image still fails.
+
 ### Added
 
 - **The lifecycle questions now have answers** (#68). Three things a service provider asks
