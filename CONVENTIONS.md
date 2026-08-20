@@ -76,6 +76,12 @@ linumed-base/
 ## Ansible conventions
 
 - Every role has: tasks/main.yml, defaults/main.yml, meta/main.yml, README.md
+- **A variable name is a promise from v1.0 onward.** Role variables, deploy paths,
+  container and network names, this kit's own metric and alert names, dashboard and
+  datasource UIDs, and systemd unit names are all covered by the stability guarantee - see
+  [ADR 0008](docs/adr/0008-what-the-v1-0-stability-guarantee-covers.md). Before 1.0 they
+  can still be fixed; after it, a rename costs a major version. Name things as if the tag
+  were tomorrow.
 - **`site.yml` is the only playbook.** Roles are not independently deployable in general -
   the bridgelink exporter joins a Docker network the monitoring role creates, for instance -
   so a per-role playbook would be a promise this repo does not keep. Anything that assumes
