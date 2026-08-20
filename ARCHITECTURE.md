@@ -368,5 +368,16 @@ Application software (HIS, DMS, document management) is deliberately
 not part of Linumed Base. The clinic runs its own applications. Linumed
 Base provides the secure, GDPR-compliant foundation.
 
-Every release is tagged as a git tag. Breaking changes only from v1.0
-onward.
+Every release is tagged as a git tag, and versions follow Semantic
+Versioning. For a 0.x project that means the opposite of what an earlier
+version of this sentence claimed ("breaking changes only from v1.0
+onward"): **before 1.0 there is no stability guarantee at all.** Breaking
+changes can and do land in minor releases, and each one is called out
+under `### Breaking` in `CHANGELOG.md` - v0.2.0 moved the Caddyfile,
+v0.3.0 renamed every identifier and moved Prometheus's configuration
+into its own directory.
+
+What `v1.0` is meant to signal is precisely the arrival of that
+guarantee: from then on a breaking change requires a major version bump.
+It is not a quality label, and reaching it is a deliberate promise about
+future releases, not a milestone that arrives by itself.
