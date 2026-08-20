@@ -56,7 +56,10 @@ print(f'PASS: all {len(targets)} Prometheus targets healthy')
 "
 }
 
-run_site_idempotency_check() {
+# Split out of run_site_idempotency_check so that a check running *before* it can use the
+# same inventory - node-baseline (#70) applies to the pristine VM first, and writing a
+# second inventory for it would let the two drift.
+write_test_inventory() {
   local inventory="${WORK_DIR}/inventory.yml"
   cat > "${inventory}" <<EOF
 all:
@@ -87,6 +90,11 @@ EOF
           docker_registry_mirrors: ["${DOCKER_REGISTRY_MIRROR}"]
 EOF
   fi
+}
+
+run_site_idempotency_check() {
+  local inventory="${WORK_DIR}/inventory.yml"
+  [ -f "${inventory}" ] || write_test_inventory
 
   (
     cd "${REPO_ROOT}/ansible"

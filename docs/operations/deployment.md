@@ -31,11 +31,30 @@ Each step depends on the one before it:
 4. **backup** runs last because it backs up `/var/lib/docker/volumes`, which only has
    meaningful content once the other roles have created their volumes.
 
-A partial deployment (running only some roles) is possible for maintenance or testing, but
-isn't the documented path for a first install, and isn't as convenient as it sounds:
-`site.yml` is the only playbook in this repo and **no task carries an Ansible tag**, so
-`--tags` has nothing to select on. Write a throwaway playbook with just the roles you want,
-and mind the dependency in point 3.
+### Deploying only the node baseline
+
+There is one supported partial deployment, and it has its own playbook:
+
+```bash
+ansible-playbook -i inventory/myhospital playbooks/node-baseline.yml --ask-vault-pass
+```
+
+`node-baseline.yml` applies `common`, `docker` and `backup` and nothing else - the roles
+that ship no Compose stack and depend on no other role. It is meant for a host that runs
+something else on top: a Kubernetes node, or a server that should be hardened and backed up
+without also carrying an integration engine and a monitoring stack. See
+[ADR 0007](../adr/0007-docker-compose-not-kubernetes.md) for why the service stacks stay
+Compose-only, and what that leaves usable for a Kubernetes site.
+
+**Set `backup_paths`.** Its default covers this kit's own state (`/opt/linumed-base`,
+`/var/lib/docker/volumes`), which is the wrong answer on a node whose data lives elsewhere.
+The role refuses to deploy if none of the configured paths exists, so a wrong value fails
+at deploy time rather than at 03:00 - but a value that is merely incomplete will not be
+caught for you.
+
+Any *other* partial deployment is unsupported: no other per-role playbook exists, and **no
+task carries an Ansible tag**, so `--tags` has nothing to select on. Write a throwaway
+playbook with just the roles you want, and mind the dependency in point 3.
 
 ## One host, and what that means
 
