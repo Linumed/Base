@@ -12,10 +12,12 @@ Written 2026-08-14, after an audit of the repository against its own stated requ
 > not prove - turned up one real defect (#48, a Compose reference broken by the #44 fix
 > and caught by nobody, because nothing tested it) and four gaps that were closed straight
 > away: the full VM test now triggers itself (#45), the `docker/` references have a smoke
-> test (#46), `SECURITY.md` exists (#47), and there is a `CHANGELOG.md` (#49). The single
-> remaining open issue is #50, publication to GitHub - deliberately the
-> last step, since publishing a kit that is still being worked on serves nobody. See
-> [CHANGELOG.md](changelog.md) for what shipped.
+> test (#46), `SECURITY.md` exists (#47), and there is a `CHANGELOG.md` (#49). #50,
+> publication to GitHub, was the last of those and is closed: the repository is public at
+> `Linumed/Base` (MIT), with Forgejo staying canonical and GitHub serving as the push
+> mirror. See [CHANGELOG.md](changelog.md) for what shipped.
+>
+> **Update 2026-08-20: `v0.3.0` is tagged**, see Stage 5 below.
 
 ## Where this actually stands
 
@@ -204,6 +206,78 @@ assumed: a clean restore reports `success=1`, a deliberate post-backup change re
 Authentik role: without four additional containers there is nothing to re-measure. It
 returns if the stack grows.
 
+## Stage 5 - v0.3: the name, and observability that observes something (done, 2026-08-20)
+
+Two unrelated things share this release because they happened in the same window.
+
+**The product got its own name.** "Linumed OS" described something this repository is not -
+a collection of Ansible roles that configure a standard Debian install is not an operating
+system. Renamed while nothing was published and nothing was installed anywhere; identifiers
+moved with it (`linumed-base-*` containers, `/opt/linumed-base`, `linumed-base-external`).
+[ADR 0006](adr/0006-linumed-base-not-linumed-os.md) has the reasoning and what was
+deliberately *not* renamed.
+
+**BridgeLink reports application metrics (#60, closed 2026-08-19).** Until now the only
+BridgeLink data Prometheus held came from cAdvisor: CPU, RAM and network of the container.
+For an integration engine that is close to useless - a channel that is deployed but stopped,
+or a destination queue that has stopped draining, looks exactly like an idle healthy
+container. BridgeLink serves no `/metrics`, so the role gained a standard-library exporter
+sidecar running in a pinned upstream `python` image, plus six alert rules.
+
+`prometheus-community/json_exporter` was tried first and rejected on a measurement, which is
+worth recording so nobody re-evaluates it: BridgeLink's JSON is serialised from its XML
+model, so a list with exactly one entry becomes an object and json_exporter's JSONPath
+matches nothing - while still reporting the scrape as successful. A monitoring gap that
+announces itself as healthy is worse than none. The exporter reads the XML instead.
+
+### What the test found, which is the more valuable half
+
+| | Issue |
+|---|---|
+| Documented secret ownership that produces a restart loop | #61 closed |
+| `vm-test` never exercised the exporter with the switch on | #62 closed |
+| Prometheus config changes never reached Prometheus | #63 closed |
+| Prometheus could not reach the exporter at all | #64 closed |
+| Diagrams redrawn and pre-rendered to SVG | #65 closed |
+
+**#62 is the reason the other two exist.** `bridgelink_exporter_enabled` defaults to false,
+so the existing double-run proved only that the feature is a no-op while switched off - the
+enable path had no coverage whatsoever. A third `site.yml` pass with the switch on found two
+real defects within two runs. The general lesson, now in `CONVENTIONS.md`: **anything behind
+a default-off flag ships with zero test coverage until a test deliberately turns it on.**
+
+**#63 was the expensive one, and it was not new.** `prometheus.yml` and `alert-rules.yml`
+were bind-mounted as individual files. A single-file bind mount binds the inode; Ansible
+rewrites atomically, orphaning it. Since the monitoring role was written, **no Prometheus
+configuration or alert-rule change had ever reached the running container** - playbook
+`changed`, validation green, `/-/reload` answering 200, and nothing reporting an error.
+Only Prometheus was affected, because it is the only service here reloaded over HTTP rather
+than restarted, and a restart re-resolves the mount.
+
+This is the same defect as #44 in the Caddyfile, documented in Stage 3 above, four days
+earlier. The precedent existed and was simply never transferred - which is why it is now a
+rule in `CONVENTIONS.md` rather than a closed issue: a config file Ansible manages is
+mounted as its containing directory, never as the file.
+
+**#64 was self-inflicted and is instructive about verification.** The exporter was addressed
+via `host.docker.internal`, copied from the Node Exporter job - whose precondition, being a
+*native* service that ufw can protect, does not transfer to a container. A container port on
+`127.0.0.1` is unreachable from another container, and publishing it on all interfaces would
+bypass ufw entirely. Fixed with a shared, explicitly named Docker network
+(`linumed-base-metrics`), the same pattern as `linumed-base-external` from #39. Worth noting
+how it survived: #60 was verified by hand against real instances - container, secrets,
+healthcheck, metrics, alert expressions - and still shipped this, because the hand
+verification never walked the scrape path *from Prometheus*. Hand verification and a role
+run do not test the same thing.
+
+**#65 - the diagrams.** Three attempts at theming had not made them look better, because the
+problem was not colour: the target-architecture figure drew arrows at the boundary of the
+Docker group, including one from that group to a node inside itself, which renders as a
+label with no arrow. Redrawn as two figures (containment, then flow) and pre-rendered to
+committed SVGs, which also settles a quieter problem - the diagrams appear on the MkDocs
+site, on GitHub and in Forgejo, and browser-side theming only ever reached the first of the
+three.
+
 ## Open convention questions
 
 These were cases where the repository stated a rule it didn't follow, which is worse than
@@ -231,7 +305,9 @@ templates despite the issue's concern.
 
 ## Deliberately not on this roadmap
 
-- **v0.3 (Orthanc/DICOM)** - named in `ARCHITECTURE.md`, no work started, no issue yet.
+- **v0.4 (Orthanc/DICOM)** - named in `ARCHITECTURE.md`, no work started, no issue yet.
+  Carried the number v0.3 until 2026-08-20, when that release turned out to be the rename
+  plus observability work instead.
 - **A bundled identity provider, a shared `linumed-net`, or a mesh-VPN role.** All three
   evaluated and rejected on 2026-08-14, see
   [ADR 0003](adr/0003-loopback-only-access-no-bundled-identity-provider.md). Connecting
