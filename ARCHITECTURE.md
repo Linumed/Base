@@ -358,8 +358,14 @@ Linumed Shifts is not in this repository and is not documented here.
   earmarked as v0.3 until 2026-08-20; that number went to the rename and
   the observability work instead.
 - v1.0: the point from which breaking changes require a major version
-  bump - see the paragraph on versioning below for what that promise
-  will cover. An earlier version of this line also named "certification
+  bump. What that promise covers is written down rather than left to
+  interpretation - variable names, deploy paths, container and network
+  names, this kit's own metric and alert names, dashboard and datasource
+  UIDs, systemd unit names, and the set of variables with no default. See
+  [ADR 0008](https://github.com/Linumed/Base/blob/main/docs/adr/0008-what-the-v1-0-stability-guarantee-covers.md),
+  which also lists what is deliberately *not* covered (pinned image
+  versions have to keep moving) and what has to be cleaned up before the
+  tag, because 1.0 freezes whatever exists at that moment. An earlier version of this line also named "certification
   prep"; that term appeared exactly once in the entire repository and was
   defined nowhere, so it was removed rather than left as an expectation
   nobody had committed to. If a specific certification ever becomes a
@@ -389,3 +395,10 @@ What `v1.0` is meant to signal is precisely the arrival of that
 guarantee: from then on a breaking change requires a major version bump.
 It is not a quality label, and reaching it is a deliberate promise about
 future releases, not a milestone that arrives by itself.
+
+The scope of that promise is defined in
+[ADR 0008](https://github.com/Linumed/Base/blob/main/docs/adr/0008-what-the-v1-0-stability-guarantee-covers.md).
+The surface was measured, not estimated: 125 role variables, 11 container
+names, 13 alert rule names, four systemd units, six variables with no
+default, and the Grafana dashboard and datasource UIDs that every
+operator-built panel references.
