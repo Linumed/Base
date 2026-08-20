@@ -37,6 +37,8 @@ source "${REPO_ROOT}/test/lib/site-idempotency.sh"
 source "${REPO_ROOT}/test/lib/docker-reference-smoke.sh"
 # shellcheck source=lib/bridgelink-exporter-check.sh
 source "${REPO_ROOT}/test/lib/bridgelink-exporter-check.sh"
+# shellcheck source=lib/node-baseline-check.sh
+source "${REPO_ROOT}/test/lib/node-baseline-check.sh"
 # shellcheck source=lib/teardown-check.sh
 source "${REPO_ROOT}/test/lib/teardown-check.sh"
 
@@ -119,6 +121,12 @@ echo "VM reachable at ${VM_IP}"
 echo "==> Waiting for cloud-init to finish"
 ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "${SSH_KEY}" \
   vmtest@"${VM_IP}" 'sudo cloud-init status --wait'
+
+# Before site.yml, on the still-pristine VM: the node-baseline subset only means anything
+# if it stands alone on a fresh host (issue #70). Its package installs are work site.yml
+# would do moments later, so the full run afterwards is correspondingly shorter.
+write_test_inventory
+run_node_baseline_check
 
 run_site_idempotency_check
 

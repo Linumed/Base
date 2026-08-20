@@ -56,10 +56,11 @@ linumed-base/
 │   │   ├── caddy/           # Reverse proxy with automatic TLS
 │   │   └── backup/          # restic-based backup (local + optional S3)
 │   ├── playbooks/
-│   │   └── site.yml         # Full stack deployment - the only playbook there is.
-│   │                        # Per-role playbooks were listed here for a long time and
-│   │                        # never existed. No task carries an Ansible tag either, so
-│   │                        # --tags selects nothing; see the note below.
+│   │   ├── site.yml         # Full stack deployment
+│   │   └── node-baseline.yml # common + docker + backup only, for hosts that run
+│   │                        # something else on top (#70). No other per-role playbook
+│   │                        # exists, and no task carries an Ansible tag, so --tags
+│   │                        # selects nothing; see the note below.
 │   └── inventory/
 │       └── example/         # Example inventory, never real hosts
 ├── docker/                  # Docker Compose files per service
@@ -82,10 +83,14 @@ linumed-base/
   [ADR 0008](docs/adr/0008-what-the-v1-0-stability-guarantee-covers.md). Before 1.0 they
   can still be fixed; after it, a rename costs a major version. Name things as if the tag
   were tomorrow.
-- **`site.yml` is the only playbook.** Roles are not independently deployable in general -
-  the bridgelink exporter joins a Docker network the monitoring role creates, for instance -
-  so a per-role playbook would be a promise this repo does not keep. Anything that assumes
-  one role can run alone on a fresh host has to say so and be tested that way.
+- **Two playbooks, and the second is a deliberate exception.** `site.yml` deploys
+  everything. `node-baseline.yml` deploys only `common`, `docker` and `backup` - the roles
+  that ship no Compose stack and depend on no other role (issue #70). Everything else is
+  *not* independently deployable: the bridgelink exporter joins a Docker network the
+  monitoring role creates, and no task carries an Ansible tag, so `--tags` selects nothing.
+  Anything that assumes a role can run alone on a fresh host has to say so **and be tested
+  that way** - `node-baseline.yml` is applied to the pristine VM on every relevant push,
+  checked for idempotency, and checked for effect rather than exit code.
 - Variables use the role name as prefix: `common_ssh_port`, `monitoring_retention_days`
 - Secrets are never in defaults. Use Ansible Vault or reference `.env` files.
 - Handlers go in handlers/main.yml, not inline.
@@ -210,7 +215,8 @@ system rather than trusting this file.)
 Four workflows under `.forgejo/workflows/`:
 
 - `ansible-lint.yml` - every push and pull request to `main`.
-- `vm-test.yml` - the full `site.yml` double-run against a throwaway libvirt/KVM VM, plus
+- `vm-test.yml` - `node-baseline.yml` on the pristine VM first (issue #70), then the full
+  `site.yml` double-run against that same throwaway libvirt/KVM VM, plus
   Prometheus target health, the `docker/` smoke test, a third `site.yml` pass with the
   BridgeLink exporter switched on (issue #62), and finally the documented teardown
   (issue #68) - the VM is destroyed straight afterwards, so removing the kit from it first

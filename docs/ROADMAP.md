@@ -356,6 +356,7 @@ them is how a rejected idea quietly comes back.
 |---|---|
 | Scan the pinned images, and act on the difference between "behind" and "upstream's problem" | #67, **done 2026-08-20** |
 | Orthanc as the DICOM role | #69 |
+| The node-baseline subset, deployable and tested on its own | #70, **done 2026-08-20** |
 | Lifecycle: Debian major upgrade, teardown, the single-host assumption | #68, **done 2026-08-20** |
 
 **Ordering, and it matters:** #67 comes before #69. Adding a role means adding two more
