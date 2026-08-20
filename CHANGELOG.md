@@ -143,6 +143,20 @@ a precedent in this repository that had simply never been carried over.
   releases happened under it, and rewriting published history to pretend otherwise would
   be dishonest.
 
+### Breaking
+
+- **Every identifier changed with the product's name** (ADR 0006). Containers are
+  `linumed-base-*`, the default deploy path is `/opt/linumed-base`, and the shared Docker
+  network is `linumed-base-external`. There are no known installations of `v0.1.0` or
+  `v0.2.0`, so no migration path is provided - treat an existing one as a fresh deployment
+  rather than an upgrade.
+- **Prometheus's configuration moved from `{{ monitoring_deploy_dir }}/prometheus.yml` and
+  `alert-rules.yml` to `{{ monitoring_deploy_dir }}/prometheus/`** (#63). The role deletes
+  the files at the old paths on the next run, so no manual migration is needed - but
+  anything referencing the old location, including an operator's own tooling, has to follow
+  the move. Edits at the old paths have no effect. This is the same shape of move as the
+  Caddyfile in v0.2.0, and for the same underlying reason.
+
 ## [0.2.0] - 2026-08-17
 
 Operational maturity rather than new services: the v0.1 role set stayed as it was, and
