@@ -1,0 +1,172 @@
+# Image findings knowingly carried, with the reason each one is carried.
+#
+# Format:  <image>  <CVE>  # reason (date)
+#
+# This is the counterpart to `.gitleaksignore` and follows the same rule: it is not a way
+# to hide a finding, it is a record that someone looked at it, decided, and left a date.
+# `scripts/scan-images.py` fails on any finding that is not listed here, so an image cannot
+# quietly accumulate new ones - a CVE that appears tomorrow is not covered by yesterday's
+# entry.
+#
+# What belongs here: findings on an image that is already on its newest upstream tag. Those
+# come from the base image the upstream builds on and cannot be fixed from this repository;
+# they clear when the upstream rebuilds. What does NOT belong here: a finding that a newer
+# tag would clear. The scanner treats that as a failure and it should be fixed by bumping
+# the pin, not by adding a line below.
+#
+# Review: entries older than 90 days are reported by the scanner. Re-check them rather than
+# refreshing the date - the point is to notice when an upstream has stopped rebuilding.
+#
+# Every entry below was created on 2026-08-20, the day the scanner first ran (issue #67).
+
+
+# caddy:2.11.4-alpine - alpine base image, caddy is already on its newest tag
+caddy:2.11.4-alpine  CVE-2026-27145  # alpine base image, caddy is already on its newest tag (2026-08-20)
+caddy:2.11.4-alpine  CVE-2026-33630  # alpine base image, caddy is already on its newest tag (2026-08-20)
+caddy:2.11.4-alpine  CVE-2026-33818  # alpine base image, caddy is already on its newest tag (2026-08-20)
+caddy:2.11.4-alpine  CVE-2026-39821  # alpine base image, caddy is already on its newest tag (2026-08-20)
+caddy:2.11.4-alpine  CVE-2026-39822  # alpine base image, caddy is already on its newest tag (2026-08-20)
+caddy:2.11.4-alpine  CVE-2026-42504  # alpine base image, caddy is already on its newest tag (2026-08-20)
+caddy:2.11.4-alpine  CVE-2026-46600  # alpine base image, caddy is already on its newest tag (2026-08-20)
+caddy:2.11.4-alpine  CVE-2026-56852  # alpine base image, caddy is already on its newest tag (2026-08-20)
+caddy:2.11.4-alpine  CVE-2026-56853  # alpine base image, caddy is already on its newest tag (2026-08-20)
+caddy:2.11.4-alpine  CVE-2026-56858  # alpine base image, caddy is already on its newest tag (2026-08-20)
+caddy:2.11.4-alpine  CVE-2026-56859  # alpine base image, caddy is already on its newest tag (2026-08-20)
+caddy:2.11.4-alpine  CVE-2026-56860  # alpine base image, caddy is already on its newest tag (2026-08-20)
+caddy:2.11.4-alpine  CVE-2026-56862  # alpine base image, caddy is already on its newest tag (2026-08-20)
+caddy:2.11.4-alpine  CVE-2026-5773  # alpine base image, caddy is already on its newest tag (2026-08-20)
+caddy:2.11.4-alpine  CVE-2026-6276  # alpine base image, caddy is already on its newest tag (2026-08-20)
+caddy:2.11.4-alpine  GHSA-hrxh-6v49-42gf  # alpine base image, caddy is already on its newest tag (2026-08-20)
+
+# ghcr.io/google/cadvisor:v0.60.5 - cadvisor is already on its newest tag; upstream rebuilds infrequently
+ghcr.io/google/cadvisor:v0.60.5  CVE-2026-33818  # cadvisor is already on its newest tag; upstream rebuilds infrequently (2026-08-20)
+ghcr.io/google/cadvisor:v0.60.5  CVE-2026-39821  # cadvisor is already on its newest tag; upstream rebuilds infrequently (2026-08-20)
+ghcr.io/google/cadvisor:v0.60.5  CVE-2026-56853  # cadvisor is already on its newest tag; upstream rebuilds infrequently (2026-08-20)
+ghcr.io/google/cadvisor:v0.60.5  CVE-2026-56858  # cadvisor is already on its newest tag; upstream rebuilds infrequently (2026-08-20)
+ghcr.io/google/cadvisor:v0.60.5  CVE-2026-56859  # cadvisor is already on its newest tag; upstream rebuilds infrequently (2026-08-20)
+ghcr.io/google/cadvisor:v0.60.5  CVE-2026-56860  # cadvisor is already on its newest tag; upstream rebuilds infrequently (2026-08-20)
+ghcr.io/google/cadvisor:v0.60.5  CVE-2026-56862  # cadvisor is already on its newest tag; upstream rebuilds infrequently (2026-08-20)
+ghcr.io/google/cadvisor:v0.60.5  GHSA-hrxh-6v49-42gf  # cadvisor is already on its newest tag; upstream rebuilds infrequently (2026-08-20)
+
+# grafana/alloy:v1.18.1 - alloy is already on its newest tag
+grafana/alloy:v1.18.1  CVE-2026-33818  # alloy is already on its newest tag (2026-08-20)
+grafana/alloy:v1.18.1  CVE-2026-34040  # alloy is already on its newest tag (2026-08-20)
+grafana/alloy:v1.18.1  CVE-2026-39821  # alloy is already on its newest tag (2026-08-20)
+grafana/alloy:v1.18.1  CVE-2026-46600  # alloy is already on its newest tag (2026-08-20)
+grafana/alloy:v1.18.1  CVE-2026-56853  # alloy is already on its newest tag (2026-08-20)
+grafana/alloy:v1.18.1  CVE-2026-56858  # alloy is already on its newest tag (2026-08-20)
+grafana/alloy:v1.18.1  CVE-2026-56859  # alloy is already on its newest tag (2026-08-20)
+grafana/alloy:v1.18.1  CVE-2026-56860  # alloy is already on its newest tag (2026-08-20)
+grafana/alloy:v1.18.1  CVE-2026-56862  # alloy is already on its newest tag (2026-08-20)
+grafana/alloy:v1.18.1  CVE-2026-56864  # alloy is already on its newest tag (2026-08-20)
+grafana/alloy:v1.18.1  CVE-2026-56865  # alloy is already on its newest tag (2026-08-20)
+grafana/alloy:v1.18.1  CVE-2026-71556  # alloy is already on its newest tag (2026-08-20)
+
+# grafana/grafana:13.1.4 - remains after bumping to the newest patch (13.1.4); a 13.2 series bump is a separate decision
+grafana/grafana:13.1.4  CVE-2026-21728  # remains after bumping to the newest patch (13.1.4); a 13.2 series bump is a separate decision (2026-08-20)
+grafana/grafana:13.1.4  CVE-2026-27145  # remains after bumping to the newest patch (13.1.4); a 13.2 series bump is a separate decision (2026-08-20)
+grafana/grafana:13.1.4  CVE-2026-28377  # remains after bumping to the newest patch (13.1.4); a 13.2 series bump is a separate decision (2026-08-20)
+grafana/grafana:13.1.4  CVE-2026-33818  # remains after bumping to the newest patch (13.1.4); a 13.2 series bump is a separate decision (2026-08-20)
+grafana/grafana:13.1.4  CVE-2026-39821  # remains after bumping to the newest patch (13.1.4); a 13.2 series bump is a separate decision (2026-08-20)
+grafana/grafana:13.1.4  CVE-2026-39822  # remains after bumping to the newest patch (13.1.4); a 13.2 series bump is a separate decision (2026-08-20)
+grafana/grafana:13.1.4  CVE-2026-42504  # remains after bumping to the newest patch (13.1.4); a 13.2 series bump is a separate decision (2026-08-20)
+grafana/grafana:13.1.4  CVE-2026-46600  # remains after bumping to the newest patch (13.1.4); a 13.2 series bump is a separate decision (2026-08-20)
+grafana/grafana:13.1.4  CVE-2026-56853  # remains after bumping to the newest patch (13.1.4); a 13.2 series bump is a separate decision (2026-08-20)
+grafana/grafana:13.1.4  CVE-2026-56858  # remains after bumping to the newest patch (13.1.4); a 13.2 series bump is a separate decision (2026-08-20)
+grafana/grafana:13.1.4  CVE-2026-56859  # remains after bumping to the newest patch (13.1.4); a 13.2 series bump is a separate decision (2026-08-20)
+grafana/grafana:13.1.4  CVE-2026-56860  # remains after bumping to the newest patch (13.1.4); a 13.2 series bump is a separate decision (2026-08-20)
+grafana/grafana:13.1.4  CVE-2026-56862  # remains after bumping to the newest patch (13.1.4); a 13.2 series bump is a separate decision (2026-08-20)
+
+# grafana/loki:3.7.6 - loki is already on its newest tag
+grafana/loki:3.7.6  CVE-2026-33818  # loki is already on its newest tag (2026-08-20)
+grafana/loki:3.7.6  CVE-2026-39821  # loki is already on its newest tag (2026-08-20)
+grafana/loki:3.7.6  CVE-2026-46600  # loki is already on its newest tag (2026-08-20)
+grafana/loki:3.7.6  CVE-2026-56853  # loki is already on its newest tag (2026-08-20)
+grafana/loki:3.7.6  CVE-2026-56858  # loki is already on its newest tag (2026-08-20)
+grafana/loki:3.7.6  CVE-2026-56859  # loki is already on its newest tag (2026-08-20)
+grafana/loki:3.7.6  CVE-2026-56860  # loki is already on its newest tag (2026-08-20)
+grafana/loki:3.7.6  CVE-2026-56862  # loki is already on its newest tag (2026-08-20)
+
+# innovarhealthcare/bridgelink:26.6.0-dhi-slim - bridgelink is already on its newest tag; upstream gates its own build on fixable OS findings, so these are what its gate lets through
+innovarhealthcare/bridgelink:26.6.0-dhi-slim  CVE-2022-46337  # bridgelink is already on its newest tag; upstream gates its own build on fixable OS findings, so these are what its gate lets through (2026-08-20)
+innovarhealthcare/bridgelink:26.6.0-dhi-slim  CVE-2024-47072  # bridgelink is already on its newest tag; upstream gates its own build on fixable OS findings, so these are what its gate lets through (2026-08-20)
+innovarhealthcare/bridgelink:26.6.0-dhi-slim  CVE-2024-47554  # bridgelink is already on its newest tag; upstream gates its own build on fixable OS findings, so these are what its gate lets through (2026-08-20)
+innovarhealthcare/bridgelink:26.6.0-dhi-slim  CVE-2025-14813  # bridgelink is already on its newest tag; upstream gates its own build on fixable OS findings, so these are what its gate lets through (2026-08-20)
+innovarhealthcare/bridgelink:26.6.0-dhi-slim  CVE-2025-52999  # bridgelink is already on its newest tag; upstream gates its own build on fixable OS findings, so these are what its gate lets through (2026-08-20)
+innovarhealthcare/bridgelink:26.6.0-dhi-slim  CVE-2025-59250  # bridgelink is already on its newest tag; upstream gates its own build on fixable OS findings, so these are what its gate lets through (2026-08-20)
+innovarhealthcare/bridgelink:26.6.0-dhi-slim  CVE-2026-10050  # bridgelink is already on its newest tag; upstream gates its own build on fixable OS findings, so these are what its gate lets through (2026-08-20)
+innovarhealthcare/bridgelink:26.6.0-dhi-slim  CVE-2026-54291  # bridgelink is already on its newest tag; upstream gates its own build on fixable OS findings, so these are what its gate lets through (2026-08-20)
+innovarhealthcare/bridgelink:26.6.0-dhi-slim  CVE-2026-54512  # bridgelink is already on its newest tag; upstream gates its own build on fixable OS findings, so these are what its gate lets through (2026-08-20)
+innovarhealthcare/bridgelink:26.6.0-dhi-slim  CVE-2026-54513  # bridgelink is already on its newest tag; upstream gates its own build on fixable OS findings, so these are what its gate lets through (2026-08-20)
+innovarhealthcare/bridgelink:26.6.0-dhi-slim  CVE-2026-55831  # bridgelink is already on its newest tag; upstream gates its own build on fixable OS findings, so these are what its gate lets through (2026-08-20)
+innovarhealthcare/bridgelink:26.6.0-dhi-slim  CVE-2026-55833  # bridgelink is already on its newest tag; upstream gates its own build on fixable OS findings, so these are what its gate lets through (2026-08-20)
+innovarhealthcare/bridgelink:26.6.0-dhi-slim  CVE-2026-56745  # bridgelink is already on its newest tag; upstream gates its own build on fixable OS findings, so these are what its gate lets through (2026-08-20)
+innovarhealthcare/bridgelink:26.6.0-dhi-slim  CVE-2026-56819  # bridgelink is already on its newest tag; upstream gates its own build on fixable OS findings, so these are what its gate lets through (2026-08-20)
+innovarhealthcare/bridgelink:26.6.0-dhi-slim  CVE-2026-59901  # bridgelink is already on its newest tag; upstream gates its own build on fixable OS findings, so these are what its gate lets through (2026-08-20)
+innovarhealthcare/bridgelink:26.6.0-dhi-slim  GHSA-r7wm-3cxj-wff9  # bridgelink is already on its newest tag; upstream gates its own build on fixable OS findings, so these are what its gate lets through (2026-08-20)
+
+# postgres:17.11-alpine - remains after bumping to the newest patch (17.11); the bump cleared none of them, measured
+postgres:17.11-alpine  CVE-2025-61726  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
+postgres:17.11-alpine  CVE-2025-61729  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
+postgres:17.11-alpine  CVE-2025-68121  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
+postgres:17.11-alpine  CVE-2026-25679  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
+postgres:17.11-alpine  CVE-2026-27145  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
+postgres:17.11-alpine  CVE-2026-32280  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
+postgres:17.11-alpine  CVE-2026-32281  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
+postgres:17.11-alpine  CVE-2026-32283  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
+postgres:17.11-alpine  CVE-2026-33811  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
+postgres:17.11-alpine  CVE-2026-33814  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
+postgres:17.11-alpine  CVE-2026-33818  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
+postgres:17.11-alpine  CVE-2026-39820  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
+postgres:17.11-alpine  CVE-2026-39821  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
+postgres:17.11-alpine  CVE-2026-39822  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
+postgres:17.11-alpine  CVE-2026-39836  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
+postgres:17.11-alpine  CVE-2026-42499  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
+postgres:17.11-alpine  CVE-2026-42504  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
+postgres:17.11-alpine  CVE-2026-56853  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
+postgres:17.11-alpine  CVE-2026-56858  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
+postgres:17.11-alpine  CVE-2026-56859  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
+postgres:17.11-alpine  CVE-2026-56860  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
+postgres:17.11-alpine  CVE-2026-56862  # remains after bumping to the newest patch (17.11); the bump cleared none of them, measured (2026-08-20)
+
+# prom/alertmanager:v0.33.1 - already on the newest 0.33 patch; v0.34 is a series bump and a separate decision
+prom/alertmanager:v0.33.1  CVE-2026-33818  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-08-20)
+prom/alertmanager:v0.33.1  CVE-2026-39821  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-08-20)
+prom/alertmanager:v0.33.1  CVE-2026-39822  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-08-20)
+prom/alertmanager:v0.33.1  CVE-2026-39828  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-08-20)
+prom/alertmanager:v0.33.1  CVE-2026-39829  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-08-20)
+prom/alertmanager:v0.33.1  CVE-2026-39830  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-08-20)
+prom/alertmanager:v0.33.1  CVE-2026-39831  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-08-20)
+prom/alertmanager:v0.33.1  CVE-2026-39832  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-08-20)
+prom/alertmanager:v0.33.1  CVE-2026-39835  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-08-20)
+prom/alertmanager:v0.33.1  CVE-2026-42508  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-08-20)
+prom/alertmanager:v0.33.1  CVE-2026-46595  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-08-20)
+prom/alertmanager:v0.33.1  CVE-2026-46597  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-08-20)
+prom/alertmanager:v0.33.1  CVE-2026-46600  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-08-20)
+prom/alertmanager:v0.33.1  CVE-2026-56852  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-08-20)
+prom/alertmanager:v0.33.1  CVE-2026-56853  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-08-20)
+prom/alertmanager:v0.33.1  CVE-2026-56858  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-08-20)
+prom/alertmanager:v0.33.1  CVE-2026-56859  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-08-20)
+prom/alertmanager:v0.33.1  CVE-2026-56860  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-08-20)
+prom/alertmanager:v0.33.1  CVE-2026-56862  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-08-20)
+prom/alertmanager:v0.33.1  CVE-2026-56864  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-08-20)
+prom/alertmanager:v0.33.1  CVE-2026-56865  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-08-20)
+prom/alertmanager:v0.33.1  GHSA-hrxh-6v49-42gf  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-08-20)
+
+# prom/prometheus:v3.13.2 - already on the newest 3.13 patch; v3.14 is a series bump and a separate decision
+prom/prometheus:v3.13.2  CVE-2026-33818  # already on the newest 3.13 patch; v3.14 is a series bump and a separate decision (2026-08-20)
+prom/prometheus:v3.13.2  CVE-2026-39821  # already on the newest 3.13 patch; v3.14 is a series bump and a separate decision (2026-08-20)
+prom/prometheus:v3.13.2  CVE-2026-42154  # already on the newest 3.13 patch; v3.14 is a series bump and a separate decision (2026-08-20)
+prom/prometheus:v3.13.2  CVE-2026-46600  # already on the newest 3.13 patch; v3.14 is a series bump and a separate decision (2026-08-20)
+prom/prometheus:v3.13.2  CVE-2026-56853  # already on the newest 3.13 patch; v3.14 is a series bump and a separate decision (2026-08-20)
+prom/prometheus:v3.13.2  CVE-2026-56858  # already on the newest 3.13 patch; v3.14 is a series bump and a separate decision (2026-08-20)
+prom/prometheus:v3.13.2  CVE-2026-56859  # already on the newest 3.13 patch; v3.14 is a series bump and a separate decision (2026-08-20)
+prom/prometheus:v3.13.2  CVE-2026-56860  # already on the newest 3.13 patch; v3.14 is a series bump and a separate decision (2026-08-20)
+prom/prometheus:v3.13.2  CVE-2026-56862  # already on the newest 3.13 patch; v3.14 is a series bump and a separate decision (2026-08-20)
+
+# python:3.13.15-alpine - alpine base image, already on the newest 3.13 patch
+python:3.13.15-alpine  CVE-2025-47273  # alpine base image, already on the newest 3.13 patch (2026-08-20)
+python:3.13.15-alpine  GHSA-6v7p-g79w-8964  # alpine base image, already on the newest 3.13 patch (2026-08-20)
+
+# tecnativa/docker-socket-proxy:0.3.0 - already on its newest tag; upstream has not released since
+tecnativa/docker-socket-proxy:0.3.0  CVE-2025-26519  # already on its newest tag; upstream has not released since (2026-08-20)

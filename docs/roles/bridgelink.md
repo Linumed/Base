@@ -59,7 +59,7 @@ All variables are prefixed `bridgelink_*` and live in
 | `bridgelink_max_heap_mb` | `512` | JVM maximum heap |
 | `bridgelink_stop_grace_period` | `35` | Seconds before a hard kill - deliberately above Docker's 10s default |
 | `bridgelink_exporter_enabled` | `false` | Prometheus exporter sidecar - opt-in, see [Monitoring](#monitoring) |
-| `bridgelink_exporter_image` | `python:3.13-alpine` | Pinned upstream image; the exporter script is bind-mounted into it |
+| `bridgelink_exporter_image` | `python:3.13.15-alpine` | Pinned upstream image; the exporter script is bind-mounted into it |
 | `bridgelink_exporter_port` | `9151` | Bound to `127.0.0.1` only - for debugging by hand, **not** how Prometheus scrapes it |
 | `bridgelink_exporter_metrics_network` | `linumed-base-metrics` | Shared Docker network created by the monitoring role; must match `monitoring_metrics_network_name` |
 | `bridgelink_exporter_user` | `""` (required if enabled) | A **read-only** BridgeLink user, not `admin` |

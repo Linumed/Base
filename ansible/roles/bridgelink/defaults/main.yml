@@ -13,7 +13,7 @@ bridgelink_deploy_dir: "/opt/linumed-base/bridgelink"
 # landing page is gone - Web Start has been dead since JDK 11, admins use the standalone
 # Administrator Launcher or WebAdmin instead.
 bridgelink_image: "innovarhealthcare/bridgelink:26.6.0-dhi-slim"
-bridgelink_postgres_image: "postgres:17.10-alpine"
+bridgelink_postgres_image: "postgres:17.11-alpine"
 
 # The DHI image runs as this UID; any bind-mounted appdata directory has to be owned by it
 # or the container cannot write its keystore and server.id.
@@ -72,7 +72,12 @@ bridgelink_exporter_enabled: false
 # image built from this repo: the script is standard library only precisely so that no
 # image has to be built, scanned and hosted for it. Bind mount of a repo-managed file is
 # the documented exception to the "named volumes only" rule in CONVENTIONS.md.
-bridgelink_exporter_image: "python:3.13-alpine"
+# A full version, not the floating `3.13-alpine`: that tag is a *series* pointer and moves
+# to the next patch release without anything in this repository changing, which is not what
+# CONVENTIONS.md means by "pinned to a specific version tag". Caught by scripts/scan-images.py
+# (issue #67) - with the series tag it could not tell a security patch from a Python version
+# jump and proposed 3.14-alpine as an update.
+bridgelink_exporter_image: "python:3.13.15-alpine"
 
 # Loopback only, same reasoning as every other port in this repo. This port is for a human
 # with curl, NOT the path Prometheus uses: a container port published on 127.0.0.1 is not
