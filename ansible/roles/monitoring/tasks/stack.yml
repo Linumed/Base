@@ -443,6 +443,16 @@
     - "{{ monitoring_alertmanager_image }}"
     - "{{ monitoring_cadvisor_image }}"
     - "{{ monitoring_docker_socket_proxy_image }}"
+  # Retried for the same reason as the bridgelink role's pull task: a failed pull fails the
+  # whole playbook, and pull failures here are measured rather than theoretical (#43, plus a
+  # CI run on 2026-08-20 that died on "invalid tar header" while the pull-through cache
+  # fetched a freshly bumped Grafana tag for the first time - the same pull worked seconds
+  # later). Three attempts make that a slower run instead of a red build; a genuinely
+  # missing image still fails.
+  register: monitoring_image_pull
+  until: monitoring_image_pull is succeeded
+  retries: 3
+  delay: 10
 
 - name: Deploy the monitoring stack
   community.docker.docker_compose_v2:
