@@ -52,7 +52,7 @@ services:
         condition: service_healthy
 
   bridgelink-db:
-    image: postgres:17.10-alpine
+    image: postgres:17.11-alpine
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true

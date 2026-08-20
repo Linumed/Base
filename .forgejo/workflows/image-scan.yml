@@ -1,0 +1,56 @@
+name: image-scan
+
+# Scans every pinned container image for known vulnerabilities (issue #67).
+#
+# Why this is its own workflow and not a step in another one: a pin ages without anything
+# in this repository changing. A check that only runs on push would stay green for weeks
+# while an image quietly becomes outdated, which is the opposite of what it is for. Hence
+# the schedule - the push trigger is only there to catch a pin being edited.
+#
+# Runs trivy as a downloaded binary rather than a container: the CI runner deliberately has
+# no broad Docker socket access (ADR 0004 keeps its volume allowlist narrow), and trivy can
+# scan images straight from a registry without a daemon. Same reasoning as gitleaks, which
+# is used as a release binary rather than as an action.
+on:
+  schedule:
+    # Mondays 06:00 UTC. Weekly, not daily: the finding set moves on the timescale of
+    # upstream rebuilds, and a job that reports the same thing every morning gets filtered
+    # out by whoever receives it.
+    - cron: '0 6 * * 1'
+  push:
+    branches: [main]
+    paths:
+      - 'ansible/roles/*/defaults/main.yml'
+      - 'docker/*/docker-compose.yml'
+      - 'security/accepted-image-findings.txt'
+      - 'scripts/scan-images.py'
+      - '.forgejo/workflows/image-scan.yml'
+  workflow_dispatch:
+
+jobs:
+  image-scan:
+    runs-on: docker
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Python
+        run: |
+          apt-get update -qq
+          apt-get install -y -qq --no-install-recommends python3 curl ca-certificates
+
+      # Pinned for the same reason the scanner pins its own version constant: an unpinned
+      # scanner changes its verdict without this repository changing, and a verdict nobody
+      # caused is a verdict nobody trusts.
+      - name: Install trivy
+        run: |
+          TRIVY_VERSION=0.58.2
+          curl -sSfL -o /tmp/trivy.tar.gz \
+            "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz"
+          tar -xzf /tmp/trivy.tar.gz -C /usr/local/bin trivy
+          trivy --version
+
+      # Fails when a pin is behind a patch release that demonstrably clears findings, when
+      # a finding is not recorded in security/accepted-image-findings.txt, or when the
+      # docker/ references have drifted from the roles. Everything else is reported.
+      - name: Scan pinned images
+        run: ./scripts/scan-images.py

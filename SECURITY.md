@@ -57,7 +57,10 @@ report against *this* repository can be about.
   a firewall or SSH rule with a hole in it.
 - Documentation that leads an operator into an insecure configuration by following it.
 - Pinned container image versions with known vulnerabilities that have a fixed version
-  available.
+  available. This is checked weekly in CI by `scripts/scan-images.py`, and findings that
+  cannot be fixed from here - because the image is already on its newest upstream tag - are
+  recorded with a reason in `security/accepted-image-findings.txt` rather than left
+  unstated. If you find one that is neither fixed nor recorded, that is a valid report.
 
 **Out of scope here** (report these to their own maintainers):
 
