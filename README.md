@@ -25,6 +25,40 @@ HL7/FHIR integration, monitoring, reverse proxy, and encrypted backups.
 | Prometheus + Grafana + Loki + Alertmanager | Observability stack (log shipping via Grafana Alloy, host metrics via native Node Exporter, optional BridgeLink channel metrics) |
 | restic | Encrypted backups |
 
+## What it deliberately does not do
+
+Stated up front, because the fastest way to evaluate a kit is to find out early whether it
+is the wrong one. Each of these is a recorded decision with its reasoning, not an omission:
+
+- **No Kubernetes.** Service stacks are Docker Compose on a single host. Kubernetes solves
+  scheduling and load distribution across nodes; this kit deploys a small, fixed set of
+  infrastructure services on one machine, where there is nothing to schedule. It also
+  fails the criterion every other addition here is held to - a cluster is a subsystem the
+  institution has to supply, and this kit has to work after the playbook runs, on a machine
+  you already have. **The cost is real and worth knowing: one host means no high
+  availability.** [ADR 0007](docs/adr/0007-docker-compose-not-kubernetes.md).
+
+  If you run Kubernetes, half of this kit is still yours: `common` (SSH hardening, ufw,
+  fail2ban, unattended-upgrades, NTP), `docker` and `backup` are runtime-agnostic and work
+  on the nodes under your cluster. Only `caddy`, `monitoring` and `bridgelink` are
+  Compose-coupled.
+
+- **No bundled identity provider, and no admin interface on the public internet.** Every
+  management UI binds to `127.0.0.1` and is reached through an SSH tunnel. Grafana can be
+  connected to an identity provider you *already* run, via OIDC; this kit does not ship one.
+  [ADR 0003](docs/adr/0003-loopback-only-access-no-bundled-identity-provider.md).
+
+- **No application software.** No HIS, no DMS, no document management. Institutions bring
+  their own applications; this provides the base they run on.
+
+- **No proprietary components.** FOSS only - which is why the integration engine is
+  BridgeLink and not Mirth Connect, after the latter went proprietary in March 2025.
+  [ADR 0001](docs/adr/0001-bridgelink-statt-mirth-connect.md).
+
+Every decision that is likely to prompt a "why not X?" is written down under
+[docs/adr/](docs/adr/), with the alternatives that were evaluated and the consequences
+accepted.
+
 ## Status
 
 **`v0.3.0` is tagged** - see [CHANGELOG.md](CHANGELOG.md). Every role passed a full

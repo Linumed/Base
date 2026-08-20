@@ -20,3 +20,4 @@ Everything else belongs as a comment at the relevant spot, not here.
 | [0004](0004-vm-tests-in-ci-via-host-libvirt-socket.md) | VM tests in CI via the host's libvirt socket | accepted (2026-08-14) |
 | [0005](0005-docker-directory-is-a-manual-testing-reference-not-a-mirror.md) | `docker/` is a manual-testing reference, not a required mirror | accepted (2026-08-16) |
 | [0006](0006-linumed-base-not-linumed-os.md) | The product is called Linumed Base, not Linumed OS | accepted (2026-08-18) |
+| [0007](0007-docker-compose-not-kubernetes.md) | Docker Compose, not Kubernetes | accepted (2026-08-20) |
