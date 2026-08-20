@@ -105,6 +105,12 @@ linumed-base/
   don't chase every Ansible-side comment/detail change.
 - Container images must be pinned to a specific version tag, never `latest` - applies to
   both the Ansible templates and any `docker/<role>/` reference.
+- **Diagrams are Mermaid sources under `docs/diagrams/`, rendered to committed SVGs.**
+  Edit the `.mmd`, run `scripts/render-diagrams.sh`, commit both. They are not rendered in
+  the reader's browser: the same file is displayed by the MkDocs site, GitHub and Forgejo,
+  each with its own Mermaid theme, so styling only ever reached one of three surfaces
+  (issue #65). Never draw an edge to or from a `subgraph` - keep containment and flow in
+  separate figures; see `scripts/README.md` for that and the empty-`%%` parse trap.
 - **A container that another Compose stack must reach joins a shared, explicitly named
   network - it does not get a host port.** A port published on `127.0.0.1` is unreachable
   from another container, and publishing on all interfaces bypasses ufw, because Docker
@@ -201,7 +207,8 @@ Three workflows under `.forgejo/workflows/`:
   the feature is a no-op while switched off. Anything added behind a default-off flag
   needs its own pass, or it ships with no coverage at all.
 
-- `docs-site.yml` - builds the MkDocs handbook with `--strict` and publishes it as the
+- `docs-site.yml` - re-renders the diagrams and fails if the committed SVGs are stale,
+  then builds the MkDocs handbook with `--strict` and publishes it as the
   `docs-site-latest` release asset, which Website#5 pulls to host at `linumed.com/base/docs/`
   (issue #55). Triggers on `docs/**`, `mkdocs.yml`, `README.md`, `ARCHITECTURE.md`,
   `CHANGELOG.md`. It deliberately stops at publishing an artifact - putting the built HTML
