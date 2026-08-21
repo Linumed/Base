@@ -1,0 +1,156 @@
+---
+# Orthanc (GPLv3 DICOM server) plus its PostgreSQL index, as a Docker Compose stack
+# (issue #69). Image choice and the measurements behind it: ADR 0009.
+
+# Same preflight pattern as bridgelink and monitoring: refuse to run rather than deploy
+# with empty or guessable credentials.
+- name: Preflight - abort if required secrets are unset
+  ansible.builtin.assert:
+    that:
+      - orthanc_db_password | length > 0
+      - orthanc_users | length > 0
+    fail_msg: >-
+      orthanc_db_password must be set and orthanc_users must contain at least one account -
+      refusing to deploy. Orthanc has no other user store, so an empty orthanc_users locks
+      the instance out of its own REST API, including its healthcheck and the Prometheus
+      scrape. Supply both via Ansible Vault.
+
+- name: Ensure deploy directory exists
+  ansible.builtin.file:
+    path: "{{ orthanc_deploy_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+
+# 0700: the files inside hold the database password and every REST API password in plain
+# text - that is how file-based Docker secrets work.
+- name: Ensure secrets directory exists
+  ansible.builtin.file:
+    path: "{{ orthanc_deploy_dir }}/secrets"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+  become: true
+
+# Owned by the container's UID, not root: Compose bind-mounts a file-based secret with the
+# host's ownership intact, and this image runs unprivileged. A root-owned file makes the
+# container fail to read its own configuration and restart-loop, the same way BridgeLink
+# did in #61. The enclosing directory is 0700 root-only, so this is not readable by other
+# users on the host either way.
+- name: Deploy the Orthanc configuration secret
+  ansible.builtin.template:
+    src: orthanc.json.j2
+    dest: "{{ orthanc_deploy_dir }}/secrets/orthanc.json"
+    owner: "{{ orthanc_uid }}"
+    group: "{{ orthanc_gid }}"
+    mode: "0400"
+  become: true
+  no_log: true
+  notify: Restart orthanc
+
+- name: Deploy the database password secret
+  ansible.builtin.copy:
+    content: "{{ orthanc_db_password }}"
+    dest: "{{ orthanc_deploy_dir }}/secrets/db_password"
+    owner: root
+    group: root
+    mode: "0600"
+  become: true
+  no_log: true
+  notify: Restart orthanc
+
+- name: Deploy docker-compose.yml
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ orthanc_deploy_dir }}/docker-compose.yml"
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+  register: orthanc_compose_file
+  become: true
+
+- name: Validate the Compose file
+  ansible.builtin.command:
+    cmd: docker compose -f docker-compose.yml config --quiet
+    chdir: "{{ orthanc_deploy_dir }}"
+  register: orthanc_compose_validate
+  changed_when: false
+  failed_when: false
+  become: true
+
+- name: Roll back Compose file if validation failed and a previous version existed
+  ansible.builtin.copy:
+    src: "{{ orthanc_compose_file.backup_file }}"
+    dest: "{{ orthanc_deploy_dir }}/docker-compose.yml"
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  when:
+    - orthanc_compose_validate.rc != 0
+    - orthanc_compose_file.backup_file is defined
+
+- name: Fail if the Compose file is invalid
+  ansible.builtin.fail:
+    msg: "docker compose config rejected the generated file: {{ orthanc_compose_validate.stderr }}"
+  when: orthanc_compose_validate.rc != 0
+
+# Retried for the same reason as the bridgelink and monitoring pull tasks: a failed pull
+# fails the whole playbook, and pull failures on this infrastructure are measured rather
+# than theoretical (#43, and a CI run on 2026-08-20).
+- name: Pull Orthanc images ahead of the compose apply
+  community.docker.docker_image:
+    name: "{{ item }}"
+    source: pull
+  become: true
+  loop:
+    - "{{ orthanc_image }}"
+    - "{{ orthanc_postgres_image }}"
+  register: orthanc_image_pull
+  until: orthanc_image_pull is succeeded
+  retries: 3
+  delay: 10
+
+- name: Deploy the Orthanc stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ orthanc_deploy_dir }}"
+    state: present
+    pull: missing
+    wait: true
+    wait_timeout: 180
+  become: true
+
+# "Container running" is not "Orthanc serving" - the lesson the bridgelink role paid for.
+# Ask the API. 401 is the expected answer without credentials and proves the HTTP server
+# is up; anything else means it is not.
+- name: Verify Orthanc is actually serving
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ orthanc_http_port }}/system"
+    status_code: [200, 401]
+  register: orthanc_serving
+  until: orthanc_serving is succeeded
+  retries: 30
+  delay: 5
+  changed_when: false
+
+# The index backend is the whole reason PostgreSQL is in this stack. Orthanc starts happily
+# with its built-in SQLite if the plugin fails to load, and nothing else would say so -
+# exactly the "green but wrong" shape this repo keeps running into.
+- name: Verify Orthanc runs against PostgreSQL, not the built-in database
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ orthanc_http_port }}/system"
+    user: "{{ orthanc_users.keys() | list | first }}"
+    password: "{{ orthanc_users.values() | list | first }}"
+    force_basic_auth: true
+    return_content: true
+  register: orthanc_system
+  changed_when: false
+  no_log: true
+  failed_when: >-
+    orthanc_system.json.DatabaseBackendPlugin is not defined
+    or 'PostgreSQL' not in (orthanc_system.json.DatabaseBackendPlugin | default(''))

@@ -185,6 +185,26 @@ Retention is split by data kind, not a single global value: metrics
 contain personal data (IP addresses, usernames), so the shorter
 retention here is data minimization, not an arbitrary choice.
 
+### orthanc (Ansible role)
+
+DICOM archive: Orthanc (GPLv3) with its index in PostgreSQL and the
+pixel data on a Docker volume. Added in v0.4 (issue #69).
+
+`jodogne/orthanc-plugins`, not the ops-facing `orthancteam/orthanc` -
+that one cannot run as a non-root user, and the component holding
+patient images is the last place this kit would accept a root
+container. Measured, not assumed:
+[ADR 0009](https://github.com/Linumed/Base/blob/main/docs/adr/0009-jodogne-orthanc-image-not-orthancteam.md).
+
+Orthanc serves Prometheus metrics natively at
+`/tools/metrics-prometheus`, so unlike BridgeLink it needs no exporter -
+the pre-check that #60 made mandatory gave the opposite answer here.
+
+The DICOM listener is **not** published to the host by default. Which
+modalities may reach the archive, from which network segment, is a
+decision about the institution's network; a published container port
+also bypasses ufw. Same reasoning as BridgeLink's channel listeners.
+
 ### backup (Ansible role)
 
 Encrypted backups with restic. Supported backends:
@@ -351,12 +371,13 @@ Linumed Shifts is not in this repository and is not documented here.
 - v0.3: the product's own name (Linumed Base, ADR 0006), BridgeLink
   application metrics, and the diagram/documentation work that came with
   them. No new role. See `docs/ROADMAP.md`.
-- v0.4: the DICOM stack (Orthanc), plus the maintenance the kit does not
-  yet do - scanning the pinned images for known vulnerabilities, and
+- v0.4: the DICOM stack (Orthanc), plus the maintenance the kit did not
+  do before - scanning the pinned images for known vulnerabilities,
   answering the lifecycle questions (Debian major upgrade, teardown, the
-  single-host assumption). See `docs/ROADMAP.md`, Stage 6. Orthanc was
-  earmarked as v0.3 until 2026-08-20; that number went to the rename and
-  the observability work instead.
+  single-host assumption), and a playbook for the runtime-agnostic
+  subset. See `docs/ROADMAP.md`, Stage 6. Orthanc was earmarked as v0.3
+  until 2026-08-20; that number went to the rename and the observability
+  work instead.
 - v1.0: the point from which breaking changes require a major version
   bump. What that promise covers is written down rather than left to
   interpretation - variable names, deploy paths, container and network

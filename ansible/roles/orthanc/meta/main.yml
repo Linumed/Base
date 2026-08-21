@@ -1,0 +1,16 @@
+---
+galaxy_info:
+  role_name: orthanc
+  author: Linumed
+  description: Orthanc DICOM server with a PostgreSQL index, as a Docker Compose stack
+  license: MIT
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Debian
+      versions:
+        - trixie
+  galaxy_tags:
+    - dicom
+    - healthcare
+    - orthanc
+dependencies: []

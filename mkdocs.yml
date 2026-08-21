@@ -71,6 +71,7 @@ nav:
       - caddy: roles/caddy.md
       - monitoring: roles/monitoring.md
       - bridgelink: roles/bridgelink.md
+      - orthanc: roles/orthanc.md
       - backup: roles/backup.md
   - Architecture Decisions:
       - Overview: adr/README.md
@@ -82,6 +83,7 @@ nav:
       - "0006: Linumed Base, not Linumed OS": adr/0006-linumed-base-not-linumed-os.md
       - "0007: Docker Compose, not Kubernetes": adr/0007-docker-compose-not-kubernetes.md
       - "0008: What the v1.0 stability guarantee covers": adr/0008-what-the-v1-0-stability-guarantee-covers.md
+      - "0009: jodogne/orthanc-plugins as the Orthanc image": adr/0009-jodogne-orthanc-image-not-orthancteam.md
 
 # Diagrams are pre-rendered to SVG by scripts/render-diagrams.sh and committed under
 # docs/img/ (issue #65), so no JavaScript renderer is loaded at all any more. That removed

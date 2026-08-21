@@ -38,3 +38,17 @@ scrape_configs:
     static_configs:
       - targets: ["{{ monitoring_bridgelink_exporter_target }}"]
 {% endif %}
+
+{% if monitoring_scrape_orthanc | bool %}
+  # Orthanc's own Prometheus endpoint - no exporter involved (ADR 0009). Reached by
+  # container name over the shared metrics network, same arrangement as the BridgeLink
+  # exporter and for the same reason (#64). The endpoint is behind Orthanc's REST
+  # authentication, hence basic_auth.
+  - job_name: orthanc
+    metrics_path: /tools/metrics-prometheus
+    basic_auth:
+      username: "{{ monitoring_orthanc_user }}"
+      password: "{{ monitoring_orthanc_password }}"
+    static_configs:
+      - targets: ["{{ monitoring_orthanc_target }}"]
+{% endif %}
