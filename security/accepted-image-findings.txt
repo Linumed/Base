@@ -171,3 +171,9 @@ python:3.13.15-alpine  GHSA-6v7p-g79w-8964  # alpine base image, already on the 
 
 # tecnativa/docker-socket-proxy:0.3.0 - already on its newest tag; upstream has not released since
 tecnativa/docker-socket-proxy:0.3.0  CVE-2025-26519  # already on its newest tag; upstream has not released since (2026-08-20)
+
+# jodogne/orthanc-plugins:1.13.0 - orthanc is already on its newest tag (1.13.0); these come from the image's Debian base and clear when upstream rebuilds
+jodogne/orthanc-plugins:1.13.0  CVE-2026-53612  # orthanc is already on its newest tag (1.13.0); these come from the image's Debian base and clear when upstream rebuilds (2026-08-21)
+jodogne/orthanc-plugins:1.13.0  CVE-2026-53613  # orthanc is already on its newest tag (1.13.0); these come from the image's Debian base and clear when upstream rebuilds (2026-08-21)
+jodogne/orthanc-plugins:1.13.0  CVE-2026-53614  # orthanc is already on its newest tag (1.13.0); these come from the image's Debian base and clear when upstream rebuilds (2026-08-21)
+jodogne/orthanc-plugins:1.13.0  CVE-2026-53615  # orthanc is already on its newest tag (1.13.0); these come from the image's Debian base and clear when upstream rebuilds (2026-08-21)
