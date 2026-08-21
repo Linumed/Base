@@ -7,8 +7,8 @@ it.
 Written 2026-08-14, after an audit of the repository against its own stated requirements
 (`CONVENTIONS.md`, `ARCHITECTURE.md`).
 
-> **Update 2026-08-17: every stage below is done and `v0.2.0` is tagged.** A second pass
-> over the repository afterwards - deliberately looking for what a green test suite does
+> **Update 2026-08-17: every stage written up to that point is done and `v0.2.0` is
+> tagged.** A second pass over the repository afterwards - deliberately looking for what a green test suite does
 > not prove - turned up one real defect (#48, a Compose reference broken by the #44 fix
 > and caught by nobody, because nothing tested it) and four gaps that were closed straight
 > away: the full VM test now triggers itself (#45), the `docker/` references have a smoke
@@ -29,9 +29,12 @@ Written 2026-08-14, after an audit of the repository against its own stated requ
 service `ARCHITECTURE.md` names. The repository is public, the documentation site is built
 and published from it, and there are no known defects and no open defect issues. The only
 open issues are Stage 7's, and they are preparation for the 1.0 tag rather than work the
-kit is missing. What *is* open is listed under
-[What is still open](#what-is-still-open-and-why-it-was-not-built-earlier) further down,
-with the reason each item is open rather than only the fact that it is.
+kit is missing - they are listed in [Stage 7](#stage-7-v10-the-promise-and-what-it-covers).
+
+[What was open, and why it was not built earlier](#what-was-open-and-why-it-was-not-built-earlier)
+further down is kept as the record of the three items that carried that status until
+v0.4.0, because the reason something was open is the more useful half of the answer and
+outlives its being open.
 
 The rest of this section is the audit that produced Stages 1-5, kept because the reasoning
 still explains why the order was what it was.
@@ -316,29 +319,34 @@ Checked rather than assumed before deciding: the two existing references
 (`docker/caddy/`, `docker/bridgelink/`) had not actually drifted from their Ansible
 templates despite the issue's concern.
 
-## What is still open, and why it was not built earlier
+## What was open, and why it was not built earlier
 
-Everything above is done. This section is the part that is not, and it exists because
-"what is left?" and "why wasn't that in v0.1?" are the two questions a reader of a public
-infrastructure kit actually has. Answering only the first reads like a wish list.
+> **All three items below closed in v0.4.0**, #66, #67 and #68 all on 2026-08-20.
+> Rewritten to the past tense on 2026-08-21; until then this section still
+> opened with "everything above is done, this section is the part that is not", which had
+> quietly become false. What is open *now* is Stage 7, further down.
 
-Nothing here is a feature someone forgot. Each item is open for one of three reasons, and
-the reason determines how urgent it is:
+The section is kept rather than deleted because "why wasn't that in v0.1?" is the second
+question a reader of a public infrastructure kit has, after "what is left?", and answering
+only the first reads like a wish list. The reason an item was open outlives its being open.
+
+None of these was a feature someone forgot. Each was open for one of three reasons, and the
+reason determined how urgent it was:
 
 **1. It could not have been built earlier without guessing.** The stability guarantee
-(#66) is the clearest case: a promise about which names and paths will not change is
+(#66, closed 2026-08-20) is the clearest case: a promise about which names and paths will not change is
 worthless before those names have survived contact with real use. v0.3.0 renamed every
 identifier; had 1.0 been declared in July, that rename would have been a broken promise
 instead of a normal release.
 
 **2. It only becomes visible once someone else operates it.** The lifecycle questions
-(#68) - what happens at a Debian major upgrade, how to remove the kit again, whether it
+(#68, closed 2026-08-20) - what happens at a Debian major upgrade, how to remove the kit again, whether it
 assumes a single host - are invisible while the author is the only operator, because the
 author knows the answers without writing them down. They are also the questions that
 decide whether an evaluator tries the kit at all.
 
 **3. It was an accepted responsibility with no mechanism behind it.** Container image
-scanning (#67) is the uncomfortable one. `SECURITY.md` lists "pinned image versions with
+scanning (#67, closed 2026-08-20) was the uncomfortable one. `SECURITY.md` lists "pinned image versions with
 known vulnerabilities that have a fixed version available" as in scope - and nothing in
 this repository has ever checked. Measured on 2026-08-20: all eleven pinned images carry
 fixable HIGH/CRITICAL findings - 129 distinct image/CVE pairs. (An earlier count of 192 in
@@ -350,7 +358,7 @@ the whole design problem: a gate that goes red on any finding is permanently red
 check that always says the same thing stops being read - the exact failure mode this
 repository already hit three times (#40, #48, #63).
 
-There is a fourth category worth naming because it is *not* on this list: things that were
+There is a fourth category worth naming because it was never on this list: things that were
 evaluated and rejected. Those live under "Deliberately not on this roadmap" below, with
 their ADRs. An open question and a closed decision are different states, and conflating
 them is how a rejected idea quietly comes back.
