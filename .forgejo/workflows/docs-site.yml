@@ -24,6 +24,12 @@ on:
       - 'README.md'
       - 'ARCHITECTURE.md'
       - 'CHANGELOG.md'
+      # The workflow's own file, so a change to the doc build is exercised by the doc
+      # build. Without this it was the one edit that never triggered its own test - the
+      # 2026-08-21 tag fix (issue #78) had to be dispatched by hand to be verified at all.
+      # Same gap as #62, one level up: the thing that tests everything else tested every
+      # change but its own.
+      - '.forgejo/workflows/docs-site.yml'
   workflow_dispatch:
 
 # Forgejo's auto-generated token defaults to read-only unless a workflow asks for more -
