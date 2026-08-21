@@ -84,6 +84,12 @@ linumed-base/
   [ADR 0008](docs/adr/0008-what-the-v1-0-stability-guarantee-covers.md). Before 1.0 they
   can still be fixed; after it, a rename costs a major version. Name things as if the tag
   were tomorrow.
+- **The exception is written down, not assumed.** A handful of variables are implementation
+  detail rather than interface and are listed in `ansible/internal-variables.txt` with the
+  reason - see [ADR 0010](docs/adr/0010-internal-versus-interface-variables.md), which also
+  says why they are a documented list rather than an enforced one.
+  `scripts/check-variable-docs.py` fails if a variable is neither documented under `docs/`
+  nor on that list, so a new one cannot arrive unclassified.
 - **Two playbooks, and the second is a deliberate exception.** `site.yml` deploys
   everything. `node-baseline.yml` deploys only `common`, `docker` and `backup` - the roles
   that ship no Compose stack and depend on no other role (issue #70). Everything else is

@@ -17,6 +17,7 @@ bridgelink_postgres_image: "postgres:17.11-alpine"
 
 # The DHI image runs as this UID; any bind-mounted appdata directory has to be owned by it
 # or the container cannot write its keystore and server.id.
+# INTERNAL, not part of the v1.0 guarantee (ADR 0010): dictated by the image.
 bridgelink_uid: 65532
 bridgelink_gid: 65532
 
@@ -31,6 +32,7 @@ bridgelink_admin_port: 8443
 
 # Database. PostgreSQL runs in the same Compose stack and gets no host port at all -
 # only BridgeLink talks to it, over the stack's own network.
+# INTERNAL, not part of the v1.0 guarantee (ADR 0010): stack-internal, no host port.
 bridgelink_db_name: "bridgelink"
 bridgelink_db_user: "bridgelink"
 # No defaults for any of these - the role's preflight refuses to run unless they are set.

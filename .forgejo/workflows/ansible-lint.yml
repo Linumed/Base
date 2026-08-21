@@ -37,3 +37,10 @@ jobs:
       - name: Run ansible-lint
         working-directory: ansible
         run: ansible-lint
+
+      # Needs no dependencies beyond the python3 installed above - deliberately, so the
+      # gate that keeps the v1.0 promise honest cannot be turned off by an install step
+      # failing. Runs after the lint because a YAML error should be reported as a YAML
+      # error, not as a variable this script cannot parse.
+      - name: Every variable is documented or recorded as internal (ADR 0010)
+        run: ./scripts/check-variable-docs.py

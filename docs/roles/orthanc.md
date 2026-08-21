@@ -41,6 +41,7 @@ All prefixed `orthanc_*`, in `ansible/roles/orthanc/defaults/main.yml`.
 | `orthanc_plugins` | PostgreSQL index only | Nothing loads unless listed here |
 | `orthanc_postgres_enable_storage` | `false` | Index in PostgreSQL, pixel data on a volume |
 | `orthanc_metrics_enabled` | `true` | Joins the shared metrics network for Prometheus |
+| `orthanc_metrics_network` | `linumed-base-metrics` | The network to join. Must equal `monitoring_metrics_network_name` and `bridgelink_exporter_metrics_network` - three Compose projects agree on one literal name, and nothing but the value holds them together |
 | `orthanc_stop_grace_period` | `30` | Seconds before a hard kill |
 
 `orthanc_db_password` and `orthanc_users` belong in **Ansible Vault**.
