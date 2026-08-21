@@ -11,15 +11,19 @@ click away instead of restated here.
 
 ## [Unreleased]
 
-### Fixed
+## [0.4.0] - 2026-08-21
 
-- **Image pulls are retried instead of failing the playbook on the first hiccup.** A pull
-  failure here fails the whole run, and on this infrastructure that is a measured recurring
-  problem rather than a theoretical one: issue #43 was opened after half the full-stack VM
-  runs on one day failed pulling from Docker Hub, and a CI run on 2026-08-20 died with
-  `invalid tar header` while the pull-through cache fetched a freshly bumped Grafana tag for
-  the first time - the same pull succeeded seconds later. Both pre-pull tasks now retry
-  three times. A genuinely missing image still fails.
+The release that completes the service set named in `ARCHITECTURE.md`, and adds the
+maintenance the kit had been going without.
+
+Orthanc was the last service named in `ARCHITECTURE.md` that did not exist; with it the kit
+has seven roles. The rest of this release is what happens when you look at a working system
+and ask what it *cannot* tell you yet: nothing checked the pinned images for
+vulnerabilities, nothing said how to remove the kit again, and nothing had ever exercised a
+feature that ships switched off.
+
+Several of the defects below were found by tests written for something else in this same
+release.
 
 ### Added
 
@@ -171,6 +175,31 @@ click away instead of restated here.
 
   v0.4 also gained content beyond Orthanc, and `ARCHITECTURE.md`'s versioning strategy was
   updated to match.
+
+### Fixed
+
+- **Image pulls are retried instead of failing the playbook on the first hiccup.** A pull
+  failure here fails the whole run, and on this infrastructure that is a measured recurring
+  problem rather than a theoretical one: issue #43 was opened after half the full-stack VM
+  runs on one day failed pulling from Docker Hub, and a CI run on 2026-08-20 died with
+  `invalid tar header` while the pull-through cache fetched a freshly bumped Grafana tag for
+  the first time - the same pull succeeded seconds later. Both pre-pull tasks now retry
+  three times. A genuinely missing image still fails.
+
+### Breaking
+
+- **Two new variables have no default, so every existing inventory needs them** before
+  `site.yml` will run: `orthanc_db_password` and `orthanc_users` (at least one account).
+  The orthanc role's preflight aborts without them.
+
+  Nothing was removed and nothing was renamed - but by the definition this project adopted
+  in ADR 0008, enlarging the set of variables that have no default *is* a breaking change,
+  because it breaks a deployment that was previously complete. The example vault
+  (`ansible/inventory/example/group_vars/linumed/vault.yml.example`) lists both.
+
+  `orthanc_users` is Orthanc's only user store. An empty map with authentication enabled
+  locks the instance out of its own REST API, including its healthcheck and the metrics
+  scrape - which is why an empty one is refused rather than accepted.
 
 ## [0.3.0] - 2026-08-20
 
