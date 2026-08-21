@@ -418,7 +418,9 @@ variables that are about to be deleted.
 **#73 exists because the measurement aged faster than the decision.** ADR 0008 measured
 125 variables across six roles on 2026-08-20; Orthanc (#69) landed a day later with 18
 more, and is in none of the ADR's numbers - not the container names, not the deploy paths,
-not the volumes. Counted on 2026-08-21, the seven roles carry 140 variables. A guarantee
+not the volumes. Counted on 2026-08-21, the seven roles carry **147** variables (an earlier
+count of 140 in this section was low: the pattern used to count names missed every name
+containing a digit, which is all seven `common_fail2ban_*` variables). A guarantee
 resting on a stale measurement is the exact failure ADR 0008 was written to avoid: its
 whole point was to *measure* the surface rather than estimate it.
 

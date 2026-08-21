@@ -84,9 +84,13 @@ time-based retention, so a spike in ingestion volume can't fill the disk on its 
 `monitoring_grafana_admin_password` set - same pattern as `common`'s SSH preflight. Set it
 via Ansible Vault; this role never generates or logs one.
 
-**Grafana telemetry is off by default** (`reporting_enabled`, `check_for_updates`,
-`analytics.enabled`) - matches CONVENTIONS.md's "no phone-home telemetry" principle; Grafana
-phones home by default otherwise.
+**Grafana telemetry is off by default** - matches CONVENTIONS.md's "no phone-home
+telemetry" principle; Grafana phones home by default otherwise. All four settings Grafana's
+`[analytics]` section actually has are covered: `reporting_enabled` and `check_for_updates`
+via `monitoring_grafana_reporting_enabled` and `monitoring_grafana_check_for_updates`,
+`check_for_plugin_updates` from the same variable as the latter, and
+`feedback_links_enabled` fixed to false in the compose template. This list said
+`analytics.enabled` until 2026-08-21, which is not a Grafana setting (issue #75).
 
 **Alloy never touches the Docker socket directly (#21).** A `docker-socket-proxy`
 (`tecnativa/docker-socket-proxy`) sits in between: it mounts `/var/run/docker.sock`
