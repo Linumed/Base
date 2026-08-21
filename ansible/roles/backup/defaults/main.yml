@@ -31,9 +31,9 @@ backup_retention_keep_monthly: 6
 # (unattended-upgrades, fstrim, ...) and gets proper systemd logging/status for free.
 backup_schedule: "*-*-* 03:00:00"
 
-# Native Debian package, not a binary download - same reasoning as node_exporter in the
-# monitoring role: automatic security updates via the common role's unattended-upgrades,
-# no separate update mechanism to maintain.
+# Where the role writes the repository password (0600, root). docs/roles/backup.md names
+# this path literally in the manual restore procedure, so changing it changes that
+# procedure too - the two are documented together for that reason.
 backup_restic_password_file: "/etc/restic/password"
 
 # Prometheus textfile-collector metrics, read by the native node_exporter from the

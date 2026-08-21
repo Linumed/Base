@@ -30,17 +30,30 @@ conscious action:
 |---|---|---|
 | caddy | `caddy_image` | `caddy:2.11.4-alpine` |
 | bridgelink | `bridgelink_image` | `innovarhealthcare/bridgelink:26.6.0-dhi-slim` |
-| bridgelink | `bridgelink_postgres_image` | `postgres:17.10-alpine` |
+| bridgelink | `bridgelink_postgres_image` | `postgres:17.11-alpine` |
+| bridgelink | `bridgelink_exporter_image` | `python:3.13.15-alpine` |
 | monitoring | `monitoring_prometheus_image` | `prom/prometheus:v3.13.2` |
-| monitoring | `monitoring_grafana_image` | `grafana/grafana:13.1.3` |
+| monitoring | `monitoring_grafana_image` | `grafana/grafana:13.1.4` |
 | monitoring | `monitoring_loki_image` | `grafana/loki:3.7.6` |
 | monitoring | `monitoring_alloy_image` | `grafana/alloy:v1.18.1` |
 | monitoring | `monitoring_alertmanager_image` | `prom/alertmanager:v0.33.1` |
 | monitoring | `monitoring_cadvisor_image` | `ghcr.io/google/cadvisor:v0.60.5` |
 | monitoring | `monitoring_docker_socket_proxy_image` | `tecnativa/docker-socket-proxy:0.3.0` |
+| orthanc | `orthanc_image` | `jodogne/orthanc-plugins:1.13.0` |
+| orthanc | `orthanc_postgres_image` | `postgres:17.11-alpine` |
 
-(Exact current values are in each role's `defaults/main.yml` - the table above is a
-pointer, not the source of truth; it will drift.)
+The roles remain the source of truth, but this table is no longer allowed to drift away
+from them: `scripts/check-variable-docs.py` compares every row against the roles' defaults
+on every push, and fails on a wrong tag, a missing image or one that no role defines. It
+said "it will drift" until 2026-08-21, and it had - two tags behind and three images
+missing entirely (issue #81). That was defensible while the table was a convenience. It
+stopped being defensible when [ADR 0010](../adr/0010-internal-versus-interface-variables.md)
+made this table the documentation that keeps those thirteen variable *names* inside the
+v1.0 promise.
+
+Note what is checked and what is not: that the table matches the roles, not that the pins
+are current upstream. The latter needs a scanner and a network and is
+`scripts/scan-images.py`'s job, weekly in CI (issue #67).
 
 To bump one: override the variable in your inventory, re-run `site.yml`. Ansible
 recreates only the affected container. There's no version-check tooling in this repo

@@ -26,7 +26,8 @@ Three things are verified:
      variable reads in this kit - every coupling is a value duplicated into a second
      variable with a comment saying "must match". A comment is not a gate; this is. That
      includes the Prometheus scrape targets, which name another role's container and the
-     port inside it (issue #80).
+     port inside it (issue #80), and the pin table in docs/operations/updates.md, which is
+     what documents the image variable names at all (issue #81).
 
 Usage:
     scripts/check-variable-docs.py            # check, print findings, exit non-zero
@@ -43,6 +44,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 ROLE_DEFAULTS = sorted(REPO_ROOT.glob("ansible/roles/*/defaults/main.yml"))
 INTERNAL_FILE = REPO_ROOT / "ansible" / "internal-variables.txt"
+PIN_TABLE = REPO_ROOT / "docs" / "operations" / "updates.md"
 DOC_DIRS = [REPO_ROOT / "docs" / "roles", REPO_ROOT / "docs" / "operations"]
 
 # A variable definition at the start of a line. Names may contain digits - missing that is
@@ -217,6 +219,47 @@ def check_coupled_literals() -> list[str]:
     return problems
 
 
+# `| role | `variable` | `image:tag` |` rows in the pin table.
+PIN_ROW = re.compile(r"^\| *([a-z]+) *\| *`([a-z][a-z0-9_]*_image)` *\| *`([^`]+)` *\|", re.M)
+IMAGE_DEF = re.compile(r'^([a-z][a-z0-9_]*_image): *"([^"]+)"', re.M)
+
+
+def check_pin_table() -> list[str]:
+    """The pin table in updates.md must list every pinned image, with the current tag.
+
+    Until 2026-08-21 the table carried a note saying it "will drift" - and it had, in both
+    directions: two tags were behind the roles and three images were missing entirely
+    (issue #81). An accepted drift was defensible while the table was only a convenience.
+    It stopped being defensible when ADR 0010 made this table the documentation that keeps
+    those 13 variable names inside the v1.0 promise: a name is documented by a row that
+    also claims a version, and a wrong version makes the row untrustworthy as a whole.
+
+    Only the tag is checked, not whether it is the newest one upstream - that is
+    scripts/scan-images.py's job and needs a scanner and a network.
+    """
+    problems = []
+    if not PIN_TABLE.exists():
+        return [f"{PIN_TABLE.relative_to(REPO_ROOT)} does not exist"]
+    listed = {m.group(2): (m.group(1), m.group(3)) for m in PIN_ROW.finditer(PIN_TABLE.read_text(encoding="utf-8"))}
+    defined: dict[str, tuple[str, str]] = {}
+    for path in ROLE_DEFAULTS:
+        for match in IMAGE_DEF.finditer(path.read_text(encoding="utf-8")):
+            defined[match.group(1)] = (role_name(path), match.group(2))
+
+    for variable, (role, image) in sorted(defined.items()):
+        if variable not in listed:
+            problems.append(f"{variable} ({image}) is pinned in the {role} role but missing from the pin table")
+            continue
+        listed_role, listed_image = listed[variable]
+        if listed_image != image:
+            problems.append(f"{variable}: the pin table says {listed_image}, the {role} role pins {image}")
+        elif listed_role != role:
+            problems.append(f"{variable}: the pin table attributes it to {listed_role}, it belongs to {role}")
+    for variable in sorted(set(listed) - set(defined)):
+        problems.append(f"the pin table lists {variable}, which no role defines")
+    return problems
+
+
 def container_port(role: str, container: str) -> tuple[str | None, str]:
     """The container-side port a role's Compose template publishes for one container.
 
@@ -282,6 +325,7 @@ def main() -> int:
 
     orphaned = sorted(name for name in internal if name not in all_variables)
     coupling = check_coupled_literals() + check_scrape_targets()
+    pins = check_pin_table()
 
     total = sum(len(v) for v in variables.values())
     print(f"{total} variables across {len(variables)} roles; {len(internal)} recorded internal.")
@@ -324,6 +368,15 @@ def main() -> int:
         print("Coupled literals disagree. There are no cross-role variable reads in this")
         print("kit, so these are held together by nothing but the values themselves:")
         for problem in coupling:
+            print(f"  {problem}")
+        print()
+        exit_code = 1
+
+    if pins:
+        print("The pin table in docs/operations/updates.md disagrees with the roles. It is")
+        print("what documents the image variable names for ADR 0010, so a wrong row is not")
+        print("cosmetic - it is the documentation being wrong about what it documents:")
+        for problem in pins:
             print(f"  {problem}")
         print()
         exit_code = 1
