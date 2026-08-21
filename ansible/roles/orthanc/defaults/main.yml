@@ -11,6 +11,7 @@ orthanc_postgres_image: "postgres:17.11-alpine"
 # The image runs as this UID when told to. A file-based Docker secret keeps the host's
 # ownership, so the configuration file - which carries the database password - has to be
 # owned by it, or the container dies in a restart loop with no useful error (the #61 trap).
+# INTERNAL, not part of the v1.0 guarantee (ADR 0010): dictated by the image.
 orthanc_uid: 65532
 orthanc_gid: 65532
 
@@ -35,6 +36,7 @@ orthanc_publish_dicom_port: false
 orthanc_aet: "LINUMED"
 
 # Database. PostgreSQL runs in the same Compose stack and gets no host port at all.
+# INTERNAL, not part of the v1.0 guarantee (ADR 0010): stack-internal, no host port.
 orthanc_db_name: "orthanc"
 orthanc_db_user: "orthanc"
 # No defaults - the role's preflight refuses to run unless these are set. Ansible Vault.

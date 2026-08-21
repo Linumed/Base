@@ -1,0 +1,43 @@
+# Role variables that are implementation detail, not part of the v1.0 stability guarantee.
+#
+# Format:  <variable>  # reason it is not an interface
+#
+# This is the machine-readable half of ADR 0010; the ADR has the reasoning and the test.
+# `scripts/check-variable-docs.py` fails if a variable is neither documented under `docs/`
+# nor listed here, if a name here no longer exists in any role, or if an entry has no
+# reason - so the line between internal and interface cannot rot the next time a role is
+# added.
+#
+# The test a variable has to fail to end up here, taken from ADR 0008:
+#
+#     "Can an operator have built something on it that silently stops working?"
+#
+# Everything on this list answers no, and answers it for a concrete reason: the value is
+# dictated by something outside this repository, or changing it on an existing host breaks
+# that host with no migration path. "Nobody would want to change it" is not a reason -
+# that is a guess about operators, and ADR 0008 is explicit that the default is inclusion.
+#
+# Being listed here does NOT make a variable unsettable. Ansible could enforce that, via
+# `vars/main.yml`, and this project deliberately does not - it enforces by discarding the
+# operator's input in silence, which is the failure mode #44, #63 and #78 were. ADR 0010
+# has the full argument. An operator who sets one of these still gets what they asked for;
+# what they do not get is a promise that the name survives to 2.0.
+
+# Dictated by the container image. Both images run as UID/GID 65532 and the bind-mounted
+# data has to be owned by it; a different value produces the #61 restart loop, in which the
+# container dies without a useful error. Changing this without changing the image is not a
+# configuration choice, it is a break.
+bridgelink_uid    # the DHI image runs as this UID, the value is not ours to choose
+bridgelink_gid    # see bridgelink_uid
+orthanc_uid       # the jodogne image runs as this UID, see the #61 trap
+orthanc_gid       # see orthanc_uid
+
+# PostgreSQL runs inside each role's own Compose stack with no host port at all - nothing
+# outside the stack can reach it, so a different database or role name buys an operator
+# nothing. Changing either on an existing host points the application at a database that
+# does not contain its data, with no migration path and no test covering it: a footgun
+# with a default, not a knob.
+bridgelink_db_name    # stack-internal Postgres, no host port, no migration path
+bridgelink_db_user    # see bridgelink_db_name
+orthanc_db_name       # stack-internal Postgres, no host port, no migration path
+orthanc_db_user       # see orthanc_db_name
