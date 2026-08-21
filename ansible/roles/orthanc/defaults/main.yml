@@ -15,10 +15,15 @@ orthanc_postgres_image: "postgres:17.11-alpine"
 orthanc_uid: 65532
 orthanc_gid: 65532
 
-# HTTP/REST port, bound to 127.0.0.1 only. Same reasoning as every other management
-# interface in this kit: a published container port bypasses ufw entirely, and access goes
-# through an SSH tunnel:
+# HTTP/REST port on the HOST, bound to 127.0.0.1 only. Same reasoning as every other
+# management interface in this kit: a published container port bypasses ufw entirely, and
+# access goes through an SSH tunnel:
 #   ssh -L 8042:127.0.0.1:8042 <user>@<host>
+#
+# Host side only - inside the container Orthanc always listens on 8042. Until issue #80
+# this variable set both, which meant changing it moved a port Prometheus reaches by
+# container name and cannot follow: the scrape died with a connection refused that looks
+# like a target being down. Change this freely to dodge a port clash on the host.
 orthanc_http_port: 8042
 
 # The DICOM listener. Deliberately NOT published to the host by this role - see

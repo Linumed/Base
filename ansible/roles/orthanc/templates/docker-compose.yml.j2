@@ -21,7 +21,7 @@ services:
       - orthanc_config
     # Loopback only - the REST API and Explorer are reached through an SSH tunnel.
     ports:
-      - "127.0.0.1:{{ orthanc_http_port }}:{{ orthanc_http_port }}"
+      - "127.0.0.1:{{ orthanc_http_port }}:8042"
 {% if orthanc_publish_dicom_port | bool %}
       # Published deliberately by the operator: modalities have to reach it. Note this
       # bypasses ufw, and what arrives here is patient data - see docs/roles/orthanc.md.
@@ -49,7 +49,7 @@ services:
     # serving, which is what a liveness check is for. Checking credentials here would turn a
     # wrong password into an unhealthy container instead of a clear 401 in the logs.
     healthcheck:
-      test: ['CMD', 'bash', '-c', 'exec 3<>/dev/tcp/127.0.0.1/{{ orthanc_http_port }} && printf ''GET /system HTTP/1.0\r\n\r\n'' >&3 && head -1 <&3 | grep -qE "40[13]|200"']
+      test: ['CMD', 'bash', '-c', 'exec 3<>/dev/tcp/127.0.0.1/8042 && printf ''GET /system HTTP/1.0\r\n\r\n'' >&3 && head -1 <&3 | grep -qE "40[13]|200"']
       interval: 30s
       timeout: 5s
       retries: 3
