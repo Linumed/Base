@@ -41,6 +41,8 @@ source "${REPO_ROOT}/test/lib/bridgelink-exporter-check.sh"
 source "${REPO_ROOT}/test/lib/node-baseline-check.sh"
 # shellcheck source=lib/orthanc-check.sh
 source "${REPO_ROOT}/test/lib/orthanc-check.sh"
+# shellcheck source=lib/orthanc-scrape-check.sh
+source "${REPO_ROOT}/test/lib/orthanc-scrape-check.sh"
 # shellcheck source=lib/teardown-check.sh
 source "${REPO_ROOT}/test/lib/teardown-check.sh"
 
@@ -142,6 +144,11 @@ run_docker_reference_smoke_check
 # default-configuration host has to have run already. Covers the enable path from #60,
 # which nothing had ever executed through Ansible (issue #62).
 run_orthanc_check
+
+# After run_orthanc_check, which asserts against a default-configuration Orthanc, and
+# before the teardown: this one switches monitoring_scrape_orthanc on, so it changes the
+# deployed state (issues #62, #76).
+run_orthanc_scrape_check
 
 run_bridgelink_exporter_check
 

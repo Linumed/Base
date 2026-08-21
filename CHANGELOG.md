@@ -41,16 +41,38 @@ click away instead of restated here.
 
 ### Added
 
+- **The Orthanc scrape credentials are checked against `orthanc_users` before deployment**
+  (#76). Orthanc serves its own metrics endpoint behind its own REST authentication (ADR
+  0009), so the same account has to exist twice: once in `orthanc_users`, once in
+  `monitoring_orthanc_user`/`_password`. Until now the two were kept equal by a comment in
+  the example vault. A drift produced a 401, which Prometheus reports as a target that is
+  down - the same symptom as an Orthanc that was never deployed at all.
+
+  The monitoring role's preflight now refuses to deploy on a mismatch and names the
+  accounts involved, never the password. It compares hashes so no plaintext can appear in
+  output at any verbosity, and it skips the comparison when `orthanc_users` is absent -
+  a monitoring-only playbook pointed at an Orthanc deployed elsewhere is legitimate.
+
+- **The VM test switches the Orthanc scrape on** (#76, #62). It defaults to off, so every
+  run until now proved only that the feature is a no-op while disabled: the scrape job, its
+  `basic_auth` and the three Orthanc alert rules had no coverage at all. The new
+  `test/lib/orthanc-scrape-check.sh` applies `site.yml` with the switch on, checks the run
+  is idempotent, checks Prometheus actually has a healthy `orthanc` job - and then feeds the
+  preflight a deliberately wrong password to prove it refuses, and that its output does not
+  contain the password. A gate that has never refused anything cannot be told apart from one
+  that does not work.
+
 - **`scripts/check-variable-docs.py`, run on every push** (#72). Fails when a role variable
   is neither documented under `docs/` nor recorded as internal, when a recorded name no
   longer exists, or when an entry carries no reason.
 
   It also compares the literals that must agree across roles. This kit has **no cross-role
-  variable reads at all** - every role declares `dependencies: []`, and Ansible scopes both
-  defaults and role vars per role - so each cross-role relationship is a value duplicated
-  into a second variable with a comment saying "must match". The three legs of
-  `linumed-base-metrics` and the two textfile directories are now compared rather than
-  trusted.
+  variable reads at all** - not one variable is dereferenced outside the role that defines
+  it - so each cross-role relationship is a value duplicated into a second variable with a
+  comment saying "must match". That is a convention rather than something Ansible enforces:
+  every role's variables are visible to every other role in the same play, defaults and
+  `vars/` alike. The three legs of `linumed-base-metrics` and the two textfile directories
+  are now compared rather than trusted.
 
 ### Fixed
 
