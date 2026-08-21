@@ -26,7 +26,11 @@ monitoring_grafana_admin_password: ""
 # Grafana phone-home, off - matches CONVENTIONS.md's "no phone-home telemetry" principle.
 monitoring_grafana_reporting_enabled: false
 monitoring_grafana_check_for_updates: false
-monitoring_grafana_analytics_enabled: false
+# There is deliberately no monitoring_grafana_analytics_enabled: Grafana has no such
+# setting. Its [analytics] section holds reporting_enabled, check_for_updates,
+# check_for_plugin_updates and feedback_links_enabled - the first two are the variables
+# above, the other two are set in the compose template. A variable existed here until
+# 2026-08-21 that nothing read (issue #75).
 
 # Local Grafana users beyond the shared admin account (issue #42) - so "who looked at
 # this dashboard/these logs" has an answer, and Loki logs (which can carry personal data)
