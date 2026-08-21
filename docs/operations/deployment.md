@@ -64,7 +64,7 @@ to find out except by trying (issue #68).
 
 What makes it a single-host kit, concretely:
 
-- `site.yml` applies all six roles to the same machine.
+- `site.yml` applies all seven roles to the same machine.
 - Prometheus reaches the Node Exporter over `host.docker.internal`, which resolves to *this*
   host's gateway, and reaches the BridgeLink exporter over a Docker network that exists on
   *this* host (issue #64).
