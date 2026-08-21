@@ -23,6 +23,31 @@ click away instead of restated here.
 
 ### Added
 
+- **Orthanc: the DICOM archive, the last service named in `ARCHITECTURE.md` that did not
+  exist** (#69). Orthanc (GPLv3) with its index in PostgreSQL and the pixel data on a Docker
+  volume, running unprivileged, reachable only through an SSH tunnel until the operator
+  deliberately opens the DICOM port.
+
+  **The image choice went against the obvious one, and only measuring showed why.** Upstream
+  frames its two image families by audience - `orthancteam/*` for "ops teams",
+  `jodogne/*` for developers - which points at the first for a kit like this. But
+  `orthancteam/orthanc` **cannot run as a non-root user**: its entrypoint fails on
+  `/etc/hostid` and the container exits. For the component holding DICOM images and their
+  metadata - names, dates of birth, referring physicians - that settled it.
+  `jodogne/orthanc-plugins` runs as UID 65532 with the same core version and the same
+  plugins. The comparison and what else was measured are in ADR 0009.
+
+  **No exporter was needed.** Orthanc serves Prometheus metrics natively at
+  `/tools/metrics-prometheus` - 46 of them, including study counts, disk size, pending jobs
+  and logged errors. That is the opposite of the answer BridgeLink gave in #60, and the
+  reason that pre-check is now mandatory when adding a service: here it saved building
+  anything. Three alert rules ship dormant until the metrics appear.
+
+  **The DICOM listener is not published by default.** Modalities cannot reach the archive
+  until an operator turns it on, and no modality is trusted until it is listed - a published
+  container port bypasses ufw, and what arrives on it is patient data. Same reasoning as
+  BridgeLink's channel listeners.
+
 - **`node-baseline.yml`: the runtime-agnostic part of the kit is now deployable on its
   own** (#70). Since ADR 0007 the README told operators running Kubernetes that `common`,
   `docker` and `backup` were theirs to use on their cluster's nodes - true, but with no way

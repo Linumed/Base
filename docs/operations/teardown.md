@@ -72,6 +72,7 @@ of package installs is prefixed, which is what makes a manual removal tractable.
   | caddy | `caddy_caddy_data`, `caddy_caddy_config` |
   | monitoring | `monitoring_prometheus_data`, `monitoring_loki_data`, `monitoring_grafana_data`, `monitoring_alertmanager_data` |
   | bridgelink | `bridgelink_bridgelink_appdata`, `bridgelink_bridgelink_extensions`, `bridgelink_bridgelink_db_data` |
+  | orthanc | `orthanc_orthanc_storage`, `orthanc_orthanc_db_data` |
 
   This page originally told you to look for them with `grep linumed-base`, which finds
   nothing - so it read as "there is no data here" while every volume was still in place.
@@ -91,7 +92,7 @@ Order matters: stopping the backup first prevents a scheduled run from firing mi
 sudo systemctl disable --now linumed-base-backup.timer linumed-base-restore-test.timer
 
 # 2. Stop and remove the service stacks
-for stack in bridgelink monitoring caddy; do
+for stack in orthanc bridgelink monitoring caddy; do
   [ -d "/opt/linumed-base/$stack" ] && \
     sudo docker compose -f "/opt/linumed-base/$stack/docker-compose.yml" down
 done
@@ -99,7 +100,7 @@ done
 # 3. Data. Irreversible - verify the backup first, see backup-restore.md
 # Volumes are named after the Compose project, NOT linumed-base - see the table above.
 sudo docker volume ls --format '{{.Name}}' \
-  | grep -E '^(caddy|monitoring|bridgelink)_'   # look before removing
+  | grep -E '^(caddy|monitoring|bridgelink|orthanc)_'   # look before removing
 # sudo docker volume rm <each one>
 
 # 4. Files, including the secrets under /opt/linumed-base/*/secrets/

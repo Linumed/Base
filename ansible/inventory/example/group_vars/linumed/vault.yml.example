@@ -45,3 +45,18 @@ bridgelink_server_id: "CHANGEME-generate-with-uuidgen"
 # second copy of this value outside this machine before relying on the backup at all
 # (see the backup role's README, "Restore-Test").
 backup_restic_password: "CHANGEME-generate-your-own"
+
+# Orthanc (DICOM archive, issue #69). Both are required once the orthanc role runs:
+# the role's preflight refuses to deploy without them.
+#
+# orthanc_users is Orthanc's ONLY user store. An empty map with authentication enabled
+# locks the instance out of its own REST API - including its healthcheck and the Prometheus
+# scrape. Give the metrics account its own entry rather than reusing the admin one.
+orthanc_db_password: "CHANGEME"
+orthanc_users:
+  admin: "CHANGEME"
+  metrics: "CHANGEME"
+
+# Only needed if monitoring_scrape_orthanc is turned on - must match an account above.
+monitoring_orthanc_user: "metrics"
+monitoring_orthanc_password: "CHANGEME"

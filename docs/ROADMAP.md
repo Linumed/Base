@@ -355,7 +355,7 @@ them is how a rejected idea quietly comes back.
 | | Issue |
 |---|---|
 | Scan the pinned images, and act on the difference between "behind" and "upstream's problem" | #67, **done 2026-08-20** |
-| Orthanc as the DICOM role | #69 |
+| Orthanc as the DICOM role | #69, **done 2026-08-21** |
 | The node-baseline subset, deployable and tested on its own | #70, **done 2026-08-20** |
 | Lifecycle: Debian major upgrade, teardown, the single-host assumption | #68, **done 2026-08-20** |
 

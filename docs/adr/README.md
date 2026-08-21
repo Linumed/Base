@@ -22,3 +22,4 @@ Everything else belongs as a comment at the relevant spot, not here.
 | [0006](0006-linumed-base-not-linumed-os.md) | The product is called Linumed Base, not Linumed OS | accepted (2026-08-18) |
 | [0007](0007-docker-compose-not-kubernetes.md) | Docker Compose, not Kubernetes | accepted (2026-08-20) |
 | [0008](0008-what-the-v1-0-stability-guarantee-covers.md) | What the v1.0 stability guarantee covers | accepted (2026-08-20) |
+| [0009](0009-jodogne-orthanc-image-not-orthancteam.md) | `jodogne/orthanc-plugins` as the Orthanc image | accepted (2026-08-21) |

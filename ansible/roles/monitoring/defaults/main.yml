@@ -156,3 +156,13 @@ monitoring_metrics_network_name: "linumed-base-metrics"
 # so no host port is involved at all. The exporter still publishes 9151 on loopback, but
 # that is for a human with curl, not for Prometheus.
 monitoring_bridgelink_exporter_target: "linumed-base-bridgelink-exporter:9151"
+
+# Orthanc serves Prometheus metrics natively at /tools/metrics-prometheus - no exporter, the
+# opposite of BridgeLink (ADR 0009). The endpoint sits behind Orthanc's own authentication,
+# so the scrape needs credentials; supply the same account used in orthanc_users.
+# Off by default for the same reason as the BridgeLink job: a scrape target that was never
+# deployed sits at up == 0 and trips HostDown forever.
+monitoring_scrape_orthanc: false
+monitoring_orthanc_target: "linumed-base-orthanc:8042"
+monitoring_orthanc_user: ""
+monitoring_orthanc_password: ""
