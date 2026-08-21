@@ -79,6 +79,30 @@ click away instead of restated here.
 
 ### Fixed
 
+- **The pin table in `docs/operations/updates.md` no longer drifts, because it can no
+  longer drift** (#81). Two tags were behind the roles (`grafana/grafana:13.1.3` against
+  13.1.4, `postgres:17.10-alpine` against 17.11) and three images were missing from it
+  entirely - `bridgelink_exporter_image`, `orthanc_image`, `orthanc_postgres_image`.
+
+  The table carried a note saying it "will drift", and while it was only a convenience that
+  was a defensible trade. It stopped being defensible when ADR 0010 made that table the
+  documentation keeping those thirteen variable *names* inside the v1.0 promise: a row that
+  claims a wrong version is not trustworthy about the name either.
+  `scripts/check-variable-docs.py` now compares every row against the roles on every push,
+  and the note is gone because the claim it made is no longer true.
+
+- **A comment in the backup role described the restic package install while sitting above
+  `backup_restic_password_file`** (#82). Moved to the task it actually explains; the
+  variable now has a comment about the variable, including that `docs/roles/backup.md`
+  names the path literally in its manual restore procedure.
+
+- **`mirth.properties.j2` stated the UID as a literal `65532` next to the variable name**
+  (#83). It sits inside a Jinja comment, so the number never rendered anywhere - it was
+  documentation that would have gone quietly wrong the moment the image changed the UID.
+  Now it names `bridgelink_uid` and no number. Deliberately not `{{ bridgelink_uid }}`:
+  inside a `{# ... #}` block that would not interpolate, and writing it that way would
+  suggest it does.
+
 - **The pre-1.0 surface measurement in ADR 0008 said "the six vault variables" while its own
   table said nine** (#73), and the audit figure of "30 undocumented variables" (#71) was too
   high because the search behind it could not see collapsed documentation rows such as
