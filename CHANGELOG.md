@@ -79,6 +79,20 @@ click away instead of restated here.
 
 ### Fixed
 
+- **Three statements in the public README and the deployment page had gone stale since
+  Orthanc landed** (found while preparing #74). The "if you run Kubernetes" paragraph
+  listed only `caddy`, `monitoring` and `bridgelink` as Compose-coupled - `orthanc` is too;
+  `docs/operations/deployment.md` said `site.yml` applies "all six roles", which has been
+  seven since v0.4.0; and the quick start said the example vault lists "the six variables
+  with no safe default" - it lists ten secrets, of which eight abort `site.yml` outright
+  and two only once the Orthanc scrape is on (#73 measured this).
+
+  The system requirements table has the same problem and it cannot be fixed by editing:
+  it opens with "Measured, not estimated" and its "full stack" row was measured before the
+  `orthanc` role existed. Re-measuring is #84; until then a note under the table says
+  plainly that Orthanc is not in those numbers, rather than leaving a figure that claims a
+  measurement it no longer has.
+
 - **The pin table in `docs/operations/updates.md` no longer drifts, because it can no
   longer drift** (#81). Two tags were behind the roles (`grafana/grafana:13.1.3` against
   13.1.4, `postgres:17.10-alpine` against 17.11) and three images were missing from it
