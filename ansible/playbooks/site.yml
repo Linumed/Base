@@ -1,6 +1,7 @@
 ---
-# Full stack deployment: common, docker, caddy, monitoring, bridgelink, backup
-# (#1/#3/#10/#5/#11, #17, #6, #8/#9, #12, #7). v0.1 scope complete.
+# Full stack deployment: common, docker, caddy, monitoring, bridgelink, orthanc, backup
+# (#1/#3/#10/#5/#11, #17, #6, #8/#9, #12, #69, #7). orthanc runs after monitoring:
+# with metrics enabled it joins a network the monitoring role creates (#64).
 - name: Linumed Base - full stack
   hosts: linumed
   roles:
@@ -9,4 +10,5 @@
     - caddy
     - monitoring
     - bridgelink
+    - orthanc
     - backup

@@ -1,0 +1,76 @@
+---
+orthanc_deploy_dir: "/opt/linumed-base/orthanc"
+
+# jodogne/orthanc-plugins, not orthancteam/orthanc: the ops-facing image cannot run as an
+# unprivileged user - its entrypoint fails on /etc/hostid and the container exits. Measured,
+# not assumed; full reasoning and the comparison in ADR 0009. This one runs as UID 65532
+# with the same core version and the same plugin set.
+orthanc_image: "jodogne/orthanc-plugins:1.13.0"
+orthanc_postgres_image: "postgres:17.11-alpine"
+
+# The image runs as this UID when told to. A file-based Docker secret keeps the host's
+# ownership, so the configuration file - which carries the database password - has to be
+# owned by it, or the container dies in a restart loop with no useful error (the #61 trap).
+orthanc_uid: 65532
+orthanc_gid: 65532
+
+# HTTP/REST port, bound to 127.0.0.1 only. Same reasoning as every other management
+# interface in this kit: a published container port bypasses ufw entirely, and access goes
+# through an SSH tunnel:
+#   ssh -L 8042:127.0.0.1:8042 <user>@<host>
+orthanc_http_port: 8042
+
+# The DICOM listener. Deliberately NOT published to the host by this role - see
+# orthanc_publish_dicom_port below.
+orthanc_dicom_port: 4242
+
+# Publishing the DICOM port is a per-site decision with real consequences, exactly like
+# BridgeLink's channel listeners: modalities have to reach it, a published container port
+# bypasses ufw, and what arrives on it is patient data. Off by default; the operator turns
+# it on deliberately and secures the path themselves. See docs/roles/orthanc.md.
+orthanc_publish_dicom_port: false
+
+# AET this Orthanc answers as. Modalities are configured against it, so changing it later
+# means reconfiguring every device that sends here.
+orthanc_aet: "LINUMED"
+
+# Database. PostgreSQL runs in the same Compose stack and gets no host port at all.
+orthanc_db_name: "orthanc"
+orthanc_db_user: "orthanc"
+# No defaults - the role's preflight refuses to run unless these are set. Ansible Vault.
+orthanc_db_password: ""
+
+# REST API accounts, as {username: password}. Orthanc has no other user store; these are
+# what the Explorer, DICOMweb clients and the Prometheus scrape authenticate with.
+# Supply via Vault. An empty map is refused: AuthenticationEnabled with no users would
+# lock the instance out of its own API, including the healthcheck.
+orthanc_users: {}
+
+# The index lives in PostgreSQL, the pixel data stays on a Docker volume rather than going
+# into the database as large objects. That is upstream's recommendation for anything but
+# small installations, and it is also what makes the backup role's file-based snapshots
+# meaningful - a restic snapshot of a volume is restorable, a half-consistent dump of
+# multi-gigabyte binary rows is a different problem.
+orthanc_postgres_enable_storage: false
+
+# Orthanc serves /tools/metrics-prometheus natively - no exporter, unlike BridgeLink
+# (#60, ADR 0009). Off by default for the same reason the BridgeLink scrape is: a scrape
+# job pointing at a host that never deployed this role sits at up == 0 forever. Turn on
+# together with monitoring_scrape_orthanc.
+orthanc_metrics_enabled: true
+
+# Shared network the monitoring stack creates; Prometheus scrapes this container by name
+# over it. Must match monitoring_metrics_network_name. A published port would not work for
+# scraping and an all-interfaces one would bypass ufw - see #64, this is the same
+# arrangement the BridgeLink exporter uses.
+orthanc_metrics_network: "linumed-base-metrics"
+
+# Which of the bundled plugins actually load. Neither Orthanc image loads anything on its
+# own; this array decides. Kept minimal on purpose - the images ship viewers, an S3 storage
+# backend and more, and every plugin enabled here is attack surface and a licence to check.
+orthanc_plugins:
+  - "/usr/local/share/orthanc/plugins/libOrthancPostgreSQLIndex.so"
+
+# Seconds Docker waits on shutdown. Orthanc finishes in-flight jobs and closes its database
+# connections; the default 10s can cut that short mid-transfer.
+orthanc_stop_grace_period: 30

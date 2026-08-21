@@ -39,6 +39,8 @@ source "${REPO_ROOT}/test/lib/docker-reference-smoke.sh"
 source "${REPO_ROOT}/test/lib/bridgelink-exporter-check.sh"
 # shellcheck source=lib/node-baseline-check.sh
 source "${REPO_ROOT}/test/lib/node-baseline-check.sh"
+# shellcheck source=lib/orthanc-check.sh
+source "${REPO_ROOT}/test/lib/orthanc-check.sh"
 # shellcheck source=lib/teardown-check.sh
 source "${REPO_ROOT}/test/lib/teardown-check.sh"
 
@@ -139,6 +141,8 @@ run_docker_reference_smoke_check
 # changes the deployed state (it switches the exporter on), so anything asserting on a
 # default-configuration host has to have run already. Covers the enable path from #60,
 # which nothing had ever executed through Ansible (issue #62).
+run_orthanc_check
+
 run_bridgelink_exporter_check
 
 # Absolutely last: it removes the installation everything above depends on. The VM is

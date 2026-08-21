@@ -22,6 +22,7 @@ HL7/FHIR integration, monitoring, reverse proxy, and encrypted backups.
 | Debian 13 hardening | SSH, ufw, fail2ban, unattended-upgrades |
 | Caddy | Reverse proxy with automatic TLS |
 | BridgeLink | HL7 v2 / FHIR R4 integration engine (MPL-2.0 fork of Mirth Connect) |
+| Orthanc | DICOM archive (GPLv3) with a PostgreSQL index - runs unprivileged, DICOM port closed by default |
 | Prometheus + Grafana + Loki + Alertmanager | Observability stack (log shipping via Grafana Alloy, host metrics via native Node Exporter, optional BridgeLink channel metrics) |
 | restic | Encrypted backups |
 
