@@ -56,6 +56,18 @@ No modality is trusted by default either - `DicomModalities` is empty and
 `DicomAlwaysAllowStore` is false, so an unknown sender is rejected rather than silently
 archived.
 
+## Its images are scanned like every other pin
+
+Adding this role added two pinned images, and the weekly scan (`scripts/scan-images.py`,
+issue #67) failed on the very first CI run afterwards because their findings were not
+recorded yet. That is the check working, not a defect: a new role widens the pin surface,
+and the scanner refuses to let findings accumulate silently.
+
+`jodogne/orthanc-plugins:1.13.0` is on its newest tag and carries four fixable HIGH/CRITICAL
+findings from its Debian base image - recorded with a reason and a date in
+`security/accepted-image-findings.txt`, where they will be reported again once the entry is
+older than 90 days.
+
 ## What this role does not do
 
 - Does not install Docker - see the `docker` role, which runs before it in `site.yml`.
