@@ -87,6 +87,16 @@ jobs:
       # Forgejo has no "update release asset" endpoint that replaces in place - delete
       # the previous docs-site-latest release (if any) and its tag, then recreate both.
       # A 404 on the delete calls is expected and fine on the very first run.
+      #
+      # The tag delete used DELETE /git/tags/{tag} until 2026-08-21. That endpoint takes a
+      # tag *object SHA*, not a name, so it 404'd on every run - and `|| true` swallowed
+      # it. The tag therefore never moved: it stayed on the commit of the first run
+      # (2026-08-19) while the asset behind it was rebuilt on every docs push. Everything
+      # keyed to the tag - the release's created_at, the commit it claims to describe -
+      # reported "unchanged" while the tarball changed, which is why the prod side saw no
+      # updates to pull. Same shape as #44 and #63: a green signal over changed content.
+      # The correct endpoint is DELETE /repos/{owner}/{repo}/tags/{tag}, and the assertion
+      # below is what keeps a future endpoint change from going quiet again.
       - name: Replace the docs-site-latest release
         env:
           GITEA_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -95,7 +105,7 @@ jobs:
           curl -s -X DELETE -H "Authorization: token ${GITEA_TOKEN}" \
             "${API}/releases/tags/docs-site-latest" || true
           curl -s -X DELETE -H "Authorization: token ${GITEA_TOKEN}" \
-            "${API}/git/tags/docs-site-latest" || true
+            "${API}/tags/docs-site-latest" || true
 
           RELEASE_ID=$(curl -s -X POST -H "Authorization: token ${GITEA_TOKEN}" \
             -H "Content-Type: application/json" \
@@ -105,3 +115,20 @@ jobs:
           curl -s -X POST -H "Authorization: token ${GITEA_TOKEN}" \
             -F "attachment=@base-docs-site.tar.gz" \
             "${API}/releases/${RELEASE_ID}/assets?name=base-docs-site.tar.gz"
+
+      # The whole point of the moving tag is that it moves. If it ever stops - a renamed
+      # endpoint, a permission change - this fails loudly instead of publishing a fresh
+      # tarball under a tag that still names a months-old commit.
+      - name: Assert the tag actually moved to this commit
+        env:
+          GITEA_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          API="${{ github.api_url }}/repos/${{ github.repository }}"
+          TAGGED=$(curl -s -H "Authorization: token ${GITEA_TOKEN}" \
+            "${API}/tags/docs-site-latest" \
+            | python3 -c "import json,sys; print(json.load(sys.stdin)['commit']['sha'])")
+          if [ "$TAGGED" != "${{ github.sha }}" ]; then
+            echo "::error::docs-site-latest points at ${TAGGED}, expected ${{ github.sha }} - the tag did not move, so anything downstream that keys on it will report no change" >&2
+            exit 1
+          fi
+          echo "docs-site-latest -> ${TAGGED}"
