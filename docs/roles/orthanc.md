@@ -74,8 +74,13 @@ monitoring_orthanc_user: "metrics"
 monitoring_orthanc_password: "{{ vault_orthanc_metrics_password }}"
 ```
 
-The account has to exist in `orthanc_users`. Prometheus reaches the container by name over
-the shared metrics network, not over a host port - see [issue #64] for why a published port
+The account has to exist in `orthanc_users`, and the monitoring role's preflight now refuses
+to deploy if it does not (issue #76) - the credential is written twice because Orthanc
+authenticates the scrape itself, and until that check the two copies were kept equal by a
+comment. A mismatch produces a 401, which Prometheus reports as a target that is down: the
+same symptom as an Orthanc that was never deployed.
+
+Prometheus reaches the container by name over the shared metrics network, not over a host port - see [issue #64] for why a published port
 would not work and an all-interfaces one would bypass ufw.
 
 Three alert rules ship dormant until the metrics appear: `OrthancDown`, `OrthancErrorRate`,

@@ -112,19 +112,27 @@ Enforcement moves to where it can be **loud**. A CI failure names the variable a
 a precedence trick names nothing.
 
 The same script also checks the couplings that nothing checked before. There are **no
-cross-role variable reads in this kit** — every role has `dependencies: []`, and Ansible
-scopes both defaults and role vars per role. Every cross-role relationship is therefore a
-value duplicated into a second variable with a comment saying "must match":
+cross-role variable reads in this kit**: not one variable is dereferenced outside the role
+whose `defaults/main.yml` defines it. Every cross-role relationship is instead a value
+duplicated into a second variable with a comment saying "must match":
 `monitoring_metrics_network_name`, `bridgelink_exporter_metrics_network` and
 `orthanc_metrics_network` are three legs of one frozen constant, as are
 `monitoring_node_exporter_textfile_dir` and `backup_textfile_dir`. The script compares the
 literals. A comment is not a gate.
 
-Those variables are deliberately **not** merged into one. A shared variable needs a shared
-home — `group_vars`, which takes it out of the role, or a `meta` dependency, which breaks
-`dependencies: []` and with it the independent deployability that
-`ansible/playbooks/node-baseline.yml` exists for (#70). Both cost more than the duplication
-does now that a check watches it.
+That this is a *convention* and not something Ansible enforces was measured after an
+earlier draft of this ADR claimed the opposite. Variables from **every** role in a play are
+visible to every other role in that play — role defaults and `vars/` alike, and regardless
+of role order (ansible-core 2.19.4, verified with a two-role playbook). What `vars/` changes
+is precedence, not visibility. So the roles could read each other's variables directly; they
+deliberately do not, because a role that reaches into another role's namespace stops being
+deployable on its own — which is the property `ansible/playbooks/node-baseline.yml` exists
+for (#70).
+
+For the same reason the coupled variables are **not** merged into one. A shared variable
+needs a shared home — `group_vars`, which takes it out of the role, or a `meta` dependency,
+which breaks `dependencies: []`. Both cost more than a duplicated literal does now that a
+check watches it.
 
 ## Consequences
 

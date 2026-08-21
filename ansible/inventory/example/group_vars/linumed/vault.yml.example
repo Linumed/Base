@@ -57,6 +57,11 @@ orthanc_users:
   admin: "CHANGEME"
   metrics: "CHANGEME"
 
-# Only needed if monitoring_scrape_orthanc is turned on - must match an account above.
+# Only needed if monitoring_scrape_orthanc is turned on, and it has to match an account
+# above - Orthanc serves its own metrics endpoint behind its own authentication (ADR 0009),
+# so the credential exists once here and once in orthanc_users. Since issue #76 the
+# monitoring role's preflight checks it and refuses to deploy on a mismatch; before that
+# this comment was the only thing holding the two together, and a drift showed up as a
+# Prometheus target that looked down rather than as a wrong password.
 monitoring_orthanc_user: "metrics"
 monitoring_orthanc_password: "CHANGEME"
