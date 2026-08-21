@@ -41,8 +41,8 @@ is the wrong one. Each of these is a recorded decision with its reasoning, not a
 
   If you run Kubernetes, half of this kit is still yours: `common` (SSH hardening, ufw,
   fail2ban, unattended-upgrades, NTP), `docker` and `backup` are runtime-agnostic and work
-  on the nodes under your cluster. Only `caddy`, `monitoring` and `bridgelink` are
-  Compose-coupled. That subset has its own playbook -
+  on the nodes under your cluster. Only `caddy`, `monitoring`, `bridgelink` and `orthanc`
+  are Compose-coupled. That subset has its own playbook -
   `ansible-playbook playbooks/node-baseline.yml` - which is applied to a fresh VM on every
   relevant change and checked for effect, not just for exit code.
 
@@ -104,6 +104,13 @@ A few things worth knowing before sizing a real host:
   engine (`bridgelink_max_heap_mb: 512` default) with no channels configured - real HL7
   traffic and channel-side JavaScript transformers use more. Size the JVM heap for your
   actual channel load, not this baseline.
+- **Orthanc is not in these numbers.** The table was measured before the `orthanc` role
+  existed (v0.4.0 added it), and the row named "full stack" therefore is not one. Orthanc
+  adds two containers - the archive and its own PostgreSQL - and DICOM images are the
+  largest thing this kit ever stores, so neither the RAM nor the disk figure transfers.
+  Re-measuring is issue #84; until it is done, treat the table as covering everything
+  except Orthanc rather than as a total.
+
 - **The optional BridgeLink exporter is not in these numbers.** Enabling
   `bridgelink_exporter_enabled` adds one more container (a pinned `python:3.13.15-alpine`
   running a standard-library script, no extra image built by this repo). Small next to the
@@ -145,8 +152,9 @@ cp -r inventory/example inventory/myhospital
 # edit inventory/myhospital/hosts.yml: set ansible_host / ansible_user for your target
 
 # inventory/myhospital/group_vars/linumed/vars.yml holds plain config (edit
-# backup_repository at least). .../vault.yml.example lists the six variables with no
-# safe default - site.yml aborts without them. Turn it into a real, encrypted vault file:
+# backup_repository at least). .../vault.yml.example lists the ten secrets with no safe
+# default; eight of them abort site.yml outright, the two monitoring_orthanc_* only once
+# the Orthanc scrape is switched on. Turn it into a real, encrypted vault file:
 cp inventory/myhospital/group_vars/linumed/vault.yml.example \
    inventory/myhospital/group_vars/linumed/vault.yml
 # edit vault.yml, replace every CHANGEME, then encrypt it:
