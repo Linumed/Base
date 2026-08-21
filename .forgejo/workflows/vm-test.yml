@@ -75,8 +75,23 @@ jobs:
       # container's own distro version - pinned to match the version already installed
       # on the host (`dpkg -l | grep osinfo-db` there), not `--latest`: that flag computes
       # a URL from today's date that doesn't reliably exist yet (confirmed: 404).
+      #
+      # Source moved 2026-08-21: this used to fetch from releases.pagure.org, which now
+      # 404s for *every* osinfo-db version, not just the pinned one - the project left
+      # pagure and publishes release assets on GitLab. The pinned version and the reason
+      # for pinning it are unchanged; only the host serving the identical tarball is.
+      # The checksum is verified rather than trusted, because a generic-package URL can be
+      # overwritten in place - without this, a changed database would silently alter what
+      # the VM test provisions, and the run would stay green.
       - name: Update osinfo-db (bookworm's own package predates debian12/13 entries)
-        run: osinfo-db-import --system https://releases.pagure.org/libosinfo/osinfo-db-20250606.tar.xz
+        env:
+          OSINFO_DB_URL: "https://gitlab.com/api/v4/projects/libosinfo%2Fosinfo-db/packages/generic/release-assets/v20250606/osinfo-db-20250606%2Etar%2Exz"
+          OSINFO_DB_SHA256: "9940aa47df298073c51dcf8a4dcc855f494ab864c24cdbda46bd897957357fe1"
+        run: |
+          curl -fsSL "$OSINFO_DB_URL" -o osinfo-db.tar.xz
+          echo "${OSINFO_DB_SHA256}  osinfo-db.tar.xz" | sha256sum -c -
+          osinfo-db-import --system osinfo-db.tar.xz
+          rm -f osinfo-db.tar.xz
 
       - name: Install required collections
         run: ansible-galaxy collection install -r ansible/requirements.yml
