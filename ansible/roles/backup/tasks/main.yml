@@ -42,6 +42,11 @@
       /var/lib/docker/volumes); on a host that does not run the service stacks, set
       backup_paths to whatever actually holds the data.
 
+# Native Debian package, not a binary download - same reasoning as node_exporter in the
+# monitoring role: automatic security updates via the common role's unattended-upgrades,
+# no separate update mechanism to maintain. (This reasoning sat above
+# backup_restic_password_file in defaults/main.yml until 2026-08-21, where it described
+# nothing that variable does - issue #82.)
 - name: Install restic
   ansible.builtin.apt:
     name: restic
