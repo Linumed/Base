@@ -32,7 +32,7 @@ All prefixed `orthanc_*`, in `ansible/roles/orthanc/defaults/main.yml`.
 |---|---|---|
 | `orthanc_image` | `jodogne/orthanc-plugins:1.13.0` | Runs as UID 65532 - see ADR 0009 |
 | `orthanc_postgres_image` | `postgres:17.11-alpine` | Index backend |
-| `orthanc_http_port` | `8042` | REST/Explorer, bound to `127.0.0.1` only |
+| `orthanc_http_port` | `8042` | REST/Explorer on the **host**, bound to `127.0.0.1` only. Inside the container Orthanc always listens on 8042, so changing this only moves the port you tunnel to - and no longer breaks the Prometheus scrape, which reaches the container by name (issue #80) |
 | `orthanc_dicom_port` | `4242` | DICOM listener **inside** the container |
 | `orthanc_publish_dicom_port` | `false` | Publishing it to the host is a deliberate per-site decision |
 | `orthanc_aet` | `LINUMED` | The AET modalities are configured against - changing it later means reconfiguring every device |

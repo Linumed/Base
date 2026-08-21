@@ -21,10 +21,18 @@
 # comment in the example vault. A drift produced a 401, which in Prometheus reads as "target
 # down" - indistinguishable from an Orthanc that is simply not deployed.
 #
-# Cost: two site.yml applies on an already-provisioned VM, mostly no-ops, plus one
+# It also covers issue #80, which is the same shape one level down: orthanc_http_port used
+# to set the port inside the container as well as the published one, so moving it moved a
+# port Prometheus reaches by container name and cannot follow. Proven here by moving it for
+# real and watching the scrape survive - an assertion about the fix, not about the code.
+#
+# Cost: three site.yml applies on an already-provisioned VM, mostly no-ops, plus one
 # deliberately failing single-role run that aborts in its first task. Accepted for the same
 # reason as bridgelink-exporter-check.sh - the alternative is shipping an enable path and a
 # gate that nothing has ever executed.
+#
+# Leaves the VM with orthanc_http_port back at its default only on the next apply, which
+# run_bridgelink_exporter_check performs - deliberate, and the reason this runs before it.
 #
 # Not meant to be executed directly. Expects: REPO_ROOT, WORK_DIR, VM_IP, SSH_KEY,
 # ANSIBLE_USER, and an inventory already written by run_site_idempotency_check.
@@ -138,6 +146,40 @@ EOF
     return 1
   fi
   echo "==> PASS: the credential preflight refuses a mismatch and leaks no password"
+
+  # Issue #80: orthanc_http_port used to set the port inside the container as well as the
+  # published one, so moving it moved a port Prometheus reaches by container name and
+  # cannot follow - the scrape died with a connection refused that reads as a target being
+  # down. Now it is host-side only. Proven by actually moving it and watching the scrape
+  # survive, because the whole class of bug here is "looks fine from the outside".
+  echo "==> Re-applying with orthanc_http_port moved, the scrape must survive it"
+  (
+    cd "${REPO_ROOT}/ansible"
+    ansible-playbook -i "${inventory}" playbooks/site.yml \
+      -e "${scrape_on}" \
+      -e '{"orthanc_http_port": 8142}' \
+      -e "monitoring_orthanc_user=${ORTHANC_TEST_METRICS_USER}" \
+      -e "monitoring_orthanc_password=${ORTHANC_TEST_METRICS_PASSWORD}"
+  ) || { echo "FAIL: site.yml failed with orthanc_http_port moved" >&2; return 1; }
+
+  echo "==> Checking the host port moved and the scrape did not"
+  local host_port_moved
+  host_port_moved="$(ssh "${ssh_opts[@]}" "${remote}" \
+    'sudo ss -tlnp 2>/dev/null | grep -c "127.0.0.1:8142 " || true')"
+  if [ "${host_port_moved}" != "1" ]; then
+    echo "FAIL: nothing is listening on 127.0.0.1:8142 - orthanc_http_port did not take effect" >&2
+    ssh "${ssh_opts[@]}" "${remote}" 'sudo ss -tlnp | grep orthanc' >&2 || true
+    return 1
+  fi
+
+  sleep 20
+  if ! check_prometheus_targets_healthy; then
+    echo "FAIL: a target is down after moving orthanc_http_port - this is issue #80 again" >&2
+    ssh "${ssh_opts[@]}" "${remote}" 'curl -s localhost:9090/api/v1/targets' \
+      | tr ',' '\n' | grep -A3 -B3 orthanc >&2 || true
+    return 1
+  fi
+  echo "==> PASS: orthanc_http_port moves the host port only, the scrape is unaffected"
 
   echo "==> PASS: the Orthanc scrape works end to end and its preflight bites"
 }

@@ -12,7 +12,12 @@
   "StorageDirectory": "/var/lib/orthanc/db",
   "IndexDirectory": "/var/lib/orthanc/db",
 
-  "HttpPort": {{ orthanc_http_port }},
+  {# Fixed, not orthanc_http_port: this is the port *inside* the container, and the
+     variable is the host-side one an operator tunnels to. Tying the two together made
+     orthanc_http_port silently break the Prometheus scrape, which reaches this container
+     by name over the metrics network and cannot follow a host-side change (issue #80).
+     Same arrangement as the BridgeLink exporter, whose container side is a literal too. #}
+  "HttpPort": 8042,
   "DicomPort": {{ orthanc_dicom_port }},
   "DicomAet": "{{ orthanc_aet }}",
 
