@@ -24,7 +24,9 @@ Three things are verified:
      list.
   3. The literals that must agree across roles actually agree. There are no cross-role
      variable reads in this kit - every coupling is a value duplicated into a second
-     variable with a comment saying "must match". A comment is not a gate; this is.
+     variable with a comment saying "must match". A comment is not a gate; this is. That
+     includes the Prometheus scrape targets, which name another role's container and the
+     port inside it (issue #80).
 
 Usage:
     scripts/check-variable-docs.py            # check, print findings, exit non-zero
@@ -71,6 +73,16 @@ COUPLED_LITERALS = [
             "backup:backup_textfile_dir",
         ],
     ),
+]
+
+
+# Prometheus scrape targets name another role's container and the port *inside* it. Both
+# ends are literals with no shared source, so nothing but equality holds them together -
+# and the symptom of a mismatch is a target that reads as down, indistinguishable from a
+# service that was never deployed. Issue #80 was exactly that, in the Orthanc job.
+SCRAPE_TARGETS = [
+    ("monitoring_orthanc_target", "orthanc"),
+    ("monitoring_bridgelink_exporter_target", "bridgelink"),
 ]
 
 
@@ -205,6 +217,48 @@ def check_coupled_literals() -> list[str]:
     return problems
 
 
+def container_port(role: str, container: str) -> tuple[str | None, str]:
+    """The container-side port a role's Compose template publishes for one container.
+
+    Returns (port, explanation-if-none). The container-side port is the last field of a
+    `- "127.0.0.1:<host>:<container>"` mapping - the host side may be a variable, the
+    container side must not be, which is the whole point of #80.
+    """
+    path = REPO_ROOT / "ansible" / "roles" / role / "templates" / "docker-compose.yml.j2"
+    if not path.exists():
+        return None, f"{path.relative_to(REPO_ROOT)} does not exist"
+    text = path.read_text(encoding="utf-8")
+    blocks = re.split(r"^\s*container_name: *", text, flags=re.M)[1:]
+    for block in blocks:
+        name = block.splitlines()[0].strip()
+        if name != container:
+            continue
+        mapping = re.search(r'^\s*- *"[^"]*:(\d+)" *$', block, re.M)
+        if not mapping:
+            return None, f"{role}'s {container} publishes no port with a literal container side"
+        return mapping.group(1), ""
+    return None, f"{role}'s Compose template defines no container named {container}"
+
+
+def check_scrape_targets() -> list[str]:
+    problems = []
+    for variable, role in SCRAPE_TARGETS:
+        target = literal_of("monitoring", variable)
+        if target is None:
+            problems.append(f"{variable} is not defined in the monitoring role")
+            continue
+        container, _, port = target.rpartition(":")
+        actual, why = container_port(role, container)
+        if actual is None:
+            problems.append(f"{variable} = {target}: {why}")
+        elif actual != port:
+            problems.append(
+                f"{variable} scrapes {container}:{port}, but that container listens on "
+                f"{actual} - Prometheus would report a target that is down, not a wrong port"
+            )
+    return problems
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--report", action="store_true", help="always exit 0")
@@ -227,7 +281,7 @@ def main() -> int:
                 both.append((role, name))
 
     orphaned = sorted(name for name in internal if name not in all_variables)
-    coupling = check_coupled_literals()
+    coupling = check_coupled_literals() + check_scrape_targets()
 
     total = sum(len(v) for v in variables.values())
     print(f"{total} variables across {len(variables)} roles; {len(internal)} recorded internal.")

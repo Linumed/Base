@@ -62,7 +62,10 @@ click away instead of restated here.
   contain the password. A gate that has never refused anything cannot be told apart from one
   that does not work.
 
-- **`scripts/check-variable-docs.py`, run on every push** (#72). Fails when a role variable
+- **`scripts/check-variable-docs.py`, run on every push** (#72). It also compares each
+  Prometheus scrape target against the Compose template of the role that owns the container
+  (#80) - the target names another role's container and the port inside it, and both ends
+  are literals with no shared source. Fails when a role variable
   is neither documented under `docs/` nor recorded as internal, when a recorded name no
   longer exists, or when an entry carries no reason.
 
@@ -81,6 +84,25 @@ click away instead of restated here.
   high because the search behind it could not see collapsed documentation rows such as
   `backup_retention_keep_daily/weekly/monthly`. Measured correctly it was 19. Both figures
   are corrected where they appeared, including `ARCHITECTURE.md`.
+
+### Breaking
+
+- **`orthanc_http_port` now only moves the host-side port; inside the container Orthanc
+  always listens on 8042** (#80). It used to set both, and that quietly broke the Prometheus
+  scrape: Prometheus reaches Orthanc by container name over the metrics network, so it
+  cannot follow a change to the published port. `monitoring_orthanc_target` kept pointing at
+  `:8042` and the scrape died with a connection refused - which Prometheus reports as a
+  target that is down, the same symptom as an Orthanc that was never deployed.
+
+  The variable's own comment already described it as the host-side tunnel port
+  (`ssh -L 8042:127.0.0.1:8042`); the implementation did more than the documentation
+  promised. The BridgeLink role never had the defect - its container side is a literal on
+  both the admin port and the exporter - so this also makes the two roles consistent.
+
+  **What changes for an existing deployment:** nothing, unless `orthanc_http_port` was set
+  to something other than 8042. If it was, Orthanc now listens on 8042 inside the container
+  and the chosen port is published on the host, which is what the documentation always
+  described. Tunnels and modality configuration are unaffected.
 
 ## [0.4.0] - 2026-08-21
 
