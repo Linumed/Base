@@ -393,10 +393,11 @@ someone wrote down what it applies to.
 
 **That is now written down (#66, closed 2026-08-20):**
 [ADR 0008](adr/0008-what-the-v1-0-stability-guarantee-covers.md) names the covered surface,
-measured rather than estimated - 125 role variables, deploy paths, 11 container names, two
-shared networks, this kit's own metric names, 13 alert rule names, four systemd units, the
-six variables with no default, and the Grafana dashboard and datasource UIDs that every
-operator-built panel references. It also names what is deliberately *not* covered: pinned
+measured rather than estimated - and re-measured against seven roles on 2026-08-21 (#73):
+146 role variables, deploy paths, 13 container names, two shared networks, this kit's own
+metric names, 16 alert rule names, four systemd units, the nine variables a plain run
+aborts without, and the Grafana dashboard and datasource UIDs that every operator-built
+panel references. It also names what is deliberately *not* covered: pinned
 image versions have to keep moving, and #67 exists to make them move.
 
 What remains for v1.0 is therefore not definition but **removal**, because the tag freezes
@@ -415,15 +416,18 @@ is not arbitrary:
 decision decides *what it survives as*. Doing them the other way round means classifying
 variables that are about to be deleted.
 
-**#73 exists because the measurement aged faster than the decision.** ADR 0008 measured
-125 variables across six roles on 2026-08-20; Orthanc (#69) landed a day later with 18
-more, and is in none of the ADR's numbers - not the container names, not the deploy paths,
-not the volumes. Counted on 2026-08-21, the seven roles carry **147** variables (an earlier
-count of 140 in this section was low: the pattern used to count names missed every name
-containing a digit, which is all seven `common_fail2ban_*` variables). A guarantee
-resting on a stale measurement is the exact failure ADR 0008 was written to avoid: its
-whole point was to *measure* the surface rather than estimate it.
+**#73 existed because the measurement aged faster than the decision.** ADR 0008 measured
+its surface across six roles on 2026-08-20; Orthanc (#69) landed a day later with 18 more
+variables, and was in none of the ADR's numbers - not the container names, not the deploy paths,
+not the volumes. **#73 is done (2026-08-21):** every row of the ADR's table was re-measured,
+and two of them were wrong for reasons that had nothing to do with Orthanc - the variable
+count missed every name containing a digit, and "variables with no default" was not a
+measurable category, since all of them have one (the empty string). A guarantee resting on
+a stale measurement is the exact failure ADR 0008 was written to avoid: its whole point was
+to *measure* the surface rather than estimate it.
 
-`monitoring_retention_days` remains the known removal candidate - an escape hatch that
-exists only so a variable name from an old documentation draft would not dangle. It is
-dead weight today and a permanent obligation after the tag.
+**#71 is done too, and it contradicted the ADR.** `monitoring_retention_days` was named
+there as the known removal candidate, "dead weight". It is not: both templates read it, the
+role page documents it twice, and `CONVENTIONS.md` uses it as the naming-convention example.
+It stays. The one variable nothing read was `monitoring_grafana_analytics_enabled` (#75,
+removed), leaving 146. What remains for #72 is the 30 variables documented nowhere.
