@@ -22,8 +22,10 @@ All variables are prefixed `monitoring_*` and have sensible defaults in
 | `monitoring_metrics_retention_days` | `90` | Prometheus retention |
 | `monitoring_logs_retention_days` | `30` | Loki retention - shorter than metrics, see the GDPR section below |
 | `monitoring_retention_days` | `~` (unset) | If set, overrides both retention values at once |
+| `monitoring_prometheus_retention_size` | `5GB` | Hard cap independent of time-based retention, so a spike in ingestion cannot fill the disk on its own. Whichever limit is reached first wins |
 | `monitoring_node_exporter_port` | `9100` | Must listen on all interfaces (see pitfalls), ufw blocks it from outside |
 | `monitoring_node_exporter_deny_external` | `true` | Explicit ufw allow (Docker bridge range) plus deny rule for the Node Exporter port |
+| `monitoring_node_exporter_textfile_dir` | `/var/lib/prometheus/node-exporter` | Where node_exporter reads textfile-collector metrics. The backup role writes its `.prom` file here via `backup_textfile_dir`; the two roles share no variable, so the values must agree or `BackupStale` never fires |
 | `monitoring_node_exporter_allow_from` | `"172.16.0.0/12"` | Docker's default address-pool range - the source Prometheus's own scrape appears to come from through the bridge gateway; without this allow rule ahead of the deny rule, the "node" target is DOWN on every fresh install (#40) |
 | `monitoring_alertmanager_smtp_smarthost` | `""` | Empty = no delivery (v0.1 behavior). Set = SMTP relay `host:port`, arms the stricter preflight |
 | `monitoring_alertmanager_smtp_from` | `""` | Required once the smarthost is set |
@@ -34,9 +36,14 @@ All variables are prefixed `monitoring_*` and have sensible defaults in
 | `monitoring_grafana_users` | `[]` | List of `{login, name, password, role}` - local Grafana accounts beyond the shared admin, see below |
 | `monitoring_grafana_oidc_client_id` | `""` | Empty = OIDC off. Setting it arms a preflight requiring `client_secret`/`auth_url`/`token_url`/`api_url` too |
 | `monitoring_grafana_oidc_allow_sign_up` | `false` | Whether a first-time OIDC login auto-creates a local Grafana account |
+| `monitoring_grafana_oidc_name` | `SSO` | Label on Grafana's login button - set it to what your users call the identity provider |
+| `monitoring_grafana_oidc_scopes` | `openid email profile` | The common denominator across AD, Entra and Keycloak. Only change it if your provider needs a different scope to return a name and an email |
+| `monitoring_grafana_reporting_enabled` | `false` | Grafana's phone-home. Off by default per CONVENTIONS.md's no-telemetry rule |
+| `monitoring_grafana_check_for_updates` | `false` | Grafana's update check, which is also a phone-home. Drives the plugin update check too |
 | `monitoring_scrape_bridgelink` | `false` | Adds the `bridgelink` scrape job - turn on together with `bridgelink_exporter_enabled`, see below |
 | `monitoring_metrics_network_name` | `linumed-base-metrics` | Docker network shared with exporters in other Compose stacks; Prometheus joins it |
 | `monitoring_bridgelink_exporter_target` | `linumed-base-bridgelink-exporter:9151` | Scrape target - a container name on that network, not a host port |
+| `monitoring_orthanc_target` | `linumed-base-orthanc:8042` | Scrape target for Orthanc's native metrics endpoint. The port is a literal here and is *not* derived from `orthanc_http_port` - changing that variable leaves this one pointing at the old port |
 
 ### Grafana users (issue #42)
 

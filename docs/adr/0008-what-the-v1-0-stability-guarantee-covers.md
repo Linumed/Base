@@ -25,7 +25,7 @@ the tag rather than after.
 
 | Surface | Size (2026-08-21, seven roles) | Was (2026-08-20, six roles) |
 |---|---|---|
-| Role variables in `defaults/main.yml` | **146** across seven roles | 125 across six |
+| Role variables in `defaults/main.yml` | **138** interface + 8 internal, seven roles | 125 across six, no split |
 | Container names (`linumed-base-*`) | **13** | 11 |
 | Shared Docker networks | 2 (`linumed-base-external`, `linumed-base-metrics`) | 2 |
 | Deploy paths | `/opt/linumed-base/{caddy,bridgelink,monitoring,`**`orthanc`**`}` | three of them |
@@ -109,7 +109,9 @@ called out under `### Breaking` in `CHANGELOG.md`:
    `bridgelink_bridgelink_db_data` and so on. This item was missing from the first version
    of this list and was found by the teardown test in #68, which is a second illustration
    of why the surface had to be measured rather than recalled.
-9. **The set of variables that have no default** - the six vault variables. Adding a
+9. **The set of variables that have no default** - the nine a plain run aborts without,
+   re-measured 2026-08-21 (#73); this said "the six vault variables" until then, against
+   this ADR's own table. Adding a
    seventh breaks every existing inventory, so it is a breaking change even though nothing
    was removed.
 
@@ -138,7 +140,7 @@ answered before release rather than regretted after.
 it stays. The mitigation is to fix such things *before* 1.0, which is the point of the
 next section.
 
-**146 variables is a large promise.** It is the honest size of the current surface, and
+**138 variables is a large promise.** It is the honest size of the current surface, and
 naming it is better than discovering it later. Whether every one of them deserves to be
 covered is a question for the pre-1.0 audit, not for this decision - the default is that
 they are covered, and taking one out requires saying so.
@@ -162,20 +164,21 @@ removal, not addition:
 
   The error is worth leaving visible rather than editing away: this ADR argued for
   measuring instead of estimating, and then estimated this one item from memory.
-- **Decide whether any variables are internal** rather than part of the interface (#72).
-  There is no visibility mechanism in Ansible, so this needs a naming convention or an
-  explicit list - and it has to exist before the freeze, not after. The audit narrowed the
-  question to the 30 variables documented nowhere, which split cleanly into implementation
-  details nobody should set (`*_uid`, `*_gid`, `*_db_name`, `*_db_user`, `*_deploy_dir`)
-  and real interface that is merely undocumented (the image pins, the Alertmanager
-  intervals, the backup retention counts). The second group is a documentation gap to close
-  before the freeze: undocumented *and* frozen is the worst of both.
+- ~~**Decide whether any variables are internal**~~ **Done (#72, 2026-08-21):**
+  [ADR 0010](0010-internal-versus-interface-variables.md). Eight are - the two `*_uid`/`*_gid`
+  pairs and the two `*_db_name`/`*_db_user` pairs - listed in `ansible/internal-variables.txt`
+  with a reason each. The promise is therefore 138 interface variables, not 146.
 
-  One rule falls out of this and is not written anywhere yet: for the 13 `*_image`
-  variables, **the value moves, the name does not**. This ADR already excludes pinned image
-  *versions* from the guarantee, and #67 exists to keep them moving - but the variable name
-  is how an operator points the kit at their own registry or mirror, and that must not
-  break in a minor release.
+  The premise this item was written on was wrong: Ansible *does* have a mechanism
+  (`vars/main.yml` outranks inventory `group_vars`, measured). It is deliberately not used,
+  because it enforces by discarding an operator's input in silence - the failure mode of
+  #44, #63 and #78. `scripts/check-variable-docs.py` enforces in CI instead, where it can be
+  loud, and also checks the cross-role literals that until now were held together by nothing
+  but a comment saying "must match".
+
+  The rule this item asked for is now stated: for the 13 `*_image` variables, **the value
+  moves, the name does not.**
+
 - ~~**Close the lifecycle questions (#68).**~~ **Done 2026-08-20.** Promising stability
   while being unable to say what happens at a Debian major upgrade is a promise about the
   wrong thing.

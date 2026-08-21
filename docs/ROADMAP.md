@@ -394,7 +394,8 @@ someone wrote down what it applies to.
 **That is now written down (#66, closed 2026-08-20):**
 [ADR 0008](adr/0008-what-the-v1-0-stability-guarantee-covers.md) names the covered surface,
 measured rather than estimated - and re-measured against seven roles on 2026-08-21 (#73):
-146 role variables, deploy paths, 13 container names, two shared networks, this kit's own
+138 interface role variables (plus eight internal, ADR 0010), deploy paths, 13 container
+names, two shared networks, this kit's own
 metric names, 16 alert rule names, four systemd units, the nine variables a plain run
 aborts without, and the Grafana dashboard and datasource UIDs that every operator-built
 panel references. It also names what is deliberately *not* covered: pinned
@@ -407,9 +408,9 @@ is not arbitrary:
 
 | | Issue |
 |---|---|
-| Audit the role variables for ones that should not be carried forever | #71 |
-| Decide which variables are internal rather than interface | #72 |
-| Re-measure ADR 0008's surface against seven roles, not six | #73 |
+| Audit the role variables for ones that should not be carried forever | #71, **done 2026-08-21** |
+| Decide which variables are internal rather than interface | #72, **done 2026-08-21** |
+| Re-measure ADR 0008's surface against seven roles, not six | #73, **done 2026-08-21** |
 | Tag and publish v1.0.0 | #74 |
 
 **#71 before #72**: the audit decides *whether* a variable survives, the visibility
@@ -430,4 +431,7 @@ to *measure* the surface rather than estimate it.
 there as the known removal candidate, "dead weight". It is not: both templates read it, the
 role page documents it twice, and `CONVENTIONS.md` uses it as the naming-convention example.
 It stays. The one variable nothing read was `monitoring_grafana_analytics_enabled` (#75,
-removed), leaving 146. What remains for #72 is the 30 variables documented nowhere.
+removed), leaving 146 defined. The "30 variables documented nowhere" figure from that audit
+was itself too high - the search behind it could not see collapsed table rows like
+`backup_retention_keep_daily/weekly/monthly`. Measured correctly during #72 it was 19, and
+they are now either documented or recorded as internal.

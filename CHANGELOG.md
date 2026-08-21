@@ -11,6 +11,55 @@ click away instead of restated here.
 
 ## [Unreleased]
 
+### Changed
+
+- **Eight role variables are recorded as implementation detail rather than interface, so
+  v1.0 promises 138 names instead of 146** (#72). The two `*_uid`/`*_gid` pairs are dictated
+  by the container images - a different value is the restart loop of #61 - and the two
+  `*_db_name`/`*_db_user` pairs address a PostgreSQL that runs inside its own Compose stack
+  with no host port, where a change on an existing host points the application at a database
+  without its data. They are listed in `ansible/internal-variables.txt` with the reason for
+  each.
+
+  Nothing was renamed, removed, or changed in behaviour, so this is not a breaking change.
+  Setting one of the eight still works exactly as before; what no longer applies is the
+  promise that the name survives to 2.0.
+
+  ADR 0010 has the reasoning,
+  including why the list is documented rather than enforced. Ansible could enforce it -
+  `vars/main.yml` outranks inventory `group_vars` - but it enforces by discarding an
+  operator's override in silence, which is the failure mode of #44, #63 and #78. The new
+  `scripts/check-variable-docs.py` enforces in CI instead, where a failure can name the
+  variable and the file.
+
+- **Eleven variables gained the documentation they should already have had**, found by that
+  same check: `backup_exclude`, `backup_restic_password_file`, `backup_textfile_dir`,
+  `monitoring_prometheus_retention_size`, `monitoring_node_exporter_textfile_dir`,
+  `monitoring_orthanc_target`, the two Grafana telemetry switches, the two OIDC display
+  variables, and `orthanc_metrics_network` - the third leg of a three-way constraint whose
+  other two legs were documented.
+
+### Added
+
+- **`scripts/check-variable-docs.py`, run on every push** (#72). Fails when a role variable
+  is neither documented under `docs/` nor recorded as internal, when a recorded name no
+  longer exists, or when an entry carries no reason.
+
+  It also compares the literals that must agree across roles. This kit has **no cross-role
+  variable reads at all** - every role declares `dependencies: []`, and Ansible scopes both
+  defaults and role vars per role - so each cross-role relationship is a value duplicated
+  into a second variable with a comment saying "must match". The three legs of
+  `linumed-base-metrics` and the two textfile directories are now compared rather than
+  trusted.
+
+### Fixed
+
+- **The pre-1.0 surface measurement in ADR 0008 said "the six vault variables" while its own
+  table said nine** (#73), and the audit figure of "30 undocumented variables" (#71) was too
+  high because the search behind it could not see collapsed documentation rows such as
+  `backup_retention_keep_daily/weekly/monthly`. Measured correctly it was 19. Both figures
+  are corrected where they appeared, including `ARCHITECTURE.md`.
+
 ## [0.4.0] - 2026-08-21
 
 The release that completes the service set named in `ARCHITECTURE.md`, and adds the

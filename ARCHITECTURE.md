@@ -420,7 +420,9 @@ future releases, not a milestone that arrives by itself.
 The scope of that promise is defined in
 [ADR 0008](https://github.com/Linumed/Base/blob/main/docs/adr/0008-what-the-v1-0-stability-guarantee-covers.md).
 The surface was measured, not estimated, and re-measured against all seven
-roles on 2026-08-21: 146 role variables, 13 container names, 16 alert rule
-names, four systemd units, nine variables a plain run aborts without, and
+roles on 2026-08-21: 138 interface role variables (plus eight recorded as
+internal in `ansible/internal-variables.txt`, see ADR 0010), 13 container
+names, 16 alert rule names, four systemd units, nine variables a plain run
+aborts without, and
 the Grafana dashboard and datasource UIDs that every operator-built panel
 references.

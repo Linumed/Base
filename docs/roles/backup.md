@@ -17,11 +17,14 @@ All variables are prefixed `backup_*` and live in
 | `backup_repository` | `""` (required) | restic repository URI, any backend restic supports |
 | `backup_restic_password` | `""` (required) | Encryption password - **without this password, all backups are unrecoverable, permanently** |
 | `backup_paths` | `/opt/linumed-base`, `/var/lib/docker/volumes` | What gets backed up |
+| `backup_exclude` | `[]` | restic `--exclude` patterns applied to `backup_paths` - use it for large regenerable data rather than narrowing `backup_paths` |
 | `backup_retention_keep_daily/weekly/monthly` | `7`/`4`/`6` | Retention after `restic forget` |
 | `backup_schedule` | `*-*-* 03:00:00` | systemd `OnCalendar` expression |
 | `backup_restore_test_enabled` | `true` | Deploys a weekly automated restore test (see below) |
 | `backup_restore_test_schedule` | `Sun *-*-* 04:00:00` | systemd `OnCalendar` expression for the restore test |
 | `backup_restore_test_diff_paths` | `/opt/linumed-base` | What gets diffed after a test restore - deliberately narrower than `backup_paths`, see below |
+| `backup_restic_password_file` | `/etc/restic/password` | Where the role writes the password (0600, root). Changing it also changes the manual restore procedure below, which names this path |
+| `backup_textfile_dir` | `/var/lib/prometheus/node-exporter` | Where the run drops its Prometheus metrics. Must equal `monitoring_node_exporter_textfile_dir` or the `BackupStale` alert never sees them - the two roles share no variable, only this value |
 
 Without `backup_repository` and `backup_restic_password`, the role aborts in its
 preflight. Both belong in Ansible Vault.
