@@ -1,6 +1,6 @@
 # ADR 0008: What the v1.0 stability guarantee covers
 
-**Status:** accepted · **Date:** 2026-08-20 · **Affects:** every role; `ARCHITECTURE.md`; `CONVENTIONS.md`; issue #66
+**Status:** accepted · **Date:** 2026-08-20, surface re-measured 2026-08-21 (#73) · **Affects:** every role; `ARCHITECTURE.md`; `CONVENTIONS.md`; issues #66, #71, #73
 
 ## The question answered here
 
@@ -18,20 +18,50 @@ cannot be quietly fixed later.
 
 ## Context
 
-The surface was measured rather than estimated (2026-08-20):
+The surface was measured rather than estimated. The figures below were re-measured on
+2026-08-21 (issue #73); the "was" column is the original 2026-08-20 measurement, kept
+because the size of the drift in one day is itself the argument for re-measuring before
+the tag rather than after.
 
-| Surface | Size |
-|---|---|
-| Role variables in `defaults/main.yml` | 125 across six roles |
-| Container names (`linumed-base-*`) | 11 |
-| Shared Docker networks | 2 (`linumed-base-external`, `linumed-base-metrics`) |
-| Deploy paths | `/opt/linumed-base/{caddy,bridgelink,monitoring}` |
-| Metrics from this kit's own exporters | `bridgelink_*`, `backup_*`, `restore_test_*` |
-| Alert rule names | 13 |
-| systemd units | 4 (`backup`, `restore-test`, each `.service` and `.timer`) |
-| Vault variables with no default | 6 |
-| Grafana dashboard and datasource UIDs | 3 dashboards, plus `prometheus` and `loki` |
-| Docker volume names | 9, project-derived rather than `linumed-base-*` |
+| Surface | Size (2026-08-21, seven roles) | Was (2026-08-20, six roles) |
+|---|---|---|
+| Role variables in `defaults/main.yml` | **146** across seven roles | 125 across six |
+| Container names (`linumed-base-*`) | **13** | 11 |
+| Shared Docker networks | 2 (`linumed-base-external`, `linumed-base-metrics`) | 2 |
+| Deploy paths | `/opt/linumed-base/{caddy,bridgelink,monitoring,`**`orthanc`**`}` | three of them |
+| Metrics from this kit's own exporters | `bridgelink_*`, `backup_*`, `restore_test_*` | unchanged |
+| Alert rule names | **16** | 13 |
+| systemd units | 4 (`backup`, `restore-test`, each `.service` and `.timer`) | 4 |
+| Variables a plain `site.yml` run aborts without | **9** | "6 with no default" |
+| Grafana dashboard and datasource UIDs | 3 dashboards, plus `prometheus` and `loki` | unchanged |
+| Docker volume names | **11**, project-derived rather than `linumed-base-*` | 9 |
+
+Three of those rows need a word beyond the number.
+
+**The variable count was never 125.** The pattern used to count them missed every name
+containing a digit, which is all seven `common_fail2ban_*` - so the 2026-08-20 figure was
+low for the six roles it claimed to cover, before Orthanc added 18 more. Correctly counted,
+those six roles held **129**, the seven held 147 when the audit ran, and **146** after #75
+removed the one variable nothing read. A measurement that is wrong in the same direction as
+the estimate it replaced is worth naming, because the point of measuring was to stop
+guessing.
+
+**Orthanc adds no metric names of this kit's own.** It serves
+`/tools/metrics-prometheus` natively, so the names on that endpoint are upstream's and
+change when Orthanc changes - this kit neither owns nor can promise them. What this kit
+does own are the three alert rules built on top (`OrthancDown`, `OrthancErrorRate`,
+`OrthancJobsStuck`), and those are in the count above. The distinction matters for anyone
+reading the "own exporters" row as "all metrics you will see".
+
+**"Vault variables with no default" was not a measurable category.** Every one of them has
+a default - the empty string, or `{}` for `orthanc_users`. What the row meant is the thing
+an operator actually feels: a plain `site.yml` run aborts in preflight without it. Measured
+that way it is nine (`backup_repository`, `backup_restic_password`, `bridgelink_db_password`,
+`bridgelink_keystore_keypass`, `bridgelink_keystore_storepass`, `bridgelink_server_id`,
+`monitoring_grafana_admin_password`, `orthanc_db_password`, `orthanc_users`). A further ten
+are asserted only once an opt-in switch arms them - the BridgeLink exporter, Alertmanager
+SMTP, Grafana OIDC - and are deliberately not counted here, because they cannot stop a
+default deployment.
 
 Not all of these are equally exposed. The distinguishing question is not "is it visible?"
 but **"can an operator have built something on it that silently stops working?"** Two
@@ -108,7 +138,7 @@ answered before release rather than regretted after.
 it stays. The mitigation is to fix such things *before* 1.0, which is the point of the
 next section.
 
-**125 variables is a large promise.** It is the honest size of the current surface, and
+**146 variables is a large promise.** It is the honest size of the current surface, and
 naming it is better than discovering it later. Whether every one of them deserves to be
 covered is a question for the pre-1.0 audit, not for this decision - the default is that
 they are covered, and taking one out requires saying so.
@@ -118,15 +148,37 @@ they are covered, and taking one out requires saying so.
 The guarantee freezes whatever exists at that moment, so the work before the tag is
 removal, not addition:
 
-- **Audit the 125 variables** for ones that should not be carried forever.
-  `monitoring_retention_days` is the known example: an escape hatch that exists only so
-  that a variable name from an earlier documentation draft would not point at nothing. It
-  is dead weight today and a permanent obligation after 1.0.
-- **Decide whether any variables are internal** rather than part of the interface. There is
-  no visibility mechanism in Ansible, so this needs a naming convention or an explicit list -
-  and it has to exist before the freeze, not after.
-- **Close the lifecycle questions (#68).** Promising stability while being unable to say
-  what happens at a Debian major upgrade is a promise about the wrong thing.
+- ~~**Audit the 125 variables**~~ **Done (#71, 2026-08-21).** Of the 147 variables the audit
+  measured, exactly one is read by nothing - `monitoring_grafana_analytics_enabled`, removed
+  in #75, leaving 146. There is no removal list beyond it.
+
+  **This ADR named `monitoring_retention_days` as the known example of dead weight, and
+  that was wrong.** The measurement contradicts it: the variable is read in both templates
+  that need it (`loki-config.yml.j2`, `docker-compose.yml.j2`), documented twice in
+  `docs/roles/monitoring.md` including the warning that it overrides *both* retention
+  values at once, and used by `CONVENTIONS.md` as the example of the naming convention. It
+  is a working, documented shortcut for the common case, not a dangling remnant. Removing
+  it would cost a breaking change and a documentation example to save one line. It stays.
+
+  The error is worth leaving visible rather than editing away: this ADR argued for
+  measuring instead of estimating, and then estimated this one item from memory.
+- **Decide whether any variables are internal** rather than part of the interface (#72).
+  There is no visibility mechanism in Ansible, so this needs a naming convention or an
+  explicit list - and it has to exist before the freeze, not after. The audit narrowed the
+  question to the 30 variables documented nowhere, which split cleanly into implementation
+  details nobody should set (`*_uid`, `*_gid`, `*_db_name`, `*_db_user`, `*_deploy_dir`)
+  and real interface that is merely undocumented (the image pins, the Alertmanager
+  intervals, the backup retention counts). The second group is a documentation gap to close
+  before the freeze: undocumented *and* frozen is the worst of both.
+
+  One rule falls out of this and is not written anywhere yet: for the 13 `*_image`
+  variables, **the value moves, the name does not**. This ADR already excludes pinned image
+  *versions* from the guarantee, and #67 exists to keep them moving - but the variable name
+  is how an operator points the kit at their own registry or mirror, and that must not
+  break in a minor release.
+- ~~**Close the lifecycle questions (#68).**~~ **Done 2026-08-20.** Promising stability
+  while being unable to say what happens at a Debian major upgrade is a promise about the
+  wrong thing.
 
 ## When to revisit this decision
 
