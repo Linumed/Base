@@ -18,13 +18,18 @@ Written 2026-08-14, after an audit of the repository against its own stated requ
 > mirror. See [CHANGELOG.md](changelog.md) for what shipped.
 >
 > **Update 2026-08-20: `v0.3.0` is tagged**, see Stage 5 below.
+>
+> **Update 2026-08-21: `v0.4.0` is tagged** and Stage 6 is complete, see below. What is
+> left before 1.0 is Stage 7, and it is now four issues rather than a paragraph.
 
 ## Where this actually stands
 
-**As of 2026-08-20, `v0.3.0`:** all six v0.1 roles are implemented, VM-tested and
-idempotent - `common`, `docker`, `caddy`, `monitoring`, `bridgelink`, `backup`. The
-repository is public, the documentation site is built and published from it, and there are
-no known defects. What *is* open is listed under
+**As of 2026-08-21, `v0.4.0`:** all seven roles are implemented, VM-tested and idempotent -
+`common`, `docker`, `caddy`, `monitoring`, `bridgelink`, `backup` and `orthanc`, the last
+service `ARCHITECTURE.md` names. The repository is public, the documentation site is built
+and published from it, and there are no known defects and no open defect issues. The only
+open issues are Stage 7's, and they are preparation for the 1.0 tag rather than work the
+kit is missing. What *is* open is listed under
 [What is still open](#what-is-still-open-and-why-it-was-not-built-earlier) further down,
 with the reason each item is open rather than only the fact that it is.
 
@@ -387,40 +392,28 @@ operator-built panel references. It also names what is deliberately *not* covere
 image versions have to keep moving, and #67 exists to make them move.
 
 What remains for v1.0 is therefore not definition but **removal**, because the tag freezes
-whatever exists at that moment:
+whatever exists at that moment. The lifecycle questions (#68), the third item ADR 0008
+named as a precondition, are closed since 2026-08-20. Three items remain, and their order
+is not arbitrary:
 
-- Audit the 125 variables for ones that should not be carried forever.
-  `monitoring_retention_days` is the known example - an escape hatch that exists only so a
-  variable name from an old documentation draft would not dangle.
-- Decide whether some variables are internal rather than interface. Ansible has no
-  visibility mechanism, so that needs a convention or an explicit list, and it has to exist
-  before the freeze.
-- Close the lifecycle questions (#68). Promising stability while being unable to say what
-  happens at a Debian major upgrade is a promise about the wrong thing.
+| | Issue |
+|---|---|
+| Audit the role variables for ones that should not be carried forever | #71 |
+| Decide which variables are internal rather than interface | #72 |
+| Re-measure ADR 0008's surface against seven roles, not six | #73 |
+| Tag and publish v1.0.0 | #74 |
 
-`ARCHITECTURE.md`'s v1.0 line used to also name "certification prep". That term appeared
-exactly once in the whole repository and was defined nowhere, so it was **removed on
-2026-08-20** rather than left standing: an undefined reference to certification in a public
-healthcare repository raises an expectation nobody has committed to. If a specific
-certification ever becomes a goal - ISO 27001, BSI-Grundschutz, KRITIS - it gets named,
-scoped and given its own issue.
+**#71 before #72**: the audit decides *whether* a variable survives, the visibility
+decision decides *what it survives as*. Doing them the other way round means classifying
+variables that are about to be deleted.
 
-## Deliberately not on this roadmap
+**#73 exists because the measurement aged faster than the decision.** ADR 0008 measured
+125 variables across six roles on 2026-08-20; Orthanc (#69) landed a day later with 18
+more, and is in none of the ADR's numbers - not the container names, not the deploy paths,
+not the volumes. Counted on 2026-08-21, the seven roles carry 140 variables. A guarantee
+resting on a stale measurement is the exact failure ADR 0008 was written to avoid: its
+whole point was to *measure* the surface rather than estimate it.
 
-- **v0.4 (Orthanc/DICOM)** - named in `ARCHITECTURE.md`, no work started, no issue yet.
-  Carried the number v0.3 until 2026-08-20, when that release turned out to be the rename
-  plus observability work instead.
-- **A bundled identity provider, a shared `linumed-net`, or a mesh-VPN role.** All three
-  evaluated and rejected on 2026-08-14, see
-  [ADR 0003](adr/0003-loopback-only-access-no-bundled-identity-provider.md). Connecting
-  Grafana to an *existing* provider via OIDC is in scope (#42); shipping
-  one is not.
-- **Application software** (HIS, DMS, document management). Out of scope by design.
-  Institutions bring their own applications; Linumed Base provides the secure base.
-- **Kubernetes.** Deliberately out of scope, with the reasoning recorded in
-  [ADR 0007](adr/0007-docker-compose-not-kubernetes.md) - including what it costs (no high
-  availability), the criterion it fails (the same one that removed SSO in ADR 0003: a
-  cluster is a subsystem the institution has to supply), and the conditions under which it
-  would be reopened. Note that `common`, `docker` and `backup` are runtime-agnostic, so a
-  Kubernetes shop can still use the node baseline.
-- **Bootable images, PXE.** Excluded by `CONVENTIONS.md`, not revisited here.
+`monitoring_retention_days` remains the known removal candidate - an escape hatch that
+exists only so a variable name from an old documentation draft would not dangle. It is
+dead weight today and a permanent obligation after the tag.
