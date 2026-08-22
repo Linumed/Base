@@ -130,7 +130,11 @@ click away instead of restated here.
   `node-baseline.yml` already ships. The weekly `diff -rq` then died under
   `set -euo pipefail`, and the trap still wrote `restore_test_success 0` with no way to
   tell "restore failed" from "there was nothing to diff". Caught at deploy time now, the
-  same way `backup_paths` already was.
+  same way `backup_paths` already was - and `node-baseline.yml` sets
+  `backup_restore_test_enabled: false` by default, because it has no way to know what
+  `backup_paths` will be on a given node and cannot pick a diff path that means anything.
+  The CI run for this exact combination went from silently green to loudly red the moment
+  the preflight above was added, which is what caught this before it shipped.
 
 - **Three statements in the public README and the deployment page had gone stale since
   Orthanc landed** (found while preparing #74). The "if you run Kubernetes" paragraph
