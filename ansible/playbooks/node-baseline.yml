@@ -30,6 +30,12 @@
 # answer on a node whose data lives in cluster volumes. The backup role refuses to deploy
 # if none of the configured paths exist, so a wrong value fails at deploy time rather than
 # at 03:00.
+#
+# `backup_restore_test_diff_paths` needs the same attention and is easy to miss: its
+# default (/opt/linumed-base) never exists here either, and until issue #86 a wrong value
+# there did NOT fail at deploy time - it failed silently, every week, forever
+# (restore_test_success 0 with no distinguishing alert). The backup role now catches this
+# the same way it catches backup_paths.
 - name: Linumed Base - node baseline (no service stacks)
   hosts: linumed
   roles:

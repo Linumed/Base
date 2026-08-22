@@ -158,6 +158,34 @@
 
 # Restore test (#36) - a backup that has never been restored is not a verified backup.
 # Same deploy/validate/enable shape as the backup script above, on its own weekly timer.
+# Same reasoning as the backup-paths check above, applied to the narrower set the restore
+# test diffs against: the default (/opt/linumed-base) never exists on a host that runs no
+# Compose role, and the script's `diff -rq` then dies under `set -euo pipefail` - the trap
+# still writes a metric, but it is restore_test_success 0, forever, with no alert
+# distinguishing "restore failed" from "there was nothing to diff" (issue #86 stage 1,
+# found on the one host shape this already ships: node-baseline.yml).
+- name: Check which of the restore-test diff paths exist
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  loop: "{{ backup_restore_test_diff_paths }}"
+  register: backup_restore_test_diff_path_stat
+  changed_when: false
+  become: true
+  when: backup_restore_test_enabled | bool
+
+- name: Preflight - abort if none of the restore-test diff paths exist
+  ansible.builtin.assert:
+    that:
+      - backup_restore_test_diff_path_stat.results | selectattr('stat.exists') | list | length > 0
+    fail_msg: >-
+      None of the paths in backup_restore_test_diff_paths exists on this host
+      ({{ backup_restore_test_diff_paths | join(', ') }}) - the weekly restore test would
+      report success forever without ever comparing anything. The default
+      (/opt/linumed-base) is this kit's own state; on a host with no Compose role, set
+      backup_restore_test_diff_paths to whatever backup_paths actually covers, or set
+      backup_restore_test_enabled: false.
+  when: backup_restore_test_enabled | bool
+
 - name: Deploy the restore-test script
   ansible.builtin.template:
     src: restore-test.sh.j2
