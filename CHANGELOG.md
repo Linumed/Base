@@ -11,6 +11,22 @@ click away instead of restated here.
 
 ## [Unreleased]
 
+### Added
+
+- **`scripts/select-roles.sh` picks a subset of the seven roles interactively** (issue
+  #87), rather than requiring an operator to hand-edit `linumed_base_roles` (#86) and
+  remember its one dependency rule. A `whiptail` checklist - the same toolkit Debian's own
+  installer uses, nothing on the network - shows the resulting YAML before writing it, and
+  offers `orthanc` only once `monitoring` is selected, since `orthanc_metrics_enabled`
+  defaults to true and orthanc alone fails `site.yml`'s own preflight otherwise.
+  `bridgelink` is deliberately not gated the same way: its exporter defaults to off, so
+  bridgelink alone is a normal, supported combination, and gating it too would make the
+  tool more restrictive than the kit actually is.
+
+  Re-running it replaces the previous selection in place rather than duplicating it, and
+  a `--non-interactive` mode (used by `test/select-roles-check.sh`, since `whiptail`
+  cannot be driven headlessly) makes the same logic usable from a script.
+
 ### Fixed
 
 - **`docs-site.yml` kept recreating the `docs-site-latest` release and tag on every doc

@@ -108,6 +108,46 @@ Entries in the accepted-findings file older than 90 days are reported, not faile
 re-check them rather than refreshing the date, because an ageing entry usually means an
 upstream has stopped rebuilding.
 
+## select-roles.sh
+
+Interactive role selection for `linumed_base_roles` (issue #86), so picking a subset of
+the seven roles doesn't mean hand-editing YAML and remembering the one dependency rule
+from memory.
+
+```bash
+./scripts/select-roles.sh --file inventory/myhospital/group_vars/linumed/vars.yml
+```
+
+`whiptail` - the same toolkit Debian's own installer uses. Runs on the control node
+before any playbook does; opens nothing on the network (see ADR 0003, which this does not
+conflict with for exactly that reason). Shows the resulting YAML before writing it - the
+tool's whole job is picking roles, not hiding what it did.
+
+**Scope, deliberately narrow:** writes `linumed_base_roles` and nothing else. It does not
+touch `hosts.yml`, any other setting in `vars.yml`, or `vault.yml` - the rest of onboarding
+stays the README's job.
+
+**`orthanc` is only offered once `monitoring` is selected** - not because of a rule this
+script invented, but because `orthanc_metrics_enabled` defaults to `true`
+(`ansible/roles/orthanc/defaults/main.yml`), so orthanc without monitoring fails `site.yml`'s
+own preflight the moment it is applied. Graying it out here means that failure is never
+reached. `bridgelink` is **not** gated the same way: its exporter defaults to *off*
+(`bridgelink_exporter_enabled`), so bridgelink alone is a normal, supported combination -
+gating it too would make the tool more restrictive than the kit actually is.
+
+Re-running it replaces the previous selection in place (between two `# BEGIN
+linumed_base_roles` / `# END` markers) rather than piling up duplicate blocks - safe to
+run again after changing your mind.
+
+```bash
+./scripts/select-roles.sh --file inventory/myhospital/group_vars/linumed/vars.yml \
+  --non-interactive "caddy monitoring orthanc backup"
+```
+
+`--non-interactive` skips the dialogs - what `test/select-roles-check.sh` uses (`whiptail`
+can't be driven headlessly), and usable by anyone scripting onboarding without a TTY.
+`common` and `docker` are always included and never listed here.
+
 ## test/vm-test-netinst.sh
 
 Not in this directory (lives under `test/`) but exercises `bootstrap.sh` end-to-end
