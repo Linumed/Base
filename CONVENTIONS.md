@@ -251,11 +251,14 @@ Four workflows under `.forgejo/workflows/`:
   needs its own pass, or it ships with no coverage at all.
 
 - `docs-site.yml` - re-renders the diagrams and fails if the committed SVGs are stale,
-  then builds the MkDocs handbook with `--strict` and publishes it as the
-  `docs-site-latest` release asset, which Website#5 pulls to host at `linumed.com/base/docs/`
-  (issue #55). Triggers on `docs/**`, `mkdocs.yml`, `README.md`, `ARCHITECTURE.md`,
-  `CHANGELOG.md`. It deliberately stops at publishing an artifact - putting the built HTML
-  on the website is a manual pull, because prod deploys are a manual gate.
+  then builds the MkDocs handbook with `--strict` and publishes it as a generic package
+  (`base-docs-site`, "latest" version), which Website#5 pulls to host at
+  `linumed.com/base/docs/` (issue #55). A moving Forgejo release tag did this job until
+  issue #85 - dropped because the push mirror copies git tags to the public GitHub repo,
+  and a build artifact's tag ended up in the public tag list pointing at nothing there.
+  Triggers on `docs/**`, `mkdocs.yml`, `README.md`, `ARCHITECTURE.md`, `CHANGELOG.md`. It
+  deliberately stops at publishing an artifact - putting the built HTML on the website is
+  a manual pull, because prod deploys are a manual gate.
 
   **The docs are a published artifact, not a byproduct.** The repository is public and the
   website is built from it, so a change without its documentation is a publicly visible

@@ -11,6 +11,16 @@ click away instead of restated here.
 
 ## [Unreleased]
 
+### Fixed
+
+- **`docs-site.yml` kept recreating the `docs-site-latest` release and tag on every doc
+  push, even after they were deleted as part of closing #85.** The step that created them
+  had no `if:` guard - it was unconditional, so the release/tag came right back on the
+  next push and reappeared in the public GitHub mirror's tag list next to `v1.0.0`. Now
+  that the package registry path is confirmed working (cc@prod switched and verified
+  independently), the release/tag creation is removed outright rather than gated - the
+  package path was always meant to replace it, not run alongside it indefinitely.
+
 ## [1.0.0] - 2026-08-22
 
 The tag ADR 0008 was written for: from here, a change to role variable names, deploy
