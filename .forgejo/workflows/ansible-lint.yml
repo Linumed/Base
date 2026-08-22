@@ -55,3 +55,10 @@ jobs:
           apt-get install -y -qq --no-install-recommends whiptail
           pip install --no-cache-dir --break-system-packages pyyaml
           ./test/select-roles-check.sh
+
+      # Same reasoning as the two checks above: pure filesystem, no host, no VM slot
+      # needed. Reuses check-variable-docs.py's own counting functions rather than
+      # re-deriving them, so the two checks cannot silently disagree about what "138
+      # interface variables" means.
+      - name: Registered numeric claims in prose match what the repository measures (issue #88)
+        run: ./scripts/check-numeric-claims.py
