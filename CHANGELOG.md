@@ -13,6 +13,17 @@ click away instead of restated here.
 
 ### Changed
 
+- **ADR 0003's "does it work after the playbook run" criterion now has three levels instead
+  of two.** As written it read as a yes-or-no test, and applied that way it rejects `caddy`
+  (serves nothing until `caddy_sites` is set), `bridgelink` (transports nothing without
+  channels) and `orthanc` (receives nothing until a modality is pointed at it) - which is
+  the wrong answer, because that is what infrastructure is.
+
+  The distinction that actually matters is **what is missing**: nothing, content the
+  operator supplies in the course of normal use, or another system somebody has to procure
+  and integrate. Only the third is what the ADR rejects. `CONVENTIONS.md` now asks the
+  question where a new role would be proposed.
+
 - **Eight role variables are recorded as implementation detail rather than interface, so
   v1.0 promises 138 names instead of 146** (#72). The two `*_uid`/`*_gid` pairs are dictated
   by the container images - a different value is the restart loop of #61 - and the two
