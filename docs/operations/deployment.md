@@ -63,12 +63,18 @@ without also carrying an integration engine and a monitoring stack. See
 [ADR 0007](../adr/0007-docker-compose-not-kubernetes.md) for why the service stacks stay
 Compose-only, and what that leaves usable for a Kubernetes site.
 
-**Set `backup_paths` and, if `backup_restore_test_enabled` stays on,
-`backup_restore_test_diff_paths`.** Both default to this kit's own state
-(`/opt/linumed-base`, `/var/lib/docker/volumes`), which is the wrong answer on a node whose
-data lives elsewhere. Both are checked at deploy time and abort rather than fail silently
-later - `backup_paths` at 03:00, `backup_restore_test_diff_paths` every week thereafter
-(issue #86) - but a value that is merely incomplete will not be caught for you.
+**Set `backup_paths`.** Its default covers this kit's own state (`/opt/linumed-base`,
+`/var/lib/docker/volumes`), which is the wrong answer on a node whose data lives
+elsewhere. Checked at deploy time and aborts rather than failing silently at 03:00 - but a
+value that is merely incomplete will not be caught for you.
+
+`node-baseline.yml` sets `backup_restore_test_enabled: false` by default, for the same
+reason: the playbook has no way to know what `backup_paths` will be set to, so it cannot
+pick a `backup_restore_test_diff_paths` that means anything, and testing a restore against
+nothing is worse than not testing it (issue #86). Once `backup_paths` names real data on
+this node, set `backup_restore_test_diff_paths` to match and turn
+`backup_restore_test_enabled` back on - otherwise a restic backup runs weekly with nothing
+ever confirming it can be restored.
 
 **Ansible tags are deliberately not the mechanism here.** They would live on the command
 line rather than in the inventory: an operator who deployed a subset and later runs plain

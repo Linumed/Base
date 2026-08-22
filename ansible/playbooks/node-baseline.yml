@@ -30,7 +30,15 @@
 # default (/opt/linumed-base) never exists here either, and until issue #86 a wrong value
 # there did NOT fail at deploy time - it failed silently, every week, forever
 # (restore_test_success 0 with no distinguishing alert). The backup role now catches this
-# the same way it catches backup_paths.
+# the same way it catches backup_paths - which means this playbook has to make a choice
+# about the restore test by default, not just warn about it.
+#
+# The restore test defaults OFF here. This playbook has no idea what backup_paths will
+# be set to on a given node, so it cannot pick a diff path that means anything - and
+# testing a restore against nothing is worse than not testing it, per the same reasoning
+# already applied to backup_paths itself. Once the operator sets backup_paths and
+# backup_restore_test_diff_paths for the data that actually lives on this node, turn
+# backup_restore_test_enabled back on.
 - name: Linumed Base - node baseline (no service stacks)
   import_playbook: site.yml
   vars:
@@ -38,3 +46,4 @@
       - common
       - docker
       - backup
+    backup_restore_test_enabled: false
