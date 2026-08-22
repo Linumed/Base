@@ -5,25 +5,20 @@
 # encrypted snapshots. None of the three deploys a Compose stack, and none depends on
 # another role being present - verified by counting rather than assuming: the Compose
 # stacks are `caddy`, `monitoring`, `bridgelink` and `orthanc`, and none of those three is
-# among them. (This said "only caddy, monitoring and bridgelink" until 2026-08-22, which
-# stopped being true when the orthanc role landed in v0.4.0 - the count was right when it
-# was written and nothing re-counted it.)
+# among them.
 #
 # Who this is for:
 #
 #   * A site running Kubernetes. Kubernetes is deliberately out of scope for the service
 #     stacks (ADR 0007) - but a cluster still runs on Debian nodes, and those nodes still
-#     need SSH hardening, a firewall, automatic security updates and backups. Until this
-#     playbook existed, the README told those readers half the kit was theirs while
-#     offering no way to deploy it.
+#     need SSH hardening, a firewall, automatic security updates and backups.
 #   * Anyone who wants the hardening on an existing server without also placing an
 #     integration engine and a monitoring stack on it.
 #
-# This is NOT a way to install the roles one at a time in general. The service roles are
-# not independently deployable - the BridgeLink exporter joins a Docker network the
-# monitoring role creates (#64) - and no task in this repository carries an Ansible tag,
-# so `--tags` selects nothing. These three are the exception, and they are the exception
-# because it was tested, not because it seems plausible.
+# Since issue #86 this is a thin wrapper around site.yml's linumed_base_roles selection,
+# not a hand-maintained second role list. It used to be the latter, and that drifted for
+# four months without anyone noticing when the orthanc role landed - the same failure
+# shape this file now exists to rule out for every other combination too.
 #
 # `backup_paths` almost certainly needs setting for this use. Its default covers this
 # kit's own state (`/opt/linumed-base`, `/var/lib/docker/volumes`), which is the wrong
@@ -37,8 +32,9 @@
 # (restore_test_success 0 with no distinguishing alert). The backup role now catches this
 # the same way it catches backup_paths.
 - name: Linumed Base - node baseline (no service stacks)
-  hosts: linumed
-  roles:
-    - common
-    - docker
-    - backup
+  import_playbook: site.yml
+  vars:
+    linumed_base_roles:
+      - common
+      - docker
+      - backup

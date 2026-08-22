@@ -43,6 +43,8 @@ source "${REPO_ROOT}/test/lib/node-baseline-check.sh"
 source "${REPO_ROOT}/test/lib/orthanc-check.sh"
 # shellcheck source=lib/orthanc-scrape-check.sh
 source "${REPO_ROOT}/test/lib/orthanc-scrape-check.sh"
+# shellcheck source=lib/role-selection-check.sh
+source "${REPO_ROOT}/test/lib/role-selection-check.sh"
 # shellcheck source=lib/teardown-check.sh
 source "${REPO_ROOT}/test/lib/teardown-check.sh"
 
@@ -132,7 +134,15 @@ ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i "${SSH_KEY}" 
 write_test_inventory
 run_node_baseline_check
 
+# Needs the clean, common+docker+backup-only state node-baseline just produced - see
+# role-selection-check.sh's header for why the host state matters here.
+run_role_selection_dependency_check
+
 run_site_idempotency_check
+
+# Needs the opposite state: the full stack that just deployed, so the residue this
+# detects (orthanc's deploy directory) is real rather than staged.
+run_role_selection_residue_check
 
 # Runs after site.yml, not instead of it: it needs the Docker the docker role installs,
 # and it deliberately reuses this already-provisioned throwaway VM rather than exposing a
