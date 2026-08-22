@@ -57,11 +57,9 @@ linumed-base/
 │   │   ├── caddy/           # Reverse proxy with automatic TLS
 │   │   └── backup/          # restic-based backup (local + optional S3)
 │   ├── playbooks/
-│   │   ├── site.yml         # Full stack deployment
-│   │   └── node-baseline.yml # common + docker + backup only, for hosts that run
-│   │                        # something else on top (#70). No other per-role playbook
-│   │                        # exists, and no task carries an Ansible tag, so --tags
-│   │                        # selects nothing; see the note below.
+│   │   ├── site.yml         # Full stack; linumed_base_roles selects a subset (#86)
+│   │   └── node-baseline.yml # thin wrapper: common + docker + backup only, for hosts
+│   │                        # that run something else on top (#70)
 │   └── inventory/
 │       └── example/         # Example inventory, never real hosts
 ├── docker/                  # Docker Compose files per service
@@ -96,11 +94,18 @@ linumed-base/
   says why they are a documented list rather than an enforced one.
   `scripts/check-variable-docs.py` fails if a variable is neither documented under `docs/`
   nor on that list, so a new one cannot arrive unclassified.
-- **Two playbooks, and the second is a deliberate exception.** `site.yml` deploys
-  everything. `node-baseline.yml` deploys only `common`, `docker` and `backup` - the roles
-  that ship no Compose stack and depend on no other role (issue #70). Everything else is
-  *not* independently deployable: the bridgelink exporter joins a Docker network the
-  monitoring role creates, and no task carries an Ansible tag, so `--tags` selects nothing.
+- **One playbook, and a variable that selects a subset.** `site.yml` runs every role by
+  default; `linumed_base_roles` in the inventory can name a subset (issue #86). It is a
+  play variable, not a role variable - it never appears in a role's `defaults/main.yml`,
+  so it adds nothing to the frozen surface ADR 0008 measures and
+  `scripts/check-variable-docs.py` does not need to know about it. Deselecting a role that
+  has already run on the host is refused, not undone - `site.yml`'s `pre_tasks` check for
+  its residue and point at `docs/operations/teardown.md`; there is no automated removal.
+  Ansible tags are deliberately not the mechanism: the selection would then live on the
+  command line, and a later plain `site.yml` run would silently redeploy everything.
+  `node-baseline.yml` (`common`, `docker`, `backup` - the roles that ship no Compose stack
+  and depend on no other role, issue #70) is a thin wrapper around this, kept as its own
+  playbook because it targets a named audience, not because it is a different mechanism.
   Anything that assumes a role can run alone on a fresh host has to say so **and be tested
   that way** - `node-baseline.yml` is applied to the pristine VM on every relevant push,
   checked for idempotency, and checked for effect rather than exit code.

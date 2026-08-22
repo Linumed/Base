@@ -88,7 +88,49 @@ click away instead of restated here.
   `vars/` alike. The three legs of `linumed-base-metrics` and the two textfile directories
   are now compared rather than trusted.
 
+- **`linumed_base_roles` selects a subset of the seven roles to deploy** (#86). Defaults
+  to all seven; an operator can, for example, deploy everything except `orthanc` on a site
+  with no imaging. It is a play variable in `site.yml`, not a role variable - it never
+  appears in a role's `defaults/main.yml`, so it adds nothing to the surface ADR 0008
+  measures.
+
+  Ansible tags were considered and rejected: the selection would then live on the command
+  line, and an operator who deployed a subset and later ran plain `site.yml` would
+  silently get the full stack back, with no record anywhere of what the host was meant to
+  be. A list in the inventory keeps that record where the rest of the host's configuration
+  already lives, and a typo in it aborts the run instead of being silently ignored.
+
+  Three preflights in `site.yml`'s `pre_tasks` guard the selection: an unknown role name,
+  a missing dependency (`docker` for any Compose role, `common` for `monitoring` unless its
+  ufw deny rule is off, `monitoring` for `orthanc`/`bridgelink` with their metrics switches
+  on), and - deliberately - a role that is *not* selected but has already run on this
+  host. The last one refuses rather than removes: `docs/operations/teardown.md` argues at
+  length why automated removal on a production host would be guesswork, and this respects
+  that rather than reinventing it. The check probes exactly what that page's own removal
+  procedure deletes, so following it never trips a false alarm.
+
+  `node-baseline.yml` is now a thin wrapper setting `linumed_base_roles: [common, docker,
+  backup]` and importing `site.yml`, rather than a hand-maintained second role list - the
+  previous form had already drifted once, silently, for four months, when the `orthanc`
+  role landed and nobody updated the duplicate.
+
 ### Fixed
+
+- **`orthanc` and `bridgelink` used to fail on a missing metrics network with Compose's
+  raw error instead of a clear one** (#86). `docker compose config` does not resolve
+  `external: true` networks, so a host with `orthanc_metrics_enabled` or
+  `bridgelink_exporter_enabled` on but no `monitoring` role failed deep inside
+  `docker_compose_v2` with "network declared as external, but could not be found". Both
+  roles now check for the network themselves, after monitoring would have run in the same
+  play, and name the actual problem.
+
+- **A host with no Compose role got a restore test that reported success forever without
+  comparing anything** (#86). `backup_restore_test_diff_paths` defaults to
+  `/opt/linumed-base`, which never exists on such a host - exactly the shape
+  `node-baseline.yml` already ships. The weekly `diff -rq` then died under
+  `set -euo pipefail`, and the trap still wrote `restore_test_success 0` with no way to
+  tell "restore failed" from "there was nothing to diff". Caught at deploy time now, the
+  same way `backup_paths` already was.
 
 - **Three statements in the public README and the deployment page had gone stale since
   Orthanc landed** (found while preparing #74). The "if you run Kubernetes" paragraph

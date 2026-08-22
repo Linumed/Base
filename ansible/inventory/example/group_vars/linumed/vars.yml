@@ -9,6 +9,21 @@
 # common_ssh_port: 22
 # common_ssh_allow_users: []
 
+# --- Which roles this host runs (issue #86) ---
+#
+# Uncomment to deploy a subset. Defaults to all seven if left unset - see
+# playbooks/site.yml. A misspelled name aborts the run rather than silently deploying
+# the full stack anyway.
+#
+# linumed_base_roles:
+#   - common
+#   - docker
+#   - caddy
+#   - monitoring
+#   - bridgelink
+#   # - orthanc      # e.g. omit on a site with no imaging
+#   - backup
+
 # --- Required, no role default (site.yml aborts without these) ---
 
 # backup role (ansible/roles/backup): any restic-compatible backend - local path, sftp,
