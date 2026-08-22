@@ -40,8 +40,12 @@ permissions:
 jobs:
   docs-site:
     runs-on: docker
-    env:
-      # The artifact is moving to the generic package registry (issue #85): a release needs
+    # NOTE: the secret is mapped to env at *step* level below, not here. A job-level
+    # `env:` fed from `secrets.` did not resolve on this Forgejo/act_runner (measured
+    # 2026-08-22: the guard step reported the secret as unset while it was present in the
+    # repository). Step-level env plus GITHUB_ENV is the form that works.
+    #
+    # The artifact is moving to the generic package registry (issue #85): a release needs
       # a git tag, and the push mirror copies every tag to the public GitHub repository, so
       # a build artifact ended up in the tag list next to v0.4.0 - with a `docs-site-latest`
       # tag that resolves to nothing there, because the mirror carries tags but not release
@@ -52,7 +56,6 @@ jobs:
       # (`reqPackageAccess`), so the scope is not grantable from the workflow. The secret is
       # a Forgejo token with `write:package`, created and installed by a human - nothing in
       # this repository should mint or print it.
-      PACKAGE_TOKEN: ${{ secrets.PACKAGE_TOKEN }}
     steps:
       - uses: actions/checkout@v4
 
@@ -107,7 +110,12 @@ jobs:
       # is how a half-finished migration survives unnoticed - the same failure mode as
       # #62, where a default-off switch meant a feature shipped with no coverage at all.
       - name: Report whether the package path is active
+        env:
+          PACKAGE_TOKEN: ${{ secrets.PACKAGE_TOKEN }}
         run: |
+          if [ -n "${PACKAGE_TOKEN}" ]; then
+            echo "package_active=true" >> "$GITHUB_ENV"
+          fi
           if [ -z "${PACKAGE_TOKEN}" ]; then
             echo "PACKAGE_TOKEN is not set - publishing to the release only."
             echo "The package registry needs a Forgejo token with write:package as a repo"
@@ -124,9 +132,9 @@ jobs:
       # The registry rejects a re-upload of the same version+filename, so the version is
       # deleted first. A 404 there is the expected answer on the very first run.
       - name: Publish the artifact as a generic package
-        if: env.PACKAGE_TOKEN != ''
+        if: env.package_active == 'true'
         env:
-          GITEA_TOKEN: ${{ env.PACKAGE_TOKEN }}
+          GITEA_TOKEN: ${{ secrets.PACKAGE_TOKEN }}
         run: |
           PKG="${{ github.server_url }}/api/packages/${{ github.repository_owner }}/generic/base-docs-site/latest"
           curl -s -X DELETE -H "Authorization: token ${GITEA_TOKEN}" "${PKG}" || true
@@ -142,9 +150,9 @@ jobs:
       # Same reasoning as the tag assertion below: publishing is not the same as being
       # fetchable, and this repository has shipped that difference before (#78).
       - name: Assert the package is fetchable and matches what was built
-        if: env.PACKAGE_TOKEN != ''
+        if: env.package_active == 'true'
         env:
-          GITEA_TOKEN: ${{ env.PACKAGE_TOKEN }}
+          GITEA_TOKEN: ${{ secrets.PACKAGE_TOKEN }}
         run: |
           PKG="${{ github.server_url }}/api/packages/${{ github.repository_owner }}/generic/base-docs-site/latest"
           curl -fsSL -H "Authorization: token ${GITEA_TOKEN}" "${PKG}/base-docs-site.tar.gz" -o fetched.tar.gz
