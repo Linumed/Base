@@ -15,9 +15,14 @@
 # To edit an already-encrypted file: `ansible-vault edit vault.yml` (never open it in a
 # plain text editor - that writes the decrypted content back to disk on save).
 #
-# These six are the variables with no role default - site.yml's preflights abort
-# without them. Everything else that's merely configuration, not a secret (e.g.
-# backup_repository), lives in vars.yml instead.
+# Ten variables below, of which nine abort a plain site.yml run outright (measured in
+# ADR 0008; this comment said "these six" until 2026-08-22 and undercounted even then -
+# see #73). The tenth pair, monitoring_orthanc_user/_password, is required only once
+# monitoring_scrape_orthanc is turned on. Everything else that's merely configuration,
+# not a secret (e.g. backup_repository), lives in vars.yml instead.
+#
+# If a role never runs on this host - see linumed_base_roles in vars.yml - its secrets
+# below are simply never asked for; nothing here needs conditioning on the selection.
 
 # monitoring role: Grafana admin login. The role refuses to deploy without this set -
 # same reasoning as every other value here, never "admin/admin" even for a first look.
