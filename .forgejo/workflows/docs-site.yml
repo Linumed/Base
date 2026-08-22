@@ -109,20 +109,6 @@ jobs:
       # Says out loud when the package path is inactive. A step that quietly does nothing
       # is how a half-finished migration survives unnoticed - the same failure mode as
       # #62, where a default-off switch meant a feature shipped with no coverage at all.
-      # Temporary diagnostic (issue #85): the guard below reported the secret as unset
-      # while it was present in the repository, first with a job-level env mapping and then
-      # with a step-level one. Prints lengths only - never a value - and distinguishes the
-      # two things a Forgejo repository can hold under the same name: an Actions *secret*
-      # and an Actions *variable*. Removed once the cause is known.
-      - name: Diagnose where the token actually is
-        env:
-          FROM_SECRET: ${{ secrets.PACKAGE_TOKEN }}
-          FROM_VARIABLE: ${{ vars.PACKAGE_TOKEN }}
-        run: |
-          echo "secrets.PACKAGE_TOKEN  length: ${#FROM_SECRET}"
-          echo "vars.PACKAGE_TOKEN     length: ${#FROM_VARIABLE}"
-          echo "expression secrets.PACKAGE_TOKEN != '' -> ${{ secrets.PACKAGE_TOKEN != '' }}"
-
       - name: Report whether the package path is active
         env:
           PACKAGE_TOKEN: ${{ secrets.PACKAGE_TOKEN }}
