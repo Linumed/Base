@@ -412,10 +412,10 @@ under `### Breaking` in `CHANGELOG.md` - v0.2.0 moved the Caddyfile,
 v0.3.0 renamed every identifier and moved Prometheus's configuration
 into its own directory.
 
-What `v1.0` is meant to signal is precisely the arrival of that
-guarantee: from then on a breaking change requires a major version bump.
-It is not a quality label, and reaching it is a deliberate promise about
-future releases, not a milestone that arrives by itself.
+**`v1.0.0` is tagged (2026-08-22).** From here a breaking change requires a major
+version bump. It was not a quality label to reach and did not arrive by itself - it is a
+deliberate promise about future releases, made only once the surface it covers had been
+measured and, where it should not have been frozen, narrowed (ADR 0010).
 
 The scope of that promise is defined in
 [ADR 0008](https://github.com/Linumed/Base/blob/main/docs/adr/0008-what-the-v1-0-stability-guarantee-covers.md).
