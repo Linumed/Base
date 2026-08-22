@@ -511,8 +511,8 @@ restores.
   tested. `grafana/loki` remains the single genuine exception (#38).
 - **Smoke test for the `docker/` references**, which previously had no coverage of any
   kind (#46, #48).
-- **`SECURITY.md`** - private reporting channel, realistic response times for a
-  one-person project, and an explicit scope boundary against upstream software (#47).
+- **`SECURITY.md`** - private reporting channel, realistic response times, and an
+  explicit scope boundary against upstream software (#47).
 - **MkDocs documentation site** (Material theme) with a cross-role operations handbook
   under `docs/operations/` (#26).
 - **Optional Docker Hub pull-through cache** (`docker_registry_mirrors`) for test runs

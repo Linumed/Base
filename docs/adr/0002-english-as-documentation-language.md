@@ -48,7 +48,7 @@ be a substantial document to write twice. Deferring the decision is the most exp
 option, not the cheapest.
 
 **Bilingual, German and English side by side.** Serves both audiences. Rejected: two
-copies of every document drift, and this project is maintained by one person. The repo
+copies of every document drift, and the budget to keep both honest does not exist. The repo
 already demonstrates what happens - the `CONVENTIONS.md` language rule itself drifted from
 reality without anyone noticing. Doubling the surface makes that worse, not better.
 
