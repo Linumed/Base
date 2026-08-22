@@ -44,3 +44,14 @@ jobs:
       # error, not as a variable this script cannot parse.
       - name: Every variable is documented or recorded as internal (ADR 0010)
         run: ./scripts/check-variable-docs.py
+
+      # select-roles.sh (issue #87) never touches a host, only the local filesystem - no
+      # reason to wait for vm-test.yml's one runner slot for this. Needs python3 (already
+      # installed above, for PyYAML's stdlib-free load isn't available, so pip install it)
+      # and whiptail for --help/argument parsing, though the tested path is
+      # --non-interactive and never opens a dialog.
+      - name: scripts/select-roles.sh behaves correctly (issue #87)
+        run: |
+          apt-get install -y -qq --no-install-recommends whiptail
+          pip install --no-cache-dir --break-system-packages pyyaml
+          ./test/select-roles-check.sh

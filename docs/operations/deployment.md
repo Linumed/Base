@@ -40,8 +40,13 @@ Each step depends on the one before it:
 ### Deploying a subset of roles
 
 Set `linumed_base_roles` in the inventory to deploy less than the full stack (issue #86) -
-for example everything except `orthanc` on a site with no imaging. Commented example in
-`group_vars/linumed/vars.yml`. `site.yml` is still the one playbook to run; a preflight
+for example everything except `orthanc` on a site with no imaging. Either edit the
+commented example in `group_vars/linumed/vars.yml` by hand, or run
+`scripts/select-roles.sh` against that file (issue #87) - a `whiptail` picker that shows
+the resulting YAML before writing it and grays out `orthanc` unless `monitoring` is also
+selected, rather than letting an invalid combination reach the preflight below at all.
+See `scripts/README.md` for the full usage. `site.yml` is still the one playbook to run; a
+preflight
 aborts with a clear message if the selection names an unknown role, omits a role another
 selected one needs (`docker` for any Compose role, `common` for `monitoring` unless
 `monitoring_node_exporter_deny_external` is off, `monitoring` for `orthanc`/`bridgelink`
