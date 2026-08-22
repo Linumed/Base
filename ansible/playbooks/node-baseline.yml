@@ -3,8 +3,11 @@
 #
 # `common` hardens the host, `docker` installs the container runtime, `backup` takes
 # encrypted snapshots. None of the three deploys a Compose stack, and none depends on
-# another role being present - verified by counting rather than assuming: only `caddy`,
-# `monitoring` and `bridgelink` ship a docker-compose.yml.j2.
+# another role being present - verified by counting rather than assuming: the Compose
+# stacks are `caddy`, `monitoring`, `bridgelink` and `orthanc`, and none of those three is
+# among them. (This said "only caddy, monitoring and bridgelink" until 2026-08-22, which
+# stopped being true when the orthanc role landed in v0.4.0 - the count was right when it
+# was written and nothing re-counted it.)
 #
 # Who this is for:
 #
