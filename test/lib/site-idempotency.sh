@@ -107,7 +107,11 @@ run_site_idempotency_check() {
     cd "${REPO_ROOT}/ansible"
 
     echo "==> First run"
-    ansible-playbook -i "${inventory}" playbooks/site.yml
+    # Also written to a file, not just streamed: run_upgrade_from_previous_tag (issue
+    # #89) needs the changed-task count from exactly this run when the VM was seeded
+    # with a previous release first, and re-parsing terminal output after the fact isn't
+    # reliable. Harmless for the netinst caller, which never reads this file.
+    ansible-playbook -i "${inventory}" playbooks/site.yml | tee "${WORK_DIR}/site-first-run.log"
 
     echo "==> Second run (must report changed=0)"
     output="$(ansible-playbook -i "${inventory}" playbooks/site.yml)"
