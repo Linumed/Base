@@ -54,7 +54,12 @@ jobs:
     env:
       TMPDIR: /srv/data/ci-vm-workdir
     steps:
+      # fetch-depth: 0 (full history, all tags) - the default shallow clone has none of
+      # the tags run_upgrade_from_previous_tag needs to check out the prior release
+      # (test/lib/upgrade-check.sh, issue #89).
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       # Client tools only (libvirt-clients, not libvirt-daemon-system) - this container
       # never starts its own libvirtd, see above. Ansible pinned to match

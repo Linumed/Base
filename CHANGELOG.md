@@ -13,6 +13,25 @@ click away instead of restated here.
 
 ### Added
 
+- **A documented, tested upgrade path** (issue #89). Until now "pull the new version, run
+  `site.yml` again" was a plausible answer nobody had actually tried across a version
+  boundary - idempotency within one version and idempotency across an upgrade are
+  different claims. Measured by hand for the first time this kit has ever been upgraded
+  (`v0.4.0` → `v1.0.0`): two changed tasks, both explained by issue #80's
+  `orthanc_http_port` template change, nothing else moved, and the second apply was
+  `changed=0`. Written up in
+  [docs/operations/upgrading.md](operations/upgrading.md) with that result as a
+  worked example.
+
+  `test/lib/upgrade-check.sh` keeps this true going forward: on every relevant push, the
+  CI VM is deployed with the previous tagged release first (reusing the VM
+  `test/vm-test.sh` already provisions rather than starting a second one), then upgraded
+  to the commit under test, with the changed-task count reported explicitly. The tag it
+  upgrades from is a fixed literal, bumped by hand when preparing each release -
+  deliberately not auto-detected, for the same reason coupled literals elsewhere in this
+  kit are compared rather than inferred (ADR 0010).
+
+
 - **`scripts/select-roles.sh` picks a subset of the seven roles interactively** (issue
   #87), rather than requiring an operator to hand-edit `linumed_base_roles` (#86) and
   remember its one dependency rule. A `whiptail` checklist - the same toolkit Debian's own

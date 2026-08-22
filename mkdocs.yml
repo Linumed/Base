@@ -57,6 +57,7 @@ nav:
       - Deployment: operations/deployment.md
       - Access: operations/access.md
       - Updates: operations/updates.md
+      - Upgrading: operations/upgrading.md
       - Backup & Restore: operations/backup-restore.md
       - Teardown: operations/teardown.md
       - Troubleshooting: operations/troubleshooting.md

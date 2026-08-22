@@ -33,6 +33,8 @@ ANSIBLE_USER="vmtest"
 
 # shellcheck source=lib/site-idempotency.sh
 source "${REPO_ROOT}/test/lib/site-idempotency.sh"
+# shellcheck source=lib/upgrade-check.sh
+source "${REPO_ROOT}/test/lib/upgrade-check.sh"
 # shellcheck source=lib/docker-reference-smoke.sh
 source "${REPO_ROOT}/test/lib/docker-reference-smoke.sh"
 # shellcheck source=lib/bridgelink-exporter-check.sh
@@ -138,7 +140,14 @@ run_node_baseline_check
 # role-selection-check.sh's header for why the host state matters here.
 run_role_selection_dependency_check
 
+# Deploys the previous release's full stack onto this same VM before main ever touches
+# it, so run_site_idempotency_check's own "First run" right below is not a fresh install
+# but a real upgrade (issue #89) - see upgrade-check.sh's header for why that distinction
+# needed measuring rather than assuming.
+run_upgrade_from_previous_tag
+
 run_site_idempotency_check
+report_upgrade_changed_count
 
 # Needs the opposite state: the full stack that just deployed, so the residue this
 # detects (orthanc's deploy directory) is real rather than staged.
