@@ -26,9 +26,8 @@ Reports in German or English are equally welcome.
 
 ## What to expect
 
-Linumed is a one-person operation. The numbers below are what a single maintainer can
-actually honour, not a service-level agreement, and there is no paid support tier that
-changes them:
+The numbers below are what this project can actually honour, not a service-level
+agreement, and there is no paid support tier that changes them:
 
 - **Acknowledgement of receipt within 7 days.** If you have heard nothing after that,
   assume the mail did not arrive and follow up.

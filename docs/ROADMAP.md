@@ -314,7 +314,7 @@ all four report `healthy`, not just `running`.
 narrowed the convention rather than completing it. `backup` was never a gap: it installs
 `restic` natively via `apt`, there's no Compose stack there to mirror. `monitoring`'s
 seven containers and multiple secrets would have cost real, recurring maintenance for a
-reference whose only job is manual smoke-testing - not worth it for a single maintainer.
+reference whose only job is manual smoke-testing - not worth the recurring cost.
 Checked rather than assumed before deciding: the two existing references
 (`docker/caddy/`, `docker/bridgelink/`) had not actually drifted from their Ansible
 templates despite the issue's concern.
@@ -341,9 +341,9 @@ instead of a normal release.
 
 **2. It only becomes visible once someone else operates it.** The lifecycle questions
 (#68, closed 2026-08-20) - what happens at a Debian major upgrade, how to remove the kit again, whether it
-assumes a single host - are invisible while the author is the only operator, because the
-author knows the answers without writing them down. They are also the questions that
-decide whether an evaluator tries the kit at all.
+assumes a single host - stay invisible as long as the only people running the kit are the
+people who built it, because they know the answers without writing them down. They are
+also the questions that decide whether an evaluator tries the kit at all.
 
 **3. It was an accepted responsibility with no mechanism behind it.** Container image
 scanning (#67, closed 2026-08-20) was the uncomfortable one. `SECURITY.md` lists "pinned image versions with

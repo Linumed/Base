@@ -111,9 +111,9 @@ that always applied to them: pinned image tags, named volumes, health checks,
 - **A future role is simple enough** (few secrets, little cross-service wiring) that a
   `docker/<role>/` reference would cost little to add and maintain - add one then, on
   that role's own merits, not because of a blanket rule.
-- **The project stops being solo-maintained.** The maintenance-cost argument in this ADR
-  is explicitly about a single maintainer's time; a team might reasonably decide the
-  completeness guarantee is worth the recurring cost.
+- **The maintenance capacity behind the project grows.** The cost argument in this ADR is
+  explicitly about recurring upkeep, not about difficulty; with more capacity the
+  completeness guarantee may well be worth that cost.
 
 ## What this decision cost, one day later (2026-08-17)
 

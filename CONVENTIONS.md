@@ -117,8 +117,8 @@ linumed-base/
   contractual mirror. It is **not required for every role** - see
   `docs/adr/0005-docker-directory-is-a-manual-testing-reference-not-a-mirror.md` for why
   (`backup` has no Compose stack at all; `monitoring`'s 7 containers and multiple secrets
-  make a hand-maintained parallel version a maintenance cost outweighing its value for a
-  solo-maintained repo) and when to add one for a new role.
+  make a hand-maintained parallel version a recurring maintenance cost outweighing its
+  value here) and when to add one for a new role.
 - Where a `docker/<role>/` does exist: named volumes only, no bind mounts to host paths
   except for explicitly documented exceptions; include a `.env.example` alongside the
   Compose file; keep the image tag manually in sync with the role's default on touch, but
