@@ -1,6 +1,6 @@
 # ADR 0003: Loopback-only access, and no bundled identity provider
 
-**Status:** accepted · **Date:** 2026-08-14 · **Affects:** `common`, `monitoring`, `bridgelink`, `caddy`; `ARCHITECTURE.md`; issues #31, #32, #34
+**Status:** accepted · **Date:** 2026-08-14, criterion sharpened 2026-08-22 · **Affects:** every role; `ARCHITECTURE.md`; `CONVENTIONS.md`; issues #31, #32, #34
 
 ## The question answered here
 
@@ -59,6 +59,34 @@ The criterion that decided it was not in any document and is now: **after the pl
 the system works, without the institution having to supply a second subsystem.** A component
 that only becomes useful once someone else provides a coordination server or a directory is
 not a shipped feature; it is a documented gap.
+
+### The criterion has three levels, not two (added 2026-08-22)
+
+As first written, this reads as a yes-or-no test, and applied that way it rejects too much.
+`caddy` serves nothing until `caddy_sites` is set; BridgeLink transports nothing until
+channels exist; Orthanc receives nothing until a modality is pointed at it and
+`orthanc_publish_dicom_port` is deliberately turned on. By a binary reading all three fail,
+which is plainly the wrong answer - that is what infrastructure *is*.
+
+What the criterion is actually about is **what is missing**:
+
+| | Roles | What is missing |
+|---|---|---|
+| **1. Works on its own** | `common`, `docker`, `monitoring`, `backup` | Nothing. Hardening, a container runtime, observability and backups need no input to start doing their job. |
+| **2. Ready but empty** | `caddy`, `bridgelink`, `orthanc` | **Content**, supplied by the operator in the course of normal use: sites, channels, images. |
+| **3. Useless without a second system** | *rejected: Authentik, a mesh-VPN role, a clinical data repository* | **Another system**, which somebody has to procure, run and integrate before this one does anything. |
+
+Level 2 is not a weakness and is not what this ADR rejects. The distinction is whether the
+missing piece is content or a system - and, for content, whether the operator already has it.
+A radiology department without imaging devices is not a scenario; an institution without a
+directory server is an everyday one.
+
+Level 3 is the failure this ADR is about, and the added cost is not the component itself but
+the project that has to happen before it is worth anything.
+
+**How to use this when a new role is proposed:** name what the role needs before it does its
+job, and decide which of the three that is. Level 3 needs an ADR arguing why it is an
+exception, not a paragraph explaining that it would be nice to have.
 
 ## Decision
 

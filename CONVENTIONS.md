@@ -78,6 +78,12 @@ linumed-base/
 ## Ansible conventions
 
 - Every role has: tasks/main.yml, defaults/main.yml, meta/main.yml, README.md
+- **Before a new role is added, name what it needs before it does its job.**
+  [ADR 0003](docs/adr/0003-loopback-only-access-no-bundled-identity-provider.md) sorts that
+  into three: nothing (it works on its own), content the operator supplies in normal use
+  (sites, channels, images), or another system somebody has to procure and integrate. The
+  third is what this kit rejects - it ships a component and a project to go with it - and
+  adding one anyway needs its own ADR, not a paragraph.
 - **A variable name is a promise from v1.0 onward.** Role variables, deploy paths,
   container and network names, this kit's own metric and alert names, dashboard and
   datasource UIDs, and systemd unit names are all covered by the stability guarantee - see
