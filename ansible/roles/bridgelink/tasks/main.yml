@@ -39,6 +39,29 @@
   # pass added in #62).
   when: bridgelink_exporter_enabled | bool
 
+# Same defect as orthanc's, same fix: docker compose config does not resolve external
+# networks, so a missing linumed-base-metrics network only surfaces at docker_compose_v2
+# as a raw "network declared as external, but could not be found" (issue #86 stage 1).
+- name: Check whether the shared metrics network exists
+  ansible.builtin.command:
+    cmd: docker network inspect {{ bridgelink_exporter_metrics_network }}
+  register: bridgelink_metrics_network_check
+  changed_when: false
+  failed_when: false
+  become: true
+  when: bridgelink_exporter_enabled | bool
+
+- name: Preflight - abort if the exporter is enabled but the monitoring role never ran
+  ansible.builtin.assert:
+    that:
+      - bridgelink_metrics_network_check.rc == 0
+    fail_msg: >-
+      bridgelink_exporter_enabled is true, but the {{ bridgelink_exporter_metrics_network }}
+      network does not exist on this host. It is created by the monitoring role, not by
+      this one - either include monitoring in linumed_base_roles, or set
+      bridgelink_exporter_enabled: false if this host deliberately runs without it.
+  when: bridgelink_exporter_enabled | bool
+
 - name: Ensure deploy directory exists
   ansible.builtin.file:
     path: "{{ bridgelink_deploy_dir }}"

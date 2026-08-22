@@ -15,6 +15,32 @@
       the instance out of its own REST API, including its healthcheck and the Prometheus
       scrape. Supply both via Ansible Vault.
 
+# docker compose config does NOT resolve external networks, so a missing
+# linumed-base-metrics network passes validation and only fails later at
+# docker_compose_v2 with a raw "network declared as external, but could not be found" -
+# indistinguishable from a dozen other Compose errors. Checked here instead, after
+# monitoring has already run in this same play, so a fresh full install never trips this
+# (issue #86 stage 1).
+- name: Check whether the shared metrics network exists
+  ansible.builtin.command:
+    cmd: docker network inspect {{ orthanc_metrics_network }}
+  register: orthanc_metrics_network_check
+  changed_when: false
+  failed_when: false
+  become: true
+  when: orthanc_metrics_enabled | bool
+
+- name: Preflight - abort if metrics are enabled but the monitoring role never ran
+  ansible.builtin.assert:
+    that:
+      - orthanc_metrics_network_check.rc == 0
+    fail_msg: >-
+      orthanc_metrics_enabled is true, but the {{ orthanc_metrics_network }} network does
+      not exist on this host. It is created by the monitoring role, not by this one -
+      either include monitoring in linumed_base_roles, or set
+      orthanc_metrics_enabled: false if this host deliberately runs without it.
+  when: orthanc_metrics_enabled | bool
+
 - name: Ensure deploy directory exists
   ansible.builtin.file:
     path: "{{ orthanc_deploy_dir }}"

@@ -10,8 +10,12 @@ happens during that run and why, across roles, which the README doesn't.
 `ansible/playbooks/site.yml` applies roles in one order, always:
 
 ```
-common → docker → caddy → monitoring → bridgelink → backup
+common → docker → caddy → monitoring → bridgelink → orthanc → backup
 ```
+
+This said `common → docker → caddy → monitoring → bridgelink → backup` - missing orthanc -
+until 2026-08-22, the same kind of staleness `node-baseline.yml`'s header once had: correct
+when written, never re-checked when the seventh role landed.
 
 Each step depends on the one before it:
 
@@ -21,12 +25,14 @@ Each step depends on the one before it:
    its own sequencing internally (SSH rule before `ufw enable`).
 2. **docker** installs Docker Engine and the Compose plugin. Every role after this one
    is a Docker Compose stack.
-3. **caddy**, **monitoring**, **bridgelink** are independent of each other with one
-   exception, and the order here is otherwise roughly "smallest blast radius first".
-   The exception: with `bridgelink_exporter_enabled`, the bridgelink stack joins a Docker
-   network the **monitoring** role creates, so monitoring has to have run on the host
-   first or Compose fails on a missing external network (issue #64). With the exporter off
-   - the default - they are genuinely independent. See
+3. **caddy**, **monitoring**, **bridgelink**, **orthanc** are independent of each other
+   with two exceptions, and the order here is otherwise roughly "smallest blast radius
+   first". With `bridgelink_exporter_enabled`, the bridgelink stack joins a Docker network
+   the **monitoring** role creates; with `orthanc_metrics_enabled` (on by default), Orthanc
+   does the same. Either way monitoring has to have run on the host first, or Compose fails
+   on a missing external network (issue #64) - both roles now check for the network
+   themselves and abort with a clear message rather than Compose's raw error (issue #86).
+   With both switches off, all four are genuinely independent. See
    [Architecture: network design](../architecture.md#network-design).
 4. **backup** runs last because it backs up `/var/lib/docker/volumes`, which only has
    meaningful content once the other roles have created their volumes.
