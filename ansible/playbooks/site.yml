@@ -2,13 +2,137 @@
 # Full stack deployment: common, docker, caddy, monitoring, bridgelink, orthanc, backup
 # (#1/#3/#10/#5/#11, #17, #6, #8/#9, #12, #69, #7). orthanc runs after monitoring:
 # with metrics enabled it joins a network the monitoring role creates (#64).
+#
+# Every role runs by default. `linumed_base_roles` (default: all seven, see
+# group_vars/linumed/vars.yml) lets an operator deploy a subset - e.g. everything except
+# `orthanc` on a site with no imaging (issue #86). It is a play variable, not a role
+# variable: it adds nothing to the frozen surface ADR 0008 measures, and
+# scripts/check-variable-docs.py does not need to know about it because it never appears
+# in a role's defaults/main.yml.
+#
+# Deliberately a `when:` on each role entry, not `include_role` in `tasks:`: `roles:` and
+# `tasks:` share one handler-flush point, so that costs nothing, and `roles:` keeps every
+# role's defaults loaded into the play even when the role itself is skipped - the
+# preflight below reads them.
 - name: Linumed Base - full stack
   hosts: linumed
+  vars:
+    # Defaults, overridable from group_vars/host_vars (play vars: is low precedence by
+    # design - see docs/operations/troubleshooting.md's "I changed a variable and nothing
+    # happened" for why that ordering matters here). linumed_base_known_roles is not
+    # meant to be overridden; it exists so the typo preflight above has something fixed
+    # to check against.
+    linumed_base_roles:
+      - common
+      - docker
+      - caddy
+      - monitoring
+      - bridgelink
+      - orthanc
+      - backup
+    linumed_base_known_roles:
+      - common
+      - docker
+      - caddy
+      - monitoring
+      - bridgelink
+      - orthanc
+      - backup
+  pre_tasks:
+    # Fails loud on a typo rather than silently deploying the full stack - a boolean
+    # `orthanc_enabled: false` would be ignored on misspelling with no error at all; a
+    # list at least has something to check membership against.
+    - name: Preflight - abort if linumed_base_roles names an unknown role
+      ansible.builtin.assert:
+        that:
+          - linumed_base_roles | difference(linumed_base_known_roles) | length == 0
+        fail_msg: >-
+          linumed_base_roles contains
+          {{ linumed_base_roles | difference(linumed_base_known_roles) | join(', ') }},
+          which is not one of {{ linumed_base_known_roles | join(', ') }}. A misspelled
+          name here is otherwise silently ignored and the role it meant to select never
+          runs.
+      tags: always
+
+    # `docker` is required by every Compose role; without it here the failure would be a
+    # confusing preflight three roles later instead of one clear message now.
+    - name: Preflight - abort if a Compose role is selected without docker
+      ansible.builtin.assert:
+        that:
+          - >-
+            (['caddy', 'monitoring', 'bridgelink', 'orthanc'] | intersect(linumed_base_roles) | length == 0)
+            or ('docker' in linumed_base_roles)
+        fail_msg: >-
+          linumed_base_roles selects a Docker Compose role
+          ({{ ['caddy', 'monitoring', 'bridgelink', 'orthanc'] | intersect(linumed_base_roles) | join(', ') }})
+          without 'docker' - add it, Compose has nothing to run on otherwise.
+      tags: always
+
+    # monitoring's ufw tasks (node-exporter.yml) call the community.general.ufw module,
+    # which needs the ufw package - installed only by common. Gated the same way the role
+    # itself gates those two tasks, so this only fires when it would actually matter.
+    - name: Preflight - abort if monitoring is selected without common and needs ufw
+      ansible.builtin.assert:
+        that:
+          - >-
+            ('monitoring' not in linumed_base_roles)
+            or (not (monitoring_node_exporter_deny_external | default(true) | bool))
+            or ('common' in linumed_base_roles)
+        fail_msg: >-
+          monitoring is selected with monitoring_node_exporter_deny_external on (the
+          default), which needs the ufw package - add 'common' to linumed_base_roles, or
+          set monitoring_node_exporter_deny_external: false if this host manages its
+          firewall another way.
+      tags: always
+
+    # Residue check: a role that is NOT selected but has visibly run here before. The
+    # decision (see #86) is to refuse rather than guess - no automated removal, because
+    # docs/operations/teardown.md argues at length why that would be guesswork on a
+    # production host. What is probed here is exactly what that page's own removal
+    # procedure deletes, so an operator who followed it never trips this by accident.
+    - name: Check for leftovers of a deselected role
+      ansible.builtin.stat:
+        path: "{{ item.path }}"
+      loop:
+        - { role: caddy, path: /opt/linumed-base/caddy }
+        - { role: monitoring, path: /opt/linumed-base/monitoring }
+        - { role: bridgelink, path: /opt/linumed-base/bridgelink }
+        - { role: orthanc, path: /opt/linumed-base/orthanc }
+        - { role: backup, path: /etc/systemd/system/linumed-base-backup.timer }
+      loop_control:
+        label: "{{ item.role }}"
+      register: linumed_base_residue_stat
+      changed_when: false
+      become: true
+      when: item.role not in linumed_base_roles
+      tags: always
+
+    - name: Preflight - abort if a deselected role has already run here
+      ansible.builtin.assert:
+        that:
+          - not (item.stat.exists | default(false))
+        fail_msg: >-
+          {{ item.item.role }} is not in linumed_base_roles, but {{ item.item.path }}
+          exists - this role has already been deployed on this host. Deselecting it here
+          does not remove it. Follow docs/operations/teardown.md for the parts you want
+          gone, then run this again.
+      loop: "{{ linumed_base_residue_stat.results }}"
+      loop_control:
+        label: "{{ item.item.role }}"
+      when: item.skipped is not defined
+      tags: always
   roles:
-    - common
-    - docker
-    - caddy
-    - monitoring
-    - bridgelink
-    - orthanc
-    - backup
+    - role: common
+      when: "'common' in linumed_base_roles"
+    - role: docker
+      when: "'docker' in linumed_base_roles"
+    - role: caddy
+      when: "'caddy' in linumed_base_roles"
+    - role: monitoring
+      when: "'monitoring' in linumed_base_roles"
+    - role: bridgelink
+      when: "'bridgelink' in linumed_base_roles"
+    - role: orthanc
+      when: "'orthanc' in linumed_base_roles"
+    - role: backup
+      when: "'backup' in linumed_base_roles"

@@ -37,30 +37,44 @@ Each step depends on the one before it:
 4. **backup** runs last because it backs up `/var/lib/docker/volumes`, which only has
    meaningful content once the other roles have created their volumes.
 
-### Deploying only the node baseline
+### Deploying a subset of roles
 
-There is one supported partial deployment, and it has its own playbook:
+Set `linumed_base_roles` in the inventory to deploy less than the full stack (issue #86) -
+for example everything except `orthanc` on a site with no imaging. Commented example in
+`group_vars/linumed/vars.yml`. `site.yml` is still the one playbook to run; a preflight
+aborts with a clear message if the selection names an unknown role, omits a role another
+selected one needs (`docker` for any Compose role, `common` for `monitoring` unless
+`monitoring_node_exporter_deny_external` is off, `monitoring` for `orthanc`/`bridgelink`
+with their metrics switches on), or if a role that is *not* selected has already run on
+this host - deselecting does not remove anything; see
+[teardown](teardown.md) for that.
+
+**`node-baseline.yml` is the one selection that ships as its own playbook**, because it is
+the one aimed at a named audience rather than a general mechanism:
 
 ```bash
 ansible-playbook -i inventory/myhospital playbooks/node-baseline.yml --ask-vault-pass
 ```
 
-`node-baseline.yml` applies `common`, `docker` and `backup` and nothing else - the roles
-that ship no Compose stack and depend on no other role. It is meant for a host that runs
+It is a thin wrapper setting `linumed_base_roles: [common, docker, backup]` - the roles
+that ship no Compose stack and depend on no other role. Meant for a host that runs
 something else on top: a Kubernetes node, or a server that should be hardened and backed up
 without also carrying an integration engine and a monitoring stack. See
 [ADR 0007](../adr/0007-docker-compose-not-kubernetes.md) for why the service stacks stay
 Compose-only, and what that leaves usable for a Kubernetes site.
 
-**Set `backup_paths`.** Its default covers this kit's own state (`/opt/linumed-base`,
-`/var/lib/docker/volumes`), which is the wrong answer on a node whose data lives elsewhere.
-The role refuses to deploy if none of the configured paths exists, so a wrong value fails
-at deploy time rather than at 03:00 - but a value that is merely incomplete will not be
-caught for you.
+**Set `backup_paths` and, if `backup_restore_test_enabled` stays on,
+`backup_restore_test_diff_paths`.** Both default to this kit's own state
+(`/opt/linumed-base`, `/var/lib/docker/volumes`), which is the wrong answer on a node whose
+data lives elsewhere. Both are checked at deploy time and abort rather than fail silently
+later - `backup_paths` at 03:00, `backup_restore_test_diff_paths` every week thereafter
+(issue #86) - but a value that is merely incomplete will not be caught for you.
 
-Any *other* partial deployment is unsupported: no other per-role playbook exists, and **no
-task carries an Ansible tag**, so `--tags` has nothing to select on. Write a throwaway
-playbook with just the roles you want, and mind the dependency in point 3.
+**Ansible tags are deliberately not the mechanism here.** They would live on the command
+line rather than in the inventory: an operator who deployed a subset and later runs plain
+`site.yml` would silently get the full stack back, with no record anywhere of what the host
+was meant to be. `linumed_base_roles` keeps that record where the rest of the host's
+configuration already lives.
 
 ## One host, and what that means
 

@@ -95,9 +95,10 @@ bridgelink_exporter_port: 9151
 #
 # Consequence worth knowing: with the exporter enabled, the monitoring role has to have run
 # on this host first, or Compose fails on a missing external network. site.yml already
-# orders monitoring before bridgelink, and site.yml is the only playbook - but running just
-# this role (with a playbook of your own; there are no Ansible tags in this repo) against a
-# host that has no monitoring stack does not work with the exporter switched on.
+# orders monitoring before bridgelink, and enforces the dependency for any
+# linumed_base_roles selection that includes bridgelink without monitoring (issue #86) -
+# a preflight in this role's own tasks/main.yml catches it with a clear message instead of
+# Compose's raw "network declared as external, but could not be found".
 bridgelink_exporter_metrics_network: "linumed-base-metrics"
 
 # A BridgeLink user with read access, NOT the admin account. The exporter only ever issues
