@@ -1,20 +1,22 @@
 name: docs-site
 
-# Builds the MkDocs operations handbook and publishes it as a Forgejo release asset -
-# the artifact Website#5 pulls from to host it at linumed.com/base/docs/ (issue #55).
+# Builds the MkDocs operations handbook and publishes it as a generic package - the
+# artifact Website#5 pulls from to host it at linumed.com/base/docs/ (issue #55).
 #
 # Deliberately stops at "publish an artifact", not "deploy it". Actually placing the
 # built HTML on linumed.com is a manual pull by cc@prod, same as every other prod change
 # - "Kein Auto-Deploy. Prod-Deploy ist ein manueller Gate" (CONVENTIONS.md). This workflow
-# only replaces the manual `mkdocs build && tar czf && curl .../releases` steps that were
+# only replaces the manual `mkdocs build && tar czf && curl ...` steps that were
 # previously run by hand on every doc change (found tedious and error-prone in practice -
 # a stale checksum was nearly handed over once, see issue #55's follow-up).
 #
-# Publishes to a fixed, moving tag (docs-site-latest) rather than a fresh dated tag every
-# run: cc@prod can always pull the same URL and get whatever is current, no need to be
-# told a new tag/checksum after every doc change. The dated one-off releases from before
-# this workflow existed (docs-site-2026-08-19, -19b) are left in place as history, not
-# superseded automatically - a human can prune old releases later if they pile up.
+# Publishes to a fixed package version ("latest") rather than a fresh one every run:
+# cc@prod can always pull the same URL and get whatever is current. This used to be a
+# moving Forgejo release tag instead - dropped in issue #85, because the push mirror
+# copies every git tag to the public GitHub repository, and a build artifact's tag ended
+# up sitting in the public tag list next to real releases (v0.4.0 etc.), pointing at
+# nothing there once mirrored (the mirror carries tags, not release assets). A package
+# has no git ref at all and cannot leak that way.
 on:
   push:
     branches: [main]
@@ -32,30 +34,19 @@ on:
       - '.forgejo/workflows/docs-site.yml'
   workflow_dispatch:
 
-# Forgejo's auto-generated token defaults to read-only unless a workflow asks for more -
-# needed here to create the release and upload the asset.
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   docs-site:
     runs-on: docker
-    # NOTE: the secret is mapped to env at *step* level below, not here. A job-level
-    # `env:` fed from `secrets.` did not resolve on this Forgejo/act_runner (measured
-    # 2026-08-22: the guard step reported the secret as unset while it was present in the
-    # repository). Step-level env plus GITHUB_ENV is the form that works.
-    #
-    # The artifact is moving to the generic package registry (issue #85): a release needs
-      # a git tag, and the push mirror copies every tag to the public GitHub repository, so
-      # a build artifact ended up in the tag list next to v0.4.0 - with a `docs-site-latest`
-      # tag that resolves to nothing there, because the mirror carries tags but not release
-      # assets. A package has no ref at all and cannot leak that way.
-      #
-      # This needs its own token. `permissions: packages: write` does not help: measured on
-      # 2026-08-22, the Actions run token is rejected by the registry with 401
-      # (`reqPackageAccess`), so the scope is not grantable from the workflow. The secret is
-      # a Forgejo token with `write:package`, created and installed by a human - nothing in
-      # this repository should mint or print it.
+    # PACKAGE_TOKEN is a Forgejo token with write:package, created by the account that
+    # owns this repository and stored as a repo secret - nothing in this repository
+    # should mint or print it. `permissions: packages: write` does not work here: measured
+    # 2026-08-22, the Actions run token is rejected by the package registry with 401
+    # (`reqPackageAccess`) regardless, and separately, packages live in the owning
+    # account's namespace - a token from a mere collaborator account got 401 too, only a
+    # token from the repo's actual owner account worked.
     steps:
       - uses: actions/checkout@v4
 
@@ -106,33 +97,26 @@ jobs:
           tar czf base-docs-site.tar.gz -C site .
           echo "sha256=$(sha256sum base-docs-site.tar.gz | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
 
-      # Says out loud when the package path is inactive. A step that quietly does nothing
-      # is how a half-finished migration survives unnoticed - the same failure mode as
-      # #62, where a default-off switch meant a feature shipped with no coverage at all.
-      - name: Report whether the package path is active
+      # The migration from a moving release tag to the package registry (issue #85) is
+      # done: cc@prod switched over and confirmed the pull independently (2026-08-22), and
+      # the old release/tag were deleted on both Forgejo and the GitHub mirror. This is
+      # now the only publish path, so a missing secret is a hard failure, not a silent
+      # fallback - the fallback existed only for the migration window.
+      - name: Preflight - abort if PACKAGE_TOKEN is not set
         env:
           PACKAGE_TOKEN: ${{ secrets.PACKAGE_TOKEN }}
         run: |
-          if [ -n "${PACKAGE_TOKEN}" ]; then
-            echo "package_active=true" >> "$GITHUB_ENV"
-          fi
           if [ -z "${PACKAGE_TOKEN}" ]; then
-            echo "PACKAGE_TOKEN is not set - publishing to the release only."
-            echo "The package registry needs a Forgejo token with write:package as a repo"
-            echo "secret named PACKAGE_TOKEN; the Actions run token cannot do it (401)."
-            echo "Until then the artifact stays where it is and issue #85 stays open."
-          else
-            echo "PACKAGE_TOKEN is set - publishing to the package registry as well."
+            echo "::error::PACKAGE_TOKEN is not set. Needs a Forgejo token with write:package," >&2
+            echo "created by the account that owns this repository (a collaborator token is" >&2
+            echo "not enough - packages live in the owner account's namespace), stored as a" >&2
+            echo "repo secret named PACKAGE_TOKEN." >&2
+            exit 1
           fi
 
-      # Published alongside the release for now, so the prod side can move over at its own
-      # pace rather than at the same second - the release path is removed once that has
-      # happened, and not before.
-      #
       # The registry rejects a re-upload of the same version+filename, so the version is
       # deleted first. A 404 there is the expected answer on the very first run.
       - name: Publish the artifact as a generic package
-        if: env.package_active == 'true'
         env:
           GITEA_TOKEN: ${{ secrets.PACKAGE_TOKEN }}
         run: |
@@ -147,10 +131,9 @@ jobs:
             case "$code" in 2*) ;; *) echo "::error::uploading $f to the package registry returned $code" >&2; exit 1;; esac
           done
 
-      # Same reasoning as the tag assertion below: publishing is not the same as being
-      # fetchable, and this repository has shipped that difference before (#78).
+      # Publishing is not the same as being fetchable, and this repository has shipped
+      # that gap before (#78, where a release tag never moved while its asset changed).
       - name: Assert the package is fetchable and matches what was built
-        if: env.package_active == 'true'
         env:
           GITEA_TOKEN: ${{ secrets.PACKAGE_TOKEN }}
         run: |
@@ -159,51 +142,3 @@ jobs:
           echo "$(cat base-docs-site.tar.gz.sha256)  fetched.tar.gz" | sha256sum -c -
           rm -f fetched.tar.gz
 
-      # Forgejo has no "update release asset" endpoint that replaces in place - delete
-      # the previous docs-site-latest release (if any) and its tag, then recreate both.
-      # A 404 on the delete calls is expected and fine on the very first run.
-      #
-      # The tag delete used DELETE /git/tags/{tag} until 2026-08-21. That endpoint takes a
-      # tag *object SHA*, not a name, so it 404'd on every run - and `|| true` swallowed
-      # it. The tag therefore never moved: it stayed on the commit of the first run
-      # (2026-08-19) while the asset behind it was rebuilt on every docs push. Everything
-      # keyed to the tag - the release's created_at, the commit it claims to describe -
-      # reported "unchanged" while the tarball changed, which is why the prod side saw no
-      # updates to pull. Same shape as #44 and #63: a green signal over changed content.
-      # The correct endpoint is DELETE /repos/{owner}/{repo}/tags/{tag}, and the assertion
-      # below is what keeps a future endpoint change from going quiet again.
-      - name: Replace the docs-site-latest release
-        env:
-          GITEA_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          API="${{ github.api_url }}/repos/${{ github.repository }}"
-          curl -s -X DELETE -H "Authorization: token ${GITEA_TOKEN}" \
-            "${API}/releases/tags/docs-site-latest" || true
-          curl -s -X DELETE -H "Authorization: token ${GITEA_TOKEN}" \
-            "${API}/tags/docs-site-latest" || true
-
-          RELEASE_ID=$(curl -s -X POST -H "Authorization: token ${GITEA_TOKEN}" \
-            -H "Content-Type: application/json" \
-            -d "{\"tag_name\":\"docs-site-latest\",\"target_commitish\":\"${{ github.sha }}\",\"name\":\"Docs site (latest build)\",\"body\":\"Auto-built by .forgejo/workflows/docs-site.yml from commit ${{ github.sha }}. Not a product release - a build artifact for Website#5. sha256: ${{ steps.package.outputs.sha256 }}\",\"draft\":false,\"prerelease\":true}" \
-            "${API}/releases" | python3 -c "import json,sys; print(json.load(sys.stdin)['id'])")
-
-          curl -s -X POST -H "Authorization: token ${GITEA_TOKEN}" \
-            -F "attachment=@base-docs-site.tar.gz" \
-            "${API}/releases/${RELEASE_ID}/assets?name=base-docs-site.tar.gz"
-
-      # The whole point of the moving tag is that it moves. If it ever stops - a renamed
-      # endpoint, a permission change - this fails loudly instead of publishing a fresh
-      # tarball under a tag that still names a months-old commit.
-      - name: Assert the tag actually moved to this commit
-        env:
-          GITEA_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          API="${{ github.api_url }}/repos/${{ github.repository }}"
-          TAGGED=$(curl -s -H "Authorization: token ${GITEA_TOKEN}" \
-            "${API}/tags/docs-site-latest" \
-            | python3 -c "import json,sys; print(json.load(sys.stdin)['commit']['sha'])")
-          if [ "$TAGGED" != "${{ github.sha }}" ]; then
-            echo "::error::docs-site-latest points at ${TAGGED}, expected ${{ github.sha }} - the tag did not move, so anything downstream that keys on it will report no change" >&2
-            exit 1
-          fi
-          echo "docs-site-latest -> ${TAGGED}"
