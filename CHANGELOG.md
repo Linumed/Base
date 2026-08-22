@@ -13,6 +13,24 @@ click away instead of restated here.
 
 ### Added
 
+- **`scripts/check-numeric-claims.py` re-verifies a curated list of numeric claims in
+  prose against what the repository currently measures** (issue #88). Five real cases
+  this week alone: ADR 0008's role-variable count (125, then silently wrong again at 129
+  and 146), the "30 undocumented variables" figure from the #71 audit (was 19), the
+  README's requirements table (silently excluded Orthanc), "all six roles" in two places
+  (became seven), `node-baseline.yml`'s "three Compose stacks" (became four). Code has
+  had gates against this shape of drift for a while; prose had none until now.
+
+  Deliberately a register, not a scan - modelled on `ansible/internal-variables.txt` and
+  `security/accepted-image-findings.txt`. It only re-checks the eleven claims explicitly
+  listed in the script, because not every number in this repository is supposed to stay
+  current: `docs/ROADMAP.md`'s "Measured on 2026-08-20: all eleven pinned images..." is a
+  dated record and correct forever as written, and a checker that flagged it as stale
+  would train everyone to ignore the next real finding - the same failure mode
+  `scripts/scan-images.py` already exists to avoid. Reuses `check-variable-docs.py`'s own
+  counting functions rather than re-deriving the same numbers a second way.
+
+
 - **A documented, tested upgrade path** (issue #89). Until now "pull the new version, run
   `site.yml` again" was a plausible answer nobody had actually tried across a version
   boundary - idempotency within one version and idempotency across an upgrade are

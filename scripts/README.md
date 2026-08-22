@@ -108,6 +108,28 @@ Entries in the accepted-findings file older than 90 days are reported, not faile
 re-check them rather than refreshing the date, because an ageing entry usually means an
 upstream has stopped rebuilding.
 
+## check-numeric-claims.py
+
+Checks that a small, deliberately curated list of numeric claims in prose - "138
+interface role variables", "13 container names" - still match what the repository
+currently measures (issue #88).
+
+```bash
+./scripts/check-numeric-claims.py            # exits non-zero on a mismatch
+./scripts/check-numeric-claims.py --report   # same output, always exits 0
+```
+
+**A register, not a scan** - the same shape as `ansible/internal-variables.txt` and
+`security/accepted-image-findings.txt`. It does not go looking for every number in the
+docs; it re-verifies exactly the ones listed in `NUMERIC_CLAIMS` inside the script.
+Reasoning behind that restraint, and what is deliberately left out (a dated measurement
+like "Measured on 2026-08-20: all eleven pinned images..." should stay exactly as
+written, not be flagged as stale), is in the script's own docstring.
+
+Reuses `check-variable-docs.py`'s own counting functions rather than re-deriving the same
+numbers a second way, so the two checks cannot quietly disagree about what "interface
+variable" means.
+
 ## select-roles.sh
 
 Interactive role selection for `linumed_base_roles` (issue #86), so picking a subset of
