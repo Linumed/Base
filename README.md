@@ -64,7 +64,11 @@ accepted.
 
 ## Status
 
-**`v0.4.0` is tagged** - see [CHANGELOG.md](CHANGELOG.md). Every role passed a full
+**`v1.0.0` is tagged** - see [CHANGELOG.md](CHANGELOG.md). From here, the surface
+ADR 0008 names (role variable names, deploy paths, container/network names, this kit's
+own metric and alert names, dashboard/datasource UIDs, systemd unit names) is covered by
+a stability guarantee: a breaking change to any of it requires a major version bump.
+Every role passed a full
 `site.yml` double-run against a throwaway VM (idempotent - `changed=0` on the second run)
 and, separately, against a real Debian 13 netinst/preseed install via
 `scripts/bootstrap.sh` and `test/vm-test-netinst.sh` (issues #13/#14). That double-run now

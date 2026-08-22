@@ -21,15 +21,21 @@ Written 2026-08-14, after an audit of the repository against its own stated requ
 >
 > **Update 2026-08-21: `v0.4.0` is tagged** and Stage 6 is complete, see below. What is
 > left before 1.0 is Stage 7, and it is now four issues rather than a paragraph.
+>
+> **Update 2026-08-22: `v1.0.0` is tagged**, Stage 7 is complete. See below for what
+> shipped before it and what is deliberately still open.
 
 ## Where this actually stands
 
-**As of 2026-08-21, `v0.4.0`:** all seven roles are implemented, VM-tested and idempotent -
-`common`, `docker`, `caddy`, `monitoring`, `bridgelink`, `backup` and `orthanc`, the last
-service `ARCHITECTURE.md` names. The repository is public, the documentation site is built
-and published from it, and there are no known defects and no open defect issues. The only
-open issues are Stage 7's, and they are preparation for the 1.0 tag rather than work the
-kit is missing - they are listed in [Stage 7](#stage-7-v10-the-promise-and-what-it-covers).
+**As of 2026-08-22, `v1.0.0`:** all seven roles are implemented, VM-tested and idempotent -
+`common`, `docker`, `caddy`, `monitoring`, `bridgelink`, `backup` and `orthanc`. From this
+tag, the surface named in [ADR 0008](adr/0008-what-the-v1-0-stability-guarantee-covers.md)
+carries a stability guarantee. The repository is public, the documentation site is built
+and published from it, and there are no known defects and no open defect issues. Two
+issues remain open, both post-1.0 maintenance rather than tag prerequisites: #84
+(re-measuring system requirements for the seven-role stack) and the roadmap items opened
+during the pre-1.0 audit (#88-#90), which were deliberately left for after the tag - see
+[What comes after 1.0](#what-comes-after-10).
 
 [What was open, and why it was not built earlier](#what-was-open-and-why-it-was-not-built-earlier)
 further down is kept as the record of the three items that carried that status until
@@ -411,7 +417,7 @@ is not arbitrary:
 | Audit the role variables for ones that should not be carried forever | #71, **done 2026-08-21** |
 | Decide which variables are internal rather than interface | #72, **done 2026-08-21** |
 | Re-measure ADR 0008's surface against seven roles, not six | #73, **done 2026-08-21** |
-| Tag and publish v1.0.0 | #74 |
+| Tag and publish v1.0.0 | #74, **done 2026-08-22** |
 
 **#71 before #72**: the audit decides *whether* a variable survives, the visibility
 decision decides *what it survives as*. Doing them the other way round means classifying
@@ -435,3 +441,42 @@ removed), leaving 146 defined. The "30 variables documented nowhere" figure from
 was itself too high - the search behind it could not see collapsed table rows like
 `backup_retention_keep_daily/weekly/monthly`. Measured correctly during #72 it was 19, and
 they are now either documented or recorded as internal.
+
+## What comes after 1.0
+
+A roadmap that ends at the tag reads like a discontinued project. It doesn't - the tag was
+never the finish line, only the point where the promise starts applying. What follows was
+sorted by whether it touches the surface ADR 0008 now freezes: anything that does had to
+be decided *before* the tag or not at all, which is why #86 landed the day before it
+rather than after.
+
+**Landed just before the tag, on that reasoning:**
+
+| | Issue |
+|---|---|
+| Role selection (`linumed_base_roles`) - deploy a subset instead of all seven | #86, **done 2026-08-22** |
+
+A per-role deployment mechanism is exactly the kind of thing that would have been frozen
+on its first design if it had shipped after 1.0. Building it before meant the two
+preflights it turned out to need (a missing dependency, a deselected role that had already
+run) could still be added for free.
+
+**Open, deliberately after 1.0 - none of these touch the frozen surface:**
+
+| | Issue |
+|---|---|
+| Role-selection TUI, `whiptail`-style over SSH | #87 |
+| A register for numeric claims in prose, so they stop aging silently | #88 |
+| A documented, tested upgrade path between kit versions | #89 |
+| An access log for Orthanc - the kit claims DGSVO-compliance and currently keeps none | #90 |
+| Re-measure system requirements including Orthanc | #84 |
+
+#87 depends on #86 and only became plannable once #86 existed. #88, #89 and #90 came out
+of a deliberate brainstorm on 2026-08-22, once the tag itself no longer needed sequencing
+decisions - the point of asking "what comes after 1.0" only arrives once "what must come
+before" has an answer. #84 is the one item here found by measurement rather than
+proposed: the README's own requirements table claims to be measured and has not accounted
+for Orthanc since the role landed in v0.4.0.
+
+None of these five is a stability-surface change. That is what makes them safe to decide
+at leisure rather than under the same before-the-tag pressure #86 was built under.

@@ -11,6 +11,23 @@ click away instead of restated here.
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-08-22
+
+The tag ADR 0008 was written for: from here, a change to role variable names, deploy
+paths, container and network names, this kit's own metric and alert names, dashboard and
+datasource UIDs, or systemd unit names requires a major version bump. Nothing about this
+release is a quality claim - v0.4.0 already had no known defects - it is the point from
+which the promise applies.
+
+Before tagging, the surface itself was re-measured rather than assumed correct (#71-#73),
+narrowed to what should actually be frozen (#72), and closed against silent drift with
+five new CI gates - variable documentation, cross-role literal agreement, Prometheus
+scrape targets, the image-pin table, and role selection. The two biggest items landed
+just before the tag rather than after it, on the reasoning in #74: whatever ships as part
+of the interface should have survived contact with real use first. `linumed_base_roles`
+(#86) is the clearest case - a mechanism invented after 1.0 would have been frozen on its
+first try, with no chance to find the two preflights it turned out to need.
+
 ### Changed
 
 - **ADR 0003's "does it work after the playbook run" criterion now has three levels instead
