@@ -36,6 +36,12 @@ on:
 # needed here to create the release and upload the asset.
 permissions:
   contents: write
+  # For the generic package registry, which is where the artifact is moving to (issue #85).
+  # A release needs a git tag, and the push mirror copies every tag to the public GitHub
+  # repository - so a build artifact ended up sitting in the tag list next to v0.4.0, with
+  # a `docs-site-latest` tag that resolves to nothing there because the mirror carries tags
+  # but not release assets. A package has no ref at all and cannot leak that way.
+  packages: write
 
 jobs:
   docs-site:
@@ -89,6 +95,39 @@ jobs:
         run: |
           tar czf base-docs-site.tar.gz -C site .
           echo "sha256=$(sha256sum base-docs-site.tar.gz | cut -d' ' -f1)" >> "$GITHUB_OUTPUT"
+
+      # The artifact's new home: a generic package, addressed by a stable URL with no git
+      # tag behind it (issue #85). Published alongside the release below for now, so the
+      # prod side can move over at its own pace rather than at the same second - the
+      # release path is removed once that has happened, and not before.
+      #
+      # The registry rejects a re-upload of the same version+filename, so the version is
+      # deleted first. A 404 there is the expected answer on the very first run.
+      - name: Publish the artifact as a generic package
+        env:
+          GITEA_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PKG="${{ github.server_url }}/api/packages/${{ github.repository_owner }}/generic/base-docs-site/latest"
+          curl -s -X DELETE -H "Authorization: token ${GITEA_TOKEN}" "${PKG}" || true
+          sha256sum base-docs-site.tar.gz | cut -d' ' -f1 > base-docs-site.tar.gz.sha256
+          for f in base-docs-site.tar.gz base-docs-site.tar.gz.sha256; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' -X PUT \
+              -H "Authorization: token ${GITEA_TOKEN}" \
+              --upload-file "$f" "${PKG}/$f")
+            echo "PUT $f -> $code"
+            case "$code" in 2*) ;; *) echo "::error::uploading $f to the package registry returned $code" >&2; exit 1;; esac
+          done
+
+      # Same reasoning as the tag assertion below: publishing is not the same as being
+      # fetchable, and this repository has shipped that difference before (#78).
+      - name: Assert the package is fetchable and matches what was built
+        env:
+          GITEA_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PKG="${{ github.server_url }}/api/packages/${{ github.repository_owner }}/generic/base-docs-site/latest"
+          curl -fsSL -H "Authorization: token ${GITEA_TOKEN}" "${PKG}/base-docs-site.tar.gz" -o fetched.tar.gz
+          echo "$(cat base-docs-site.tar.gz.sha256)  fetched.tar.gz" | sha256sum -c -
+          rm -f fetched.tar.gz
 
       # Forgejo has no "update release asset" endpoint that replaces in place - delete
       # the previous docs-site-latest release (if any) and its tag, then recreate both.
