@@ -40,7 +40,7 @@ roles, and leaves.
 "Base" names what the thing actually is: the foundation an institution's own
 applications - including Linumed Shifts - are deployed on top of. It reads naturally
 next to "Linumed Shifts" as a product family, and it promises no distribution lifecycle,
-ISO downloads or support horizon that a single maintainer could never honour.
+ISO downloads or support horizon that this project could never honour.
 
 ## Why now, and not later
 

@@ -44,7 +44,8 @@ cluster is not something this kit owns or configures.
 **Compose plus optional Kubernetes manifests or Helm charts in this repository.** Rejected.
 This would not be a switch, it would be a second product: charts, a different security
 model, a cluster in CI, its own operations handbook, and every future role written twice.
-For a single maintainer that reliably produces two half-maintained halves. ADR 0005
+At the maintenance budget this project has, that reliably produces two half-maintained
+halves. ADR 0005
 already narrowed this repository's scope on exactly that basis, deciding that
 `docker/<role>/` references for all six roles cost more than they returned.
 
@@ -140,8 +141,8 @@ Any one of these is reason to reopen it:
   stacks; that is comfortably a single machine.
 
 If it is reopened, the answer is a **separate repository**, sharing these decisions and
-this documentation, not a flag in this one. Two deployment models inside one repository,
-maintained by one person, produces two that do not work rather than one that does.
+this documentation, not a flag in this one. Two deployment models inside one repository
+produce two that do not work rather than one that does.
 
 ## Sources
 

@@ -171,8 +171,8 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for design decisions and component detail
 ## Reporting a security problem
 
 Privately, by email, never as a public issue - see [SECURITY.md](SECURITY.md) for the
-address, what to include, what response times a one-person project can realistically
-promise, and what is in scope here versus belonging upstream.
+address, what to include, what response times this project can realistically promise,
+and what is in scope here versus belonging upstream.
 
 ## License
 
