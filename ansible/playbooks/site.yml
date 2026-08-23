@@ -17,19 +17,9 @@
 - name: Linumed Base - full stack
   hosts: linumed
   vars:
-    # Defaults, overridable from group_vars/host_vars (play vars: is low precedence by
-    # design - see docs/operations/troubleshooting.md's "I changed a variable and nothing
-    # happened" for why that ordering matters here). linumed_base_known_roles is not
-    # meant to be overridden; it exists so the typo preflight above has something fixed
-    # to check against.
-    linumed_base_roles:
-      - common
-      - docker
-      - caddy
-      - monitoring
-      - bridgelink
-      - orthanc
-      - backup
+    # linumed_base_known_roles is not meant to be overridden; it exists so the typo
+    # preflight below has something fixed to check against. linumed_base_roles itself is
+    # deliberately NOT given a value here - see the set_fact below (issue #91) for why.
     linumed_base_known_roles:
       - common
       - docker
@@ -39,6 +29,20 @@
       - orthanc
       - backup
   pre_tasks:
+    # The default lives here, not in `vars:` above. `vars:` on a play outranks inventory
+    # group_vars/host_vars in Ansible's real precedence order - a value an operator sets
+    # in group_vars/linumed/vars.yml (or via scripts/select-roles.sh, issue #87) would be
+    # silently overridden by a play-level default (issue #91: exactly this shipped and
+    # meant every operator-set selection was ignored, discovered against a real VM with
+    # bridgelink deliberately deselected but running anyway). `default()` only supplies
+    # this list when linumed_base_roles is truly undefined, so inventory input wins as
+    # intended.
+    - name: Establish the linumed_base_roles default when the operator did not set one
+      ansible.builtin.set_fact:
+        linumed_base_roles: >-
+          {{ linumed_base_roles | default(linumed_base_known_roles) }}
+      tags: always
+
     # Fails loud on a typo rather than silently deploying the full stack - a boolean
     # `orthanc_enabled: false` would be ignored on misspelling with no error at all; a
     # list at least has something to check membership against.

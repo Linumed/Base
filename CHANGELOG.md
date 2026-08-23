@@ -11,6 +11,22 @@ click away instead of restated here.
 
 ## [Unreleased]
 
+### Fixed
+
+- **`linumed_base_roles` set via inventory group_vars/host_vars was silently overridden
+  by `site.yml`'s own default** (issue #91). The play's `vars:` block defined the default
+  (all seven roles), and in Ansible's real precedence order play `vars:` outranks
+  inventory group_vars/host_vars - the opposite of what a comment in the file claimed. In
+  practice, every operator-documented way of selecting a role subset (hand-editing
+  `group_vars/linumed/vars.yml`, or `scripts/select-roles.sh` from #87) had no effect: the
+  full stack always deployed regardless. Only `node-baseline.yml` worked, because it sets
+  the variable through `import_playbook: ... vars:`, a different and higher-precedence
+  path. Found by deploying a role subset against a real VM and watching `bridgelink` run
+  and fail its own preflight despite being deselected. Fixed by moving the default out of
+  `vars:` into a `set_fact` guarded by `default()`, so inventory input is only replaced
+  when the operator set nothing at all - verified against the same VM with the same
+  selection, `bridgelink` now correctly skipped.
+
 ### Changed
 
 - **README's "System requirements by stack" table re-measured to include `orthanc`**
