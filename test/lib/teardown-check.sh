@@ -26,7 +26,12 @@ run_teardown_check() {
   ssh "${ssh_opts[@]}" "${remote}" 'set -e
     sudo systemctl disable --now linumed-base-backup.timer linumed-base-restore-test.timer
 
-    for stack in bridgelink monitoring caddy; do
+    # orthanc stays in this loop even though the role was removed in #92/ADR 0011 - this
+    # VM went through run_upgrade_from_previous_tag first, deploying v1.0.0 (which still
+    # has it), so a leftover orthanc stack is real state here, not a stale assumption.
+    # docs/operations/teardown.md keeps this entry for exactly this legacy-host case, and
+    # this loop has to match that page verbatim - see this file's own header.
+    for stack in orthanc bridgelink monitoring caddy; do
       [ -d "/opt/linumed-base/$stack" ] && \
         sudo docker compose -f "/opt/linumed-base/$stack/docker-compose.yml" down || true
     done
@@ -36,7 +41,7 @@ run_teardown_check() {
     # this also checks the page is right: volumes are named after the Compose project, not
     # after container_name. The first version grepped for linumed-base, matched nothing,
     # and that is how the docs error was caught instead of shipped.
-    volumes="$(sudo docker volume ls --format "{{.Name}}" | grep -E "^(caddy|monitoring|bridgelink)_" || true)"
+    volumes="$(sudo docker volume ls --format "{{.Name}}" | grep -E "^(caddy|monitoring|bridgelink|orthanc)_" || true)"
     [ -n "$volumes" ] || { echo "no project volumes found - the filter in the docs is wrong" >&2; exit 1; }
     echo "$volumes" | xargs -r sudo docker volume rm >/dev/null
 

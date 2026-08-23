@@ -46,6 +46,13 @@ click away instead of restated here.
   as extra-vars scoped to just that one old-tag deploy, exactly the failure mode a
   comment in that file already warned about before this change ever landed.
 
+  A second CI failure followed the first fix: `test/lib/teardown-check.sh` had `orthanc`
+  removed from its stack-teardown loop and volume grep, but
+  `docs/operations/teardown.md` deliberately keeps `orthanc` in both, for hosts upgrading
+  from before this change - and the CI VM, having just deployed `v1.0.0` in the upgrade
+  step, is exactly such a host. Reverted; the check now matches the page it verifies,
+  verbatim, again.
+
 ### Fixed
 
 - **`linumed_base_roles` set via inventory group_vars/host_vars was silently overridden
