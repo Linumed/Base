@@ -41,10 +41,6 @@ source "${REPO_ROOT}/test/lib/docker-reference-smoke.sh"
 source "${REPO_ROOT}/test/lib/bridgelink-exporter-check.sh"
 # shellcheck source=lib/node-baseline-check.sh
 source "${REPO_ROOT}/test/lib/node-baseline-check.sh"
-# shellcheck source=lib/orthanc-check.sh
-source "${REPO_ROOT}/test/lib/orthanc-check.sh"
-# shellcheck source=lib/orthanc-scrape-check.sh
-source "${REPO_ROOT}/test/lib/orthanc-scrape-check.sh"
 # shellcheck source=lib/role-selection-check.sh
 source "${REPO_ROOT}/test/lib/role-selection-check.sh"
 # shellcheck source=lib/teardown-check.sh
@@ -150,24 +146,13 @@ run_site_idempotency_check
 report_upgrade_changed_count
 
 # Needs the opposite state: the full stack that just deployed, so the residue this
-# detects (orthanc's deploy directory) is real rather than staged.
+# detects (caddy's deploy directory) is real rather than staged.
 run_role_selection_residue_check
 
 # Runs after site.yml, not instead of it: it needs the Docker the docker role installs,
 # and it deliberately reuses this already-provisioned throwaway VM rather than exposing a
 # Docker socket to the CI job container (issue #46).
 run_docker_reference_smoke_check
-
-# Last, and after the idempotency check rather than folded into it: this one deliberately
-# changes the deployed state (it switches the exporter on), so anything asserting on a
-# default-configuration host has to have run already. Covers the enable path from #60,
-# which nothing had ever executed through Ansible (issue #62).
-run_orthanc_check
-
-# After run_orthanc_check, which asserts against a default-configuration Orthanc, and
-# before the teardown: this one switches monitoring_scrape_orthanc on, so it changes the
-# deployed state (issues #62, #76).
-run_orthanc_scrape_check
 
 run_bridgelink_exporter_check
 

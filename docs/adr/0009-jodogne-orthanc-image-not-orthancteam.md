@@ -1,6 +1,11 @@
 # ADR 0009: `jodogne/orthanc-plugins` as the Orthanc image, not `orthancteam/orthanc`
 
-**Status:** accepted · **Date:** 2026-08-21 · **Affects:** `orthanc`; issue #69
+**Status:** superseded by [ADR 0011](0011-orthanc-removed-not-part-of-base.md) · **Date:** 2026-08-21 · **Affects:** `orthanc`; issue #69
+
+> **2026-08-23:** the `orthanc` role this ADR was written for no longer exists in this
+> kit (#92/ADR 0011). The measurement below is kept because it is still correct and still
+> useful to anyone deploying Orthanc themselves - see
+> [docs/operations/orthanc-recommendation.md](../operations/orthanc-recommendation.md).
 
 ## The question answered here
 

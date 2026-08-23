@@ -61,6 +61,7 @@ nav:
       - Backup & Restore: operations/backup-restore.md
       - Teardown: operations/teardown.md
       - Troubleshooting: operations/troubleshooting.md
+      - Orthanc (DICOM) recommendation: operations/orthanc-recommendation.md
   - Roles:
       - common:
           - SSH hardening: roles/common-ssh.md
@@ -72,7 +73,6 @@ nav:
       - caddy: roles/caddy.md
       - monitoring: roles/monitoring.md
       - bridgelink: roles/bridgelink.md
-      - orthanc: roles/orthanc.md
       - backup: roles/backup.md
   - Architecture Decisions:
       - Overview: adr/README.md
@@ -86,6 +86,7 @@ nav:
       - "0008: What the v1.0 stability guarantee covers": adr/0008-what-the-v1-0-stability-guarantee-covers.md
       - "0009: jodogne/orthanc-plugins as the Orthanc image": adr/0009-jodogne-orthanc-image-not-orthancteam.md
       - "0010: Internal versus interface variables": adr/0010-internal-versus-interface-variables.md
+      - "0011: Orthanc removed - not part of Linumed Base": adr/0011-orthanc-removed-not-part-of-base.md
 
 # Diagrams are pre-rendered to SVG by scripts/render-diagrams.sh and committed under
 # docs/img/ (issue #65), so no JavaScript renderer is loaded at all any more. That removed

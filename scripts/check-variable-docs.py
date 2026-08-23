@@ -59,12 +59,11 @@ DOC_TOKEN = re.compile(r"[a-z][a-z0-9_]*|_[a-z][a-z0-9_]*")
 # `role:variable`; every group must resolve to one distinct value.
 COUPLED_LITERALS = [
     (
-        "the shared metrics network - three Compose projects agree on one fixed literal "
+        "the shared metrics network - two Compose projects agree on one fixed literal "
         "name (issues #39, #64); a mismatch means Prometheus cannot reach the exporter",
         [
             "monitoring:monitoring_metrics_network_name",
             "bridgelink:bridgelink_exporter_metrics_network",
-            "orthanc:orthanc_metrics_network",
         ],
     ),
     (
@@ -81,9 +80,9 @@ COUPLED_LITERALS = [
 # Prometheus scrape targets name another role's container and the port *inside* it. Both
 # ends are literals with no shared source, so nothing but equality holds them together -
 # and the symptom of a mismatch is a target that reads as down, indistinguishable from a
-# service that was never deployed. Issue #80 was exactly that, in the Orthanc job.
+# service that was never deployed. Issue #80 was exactly that, in the (now removed,
+# #92/ADR 0011) Orthanc job.
 SCRAPE_TARGETS = [
-    ("monitoring_orthanc_target", "orthanc"),
     ("monitoring_bridgelink_exporter_target", "bridgelink"),
 ]
 
@@ -111,10 +110,8 @@ def doc_pages() -> list[Path]:
     Not per-role, for two reasons taken from the actual pages: `common` is split across
     five pages (SSH, ufw, fail2ban, unattended-upgrades, NTP), so a one-file-per-role
     mapping is already wrong; and a variable is documented where an operator *sets* it, not
-    where it is defined - `monitoring_scrape_orthanc` and the two `monitoring_orthanc_*`
-    credentials live in docs/roles/orthanc.md next to the feature that needs them, and the
-    image pins live once in docs/operations/updates.md rather than repeated in every role
-    table.
+    where it is defined - the image pins live once in docs/operations/updates.md rather
+    than repeated in every role table.
 
     Not the whole site either, which the first version of this check got wrong: ADR 0010
     necessarily names every internal variable in order to explain it, and `docs/changelog.md`

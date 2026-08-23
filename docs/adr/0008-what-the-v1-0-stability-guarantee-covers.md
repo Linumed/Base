@@ -1,6 +1,6 @@
 # ADR 0008: What the v1.0 stability guarantee covers
 
-**Status:** accepted · **Date:** 2026-08-20, surface re-measured 2026-08-21 (#73) · **Affects:** every role; `ARCHITECTURE.md`; `CONVENTIONS.md`; issues #66, #71, #73
+**Status:** accepted · **Date:** 2026-08-20, surface re-measured 2026-08-21 (#73) and again 2026-08-23 after Orthanc's removal (#92/[ADR 0011](0011-orthanc-removed-not-part-of-base.md)) · **Affects:** every role; `ARCHITECTURE.md`; `CONVENTIONS.md`; issues #66, #71, #73, #92
 
 ## The question answered here
 
@@ -18,23 +18,24 @@ cannot be quietly fixed later.
 
 ## Context
 
-The surface was measured rather than estimated. The figures below were re-measured on
-2026-08-21 (issue #73); the "was" column is the original 2026-08-20 measurement, kept
-because the size of the drift in one day is itself the argument for re-measuring before
-the tag rather than after.
+The surface was measured rather than estimated, three times so far: 2026-08-20 (six
+roles, before Orthanc), 2026-08-21 (seven roles, #73), and 2026-08-23 (six roles again,
+after Orthanc's removal in #92/ADR 0011). The current column is what the guarantee covers
+today; the other two are kept because the size of each swing is itself the argument for
+re-measuring before every change to this surface rather than estimating.
 
-| Surface | Size (2026-08-21, seven roles) | Was (2026-08-20, six roles) |
-|---|---|---|
-| Role variables in `defaults/main.yml` | **138** interface + 8 internal, seven roles | 125 across six, no split |
-| Container names (`linumed-base-*`) | **13** | 11 |
-| Shared Docker networks | 2 (`linumed-base-external`, `linumed-base-metrics`) | 2 |
-| Deploy paths | `/opt/linumed-base/{caddy,bridgelink,monitoring,`**`orthanc`**`}` | three of them |
-| Metrics from this kit's own exporters | `bridgelink_*`, `backup_*`, `restore_test_*` | unchanged |
-| Alert rule names | **16** | 13 |
-| systemd units | 4 (`backup`, `restore-test`, each `.service` and `.timer`) | 4 |
-| Variables a plain `site.yml` run aborts without | **9** | "6 with no default" |
-| Grafana dashboard and datasource UIDs | 3 dashboards, plus `prometheus` and `loki` | unchanged |
-| Docker volume names | **11**, project-derived rather than `linumed-base-*` | 9 |
+| Surface | Size (2026-08-23, six roles) | Was (2026-08-21, seven roles) | Was (2026-08-20, six roles) |
+|---|---|---|---|
+| Role variables in `defaults/main.yml` | **120** interface + 4 internal, six roles | 138 interface + 8 internal, seven roles | 125 across six, no split |
+| Container names (`linumed-base-*`) | **11** | 13 | 11 |
+| Shared Docker networks | 2 (`linumed-base-external`, `linumed-base-metrics`) | 2 | 2 |
+| Deploy paths | `/opt/linumed-base/{caddy,bridgelink,monitoring}` | four of them, incl. `orthanc` | three of them |
+| Metrics from this kit's own exporters | `bridgelink_*`, `backup_*`, `restore_test_*` | unchanged | unchanged |
+| Alert rule names | **13** | 16 | 13 |
+| systemd units | 4 (`backup`, `restore-test`, each `.service` and `.timer`) | 4 | 4 |
+| Variables a plain `site.yml` run aborts without | **7** | 9 | "6 with no default" |
+| Grafana dashboard and datasource UIDs | 3 dashboards, plus `prometheus` and `loki` | unchanged | unchanged |
+| Docker volume names | **9**, project-derived rather than `linumed-base-*` | 11 | 9 |
 
 Three of those rows need a word beyond the number.
 
@@ -46,22 +47,23 @@ removed the one variable nothing read. A measurement that is wrong in the same d
 the estimate it replaced is worth naming, because the point of measuring was to stop
 guessing.
 
-**Orthanc adds no metric names of this kit's own.** It serves
-`/tools/metrics-prometheus` natively, so the names on that endpoint are upstream's and
-change when Orthanc changes - this kit neither owns nor can promise them. What this kit
-does own are the three alert rules built on top (`OrthancDown`, `OrthancErrorRate`,
-`OrthancJobsStuck`), and those are in the count above. The distinction matters for anyone
-reading the "own exporters" row as "all metrics you will see".
+**Orthanc's share of the table above is history as of 2026-08-23.** The 2026-08-21 column
+included three alert rules and 18 role variables that were Orthanc's; the role was
+removed entirely in #92/ADR 0011, for reasons unrelated to this ADR (an access-log gap
+and a "no application software" boundary question, not anything about the stability
+surface). The drop from 138 to 120 interface variables and from 16 to 13 alert rule names
+is that removal, not a correction of a prior miscount - contrast the previous paragraph,
+which *is* a correction.
 
 **"Vault variables with no default" was not a measurable category.** Every one of them has
-a default - the empty string, or `{}` for `orthanc_users`. What the row meant is the thing
-an operator actually feels: a plain `site.yml` run aborts in preflight without it. Measured
-that way it is nine (`backup_repository`, `backup_restic_password`, `bridgelink_db_password`,
+a default - the empty string. What the row meant is the thing an operator actually feels:
+a plain `site.yml` run aborts in preflight without it. Measured that way it is seven
+(`backup_repository`, `backup_restic_password`, `bridgelink_db_password`,
 `bridgelink_keystore_keypass`, `bridgelink_keystore_storepass`, `bridgelink_server_id`,
-`monitoring_grafana_admin_password`, `orthanc_db_password`, `orthanc_users`). A further ten
-are asserted only once an opt-in switch arms them - the BridgeLink exporter, Alertmanager
-SMTP, Grafana OIDC - and are deliberately not counted here, because they cannot stop a
-default deployment.
+`monitoring_grafana_admin_password`) - `orthanc_db_password` and `orthanc_users` are gone
+along with the role. A further ten are asserted only once an opt-in switch arms them - the
+BridgeLink exporter, Alertmanager SMTP, Grafana OIDC - and are deliberately not counted
+here, because they cannot stop a default deployment.
 
 Not all of these are equally exposed. The distinguishing question is not "is it visible?"
 but **"can an operator have built something on it that silently stops working?"** Two

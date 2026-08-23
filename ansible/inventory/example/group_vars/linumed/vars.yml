@@ -11,13 +11,11 @@
 
 # --- Which roles this host runs (issue #86) ---
 #
-# Leave commented to deploy all seven - see playbooks/site.yml. To deploy a subset, either
+# Leave commented to deploy all six - see playbooks/site.yml. To deploy a subset, either
 # uncomment and edit the list by hand (a misspelled name aborts the run rather than
 # silently deploying the full stack anyway), or run scripts/select-roles.sh against this
-# file (issue #87) - it understands the one dependency rule (orthanc needs monitoring,
-# because orthanc_metrics_enabled defaults to true) and writes the list for you. Either
-# way the result has to stay between the two markers below, or a later select-roles.sh
-# run duplicates the block instead of replacing it.
+# file (issue #87). Either way the result has to stay between the two markers below, or a
+# later select-roles.sh run duplicates the block instead of replacing it.
 # BEGIN linumed_base_roles
 # linumed_base_roles:
 #   - common
@@ -25,7 +23,6 @@
 #   - caddy
 #   - monitoring
 #   - bridgelink
-#   # - orthanc      # e.g. omit on a site with no imaging
 #   - backup
 # END linumed_base_roles
 

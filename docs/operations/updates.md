@@ -39,8 +39,6 @@ conscious action:
 | monitoring | `monitoring_alertmanager_image` | `prom/alertmanager:v0.33.1` |
 | monitoring | `monitoring_cadvisor_image` | `ghcr.io/google/cadvisor:v0.60.5` |
 | monitoring | `monitoring_docker_socket_proxy_image` | `tecnativa/docker-socket-proxy:0.3.0` |
-| orthanc | `orthanc_image` | `jodogne/orthanc-plugins:1.13.0` |
-| orthanc | `orthanc_postgres_image` | `postgres:17.11-alpine` |
 
 The roles remain the source of truth, but this table is no longer allowed to drift away
 from them: `scripts/check-variable-docs.py` compares every row against the roles' defaults

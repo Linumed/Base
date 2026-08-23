@@ -133,8 +133,7 @@ variable" means.
 ## select-roles.sh
 
 Interactive role selection for `linumed_base_roles` (issue #86), so picking a subset of
-the seven roles doesn't mean hand-editing YAML and remembering the one dependency rule
-from memory.
+the six roles doesn't mean hand-editing YAML.
 
 ```bash
 ./scripts/select-roles.sh --file inventory/myhospital/group_vars/linumed/vars.yml
@@ -149,13 +148,9 @@ tool's whole job is picking roles, not hiding what it did.
 touch `hosts.yml`, any other setting in `vars.yml`, or `vault.yml` - the rest of onboarding
 stays the README's job.
 
-**`orthanc` is only offered once `monitoring` is selected** - not because of a rule this
-script invented, but because `orthanc_metrics_enabled` defaults to `true`
-(`ansible/roles/orthanc/defaults/main.yml`), so orthanc without monitoring fails `site.yml`'s
-own preflight the moment it is applied. Graying it out here means that failure is never
-reached. `bridgelink` is **not** gated the same way: its exporter defaults to *off*
-(`bridgelink_exporter_enabled`), so bridgelink alone is a normal, supported combination -
-gating it too would make the tool more restrictive than the kit actually is.
+None of the four optional roles depends on another being selected, so this is a single
+flat checklist - there used to be a gated second step for `orthanc`, removed along with
+the role itself in #92/ADR 0011 (see `docs/operations/orthanc-recommendation.md`).
 
 Re-running it replaces the previous selection in place (between two `# BEGIN
 linumed_base_roles` / `# END` markers) rather than piling up duplicate blocks - safe to
@@ -163,7 +158,7 @@ run again after changing your mind.
 
 ```bash
 ./scripts/select-roles.sh --file inventory/myhospital/group_vars/linumed/vars.yml \
-  --non-interactive "caddy monitoring orthanc backup"
+  --non-interactive "caddy monitoring backup"
 ```
 
 `--non-interactive` skips the dialogs - what `test/select-roles-check.sh` uses (`whiptail`

@@ -52,7 +52,6 @@ linumed-base/
 │   │   ├── common/          # Hardening, firewall, SSH, updates
 │   │   ├── docker/          # Docker Engine + compose plugin, shared prerequisite
 │   │   ├── bridgelink/      # HL7/FHIR integration engine (MPL-2.0 Mirth fork)
-│   │   ├── orthanc/         # DICOM archive (GPLv3), PostgreSQL index
 │   │   ├── monitoring/      # Prometheus + Grafana + Loki + Node Exporter
 │   │   ├── caddy/           # Reverse proxy with automatic TLS
 │   │   └── backup/          # restic-based backup (local + optional S3)
@@ -183,7 +182,6 @@ linumed-base/
 | Docker | ansible/roles/docker | Docker Engine + compose plugin, shared prerequisite for every Docker-based role |
 | Caddy | ansible/roles/caddy | Reverse proxy, automatic TLS via ACME |
 | BridgeLink | ansible/roles/bridgelink | HL7 v2, FHIR R4 integration engine - MPL-2.0 fork of Mirth Connect, which went proprietary in March 2025 |
-| Orthanc | ansible/roles/orthanc | DICOM archive (GPLv3) with a PostgreSQL index - added in v0.4, see ADR 0009 for the image choice |
 | Prometheus | ansible/roles/monitoring | Metrics collection |
 | Grafana | ansible/roles/monitoring | Dashboards, loopback-only by default |
 | Loki | ansible/roles/monitoring | Log aggregation |
@@ -193,7 +191,9 @@ linumed-base/
 | Node Exporter | ansible/roles/monitoring | Host metrics - native Debian package, not a container |
 | restic | ansible/roles/backup | Encrypted backup |
 
-Orthanc (DICOM) was out of scope for v0.1 and arrived in v0.4.
+Orthanc (DICOM) was out of scope for v0.1, arrived in v0.4, and was removed again in
+#92/[ADR 0011](docs/adr/0011-orthanc-removed-not-part-of-base.md) - see
+`docs/operations/orthanc-recommendation.md` for what replaced it.
 
 **No identity provider is bundled, ever** - Authentik was planned for v0.2 and is dropped,
 see `docs/adr/0003-loopback-only-access-no-bundled-identity-provider.md`. Every management

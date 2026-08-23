@@ -10,12 +10,11 @@ happens during that run and why, across roles, which the README doesn't.
 `ansible/playbooks/site.yml` applies roles in one order, always:
 
 ```
-common → docker → caddy → monitoring → bridgelink → orthanc → backup
+common → docker → caddy → monitoring → bridgelink → backup
 ```
 
-This said `common → docker → caddy → monitoring → bridgelink → backup` - missing orthanc -
-until 2026-08-22, the same kind of staleness `node-baseline.yml`'s header once had: correct
-when written, never re-checked when the seventh role landed.
+This briefly included a seventh role, `orthanc`, between `bridgelink` and `backup` -
+removed again in #92/[ADR 0011](../adr/0011-orthanc-removed-not-part-of-base.md).
 
 Each step depends on the one before it:
 
@@ -25,14 +24,13 @@ Each step depends on the one before it:
    its own sequencing internally (SSH rule before `ufw enable`).
 2. **docker** installs Docker Engine and the Compose plugin. Every role after this one
    is a Docker Compose stack.
-3. **caddy**, **monitoring**, **bridgelink**, **orthanc** are independent of each other
-   with two exceptions, and the order here is otherwise roughly "smallest blast radius
-   first". With `bridgelink_exporter_enabled`, the bridgelink stack joins a Docker network
-   the **monitoring** role creates; with `orthanc_metrics_enabled` (on by default), Orthanc
-   does the same. Either way monitoring has to have run on the host first, or Compose fails
-   on a missing external network (issue #64) - both roles now check for the network
-   themselves and abort with a clear message rather than Compose's raw error (issue #86).
-   With both switches off, all four are genuinely independent. See
+3. **caddy**, **monitoring**, **bridgelink** are independent of each other with one
+   exception, and the order here is otherwise roughly "smallest blast radius first". With
+   `bridgelink_exporter_enabled`, the bridgelink stack joins a Docker network the
+   **monitoring** role creates - monitoring has to have run on the host first, or Compose
+   fails on a missing external network (issue #64); the role checks for the network itself
+   and aborts with a clear message rather than Compose's raw error (issue #86). With that
+   switch off, all three are genuinely independent. See
    [Architecture: network design](../architecture.md#network-design).
 4. **backup** runs last because it backs up `/var/lib/docker/volumes`, which only has
    meaningful content once the other roles have created their volumes.
@@ -40,19 +38,16 @@ Each step depends on the one before it:
 ### Deploying a subset of roles
 
 Set `linumed_base_roles` in the inventory to deploy less than the full stack (issue #86) -
-for example everything except `orthanc` on a site with no imaging. Either edit the
-commented example in `group_vars/linumed/vars.yml` by hand, or run
+for example everything except `bridgelink` on a site with no integration engine. Either
+edit the commented example in `group_vars/linumed/vars.yml` by hand, or run
 `scripts/select-roles.sh` against that file (issue #87) - a `whiptail` picker that shows
-the resulting YAML before writing it and grays out `orthanc` unless `monitoring` is also
-selected, rather than letting an invalid combination reach the preflight below at all.
-See `scripts/README.md` for the full usage. `site.yml` is still the one playbook to run; a
-preflight
-aborts with a clear message if the selection names an unknown role, omits a role another
-selected one needs (`docker` for any Compose role, `common` for `monitoring` unless
-`monitoring_node_exporter_deny_external` is off, `monitoring` for `orthanc`/`bridgelink`
-with their metrics switches on), or if a role that is *not* selected has already run on
-this host - deselecting does not remove anything; see
-[teardown](teardown.md) for that.
+the resulting YAML before writing it. See `scripts/README.md` for the full usage.
+`site.yml` is still the one playbook to run; a preflight aborts with a clear message if
+the selection names an unknown role, omits a role another selected one needs (`docker`
+for any Compose role, `common` for `monitoring` unless
+`monitoring_node_exporter_deny_external` is off, `monitoring` for `bridgelink` with its
+exporter switch on), or if a role that is *not* selected has already run on this host -
+deselecting does not remove anything; see [teardown](teardown.md) for that.
 
 **`node-baseline.yml` is the one selection that ships as its own playbook**, because it is
 the one aimed at a named audience rather than a general mechanism:
@@ -95,7 +90,7 @@ to find out except by trying (issue #68).
 
 What makes it a single-host kit, concretely:
 
-- `site.yml` applies all seven roles to the same machine.
+- `site.yml` applies all six roles to the same machine.
 - Prometheus reaches the Node Exporter over `host.docker.internal`, which resolves to *this*
   host's gateway, and reaches the BridgeLink exporter over a Docker network that exists on
   *this* host (issue #64).
@@ -115,7 +110,7 @@ network the monitoring role creates locally.
   survive the loss of a machine, this kit does not provide that - see
   [ADR 0007](../adr/0007-docker-compose-not-kubernetes.md), which states the same thing from
   the Kubernetes side.
-- **Capacity is one machine's capacity.** Four Compose stacks sit comfortably on one server
+- **Capacity is one machine's capacity.** Three Compose stacks sit comfortably on one server
   today; that is a fact about the current service set, not a promise about a future one.
 - **A central monitoring stack across sites is not what this is.** Each host monitors
   itself. Feeding several installations into one Grafana is possible - it is the operator's

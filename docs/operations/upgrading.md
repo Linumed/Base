@@ -27,7 +27,10 @@ step in the same `test/vm-test.sh` sequence that already double-runs every deplo
 
 ## What actually happened, measured (`v0.4.0` → `v1.0.0`, 2026-08-22)
 
-The first upgrade this kit ever went through, by hand, before the automated check existed:
+The first upgrade this kit ever went through, by hand, before the automated check existed
+(the `orthanc` role named below no longer exists - removed in #92/[ADR
+0011](../adr/0011-orthanc-removed-not-part-of-base.md) - this is historical evidence about
+how upgrades behave, kept as written):
 
 ```
 v0.4.0 first apply (fresh host):        ok=127  changed=77  failed=0

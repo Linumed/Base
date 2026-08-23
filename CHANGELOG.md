@@ -11,6 +11,34 @@ click away instead of restated here.
 
 ## [Unreleased]
 
+### Removed
+
+- **The `orthanc` role - Orthanc is no longer part of this kit** (issue #92,
+  [ADR 0011](adr/0011-orthanc-removed-not-part-of-base.md)). **Breaking change
+  against the ADR 0008 v1.0 stability surface** - a major version bump, not a minor one.
+  Three findings drove this, all from real testing against a live instance: Orthanc logs
+  no access identity at any verbosity (method/path/timing only, never a username, tested
+  with real and fake credentials alike); it persists patient data indefinitely on a
+  dedicated Docker volume with no retention policy and no offload enabled by default,
+  despite its own README calling it "an archive"; and both of those together put it on
+  the wrong side of README's own "No application software" boundary, which Orthanc's
+  inclusion (v0.4.0, #69) was never actually weighed against at the time.
+
+  Removed: the role itself; its scrape job, alert rule group
+  (`OrthancDown`/`OrthancErrorRate`/`OrthancJobsStuck`) and credential-matching preflight
+  from `monitoring`; its dependency gate from `scripts/select-roles.sh`, now a flat
+  four-role checklist; its pinned-image entries from `security/accepted-image-findings.txt`.
+  Kept: `docs/operations/teardown.md`'s Orthanc removal steps, for hosts that still have
+  it deployed from before this change; ADR 0009's image-choice measurement, marked
+  superseded rather than deleted. Replaced by
+  [docs/operations/orthanc-recommendation.md](operations/orthanc-recommendation.md) -
+  Orthanc recommended for anyone who needs a DICOM server, with every finding above
+  stated plainly and a starting-point configuration to build from.
+
+  Verified against a real VM: the documented six-role selection mechanism (#86/#87)
+  deploys cleanly with no `orthanc` reference anywhere in the output, and a second apply
+  is `changed=0`.
+
 ### Fixed
 
 - **`linumed_base_roles` set via inventory group_vars/host_vars was silently overridden

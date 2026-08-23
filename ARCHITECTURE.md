@@ -185,26 +185,6 @@ Retention is split by data kind, not a single global value: metrics
 contain personal data (IP addresses, usernames), so the shorter
 retention here is data minimization, not an arbitrary choice.
 
-### orthanc (Ansible role)
-
-DICOM archive: Orthanc (GPLv3) with its index in PostgreSQL and the
-pixel data on a Docker volume. Added in v0.4 (issue #69).
-
-`jodogne/orthanc-plugins`, not the ops-facing `orthancteam/orthanc` -
-that one cannot run as a non-root user, and the component holding
-patient images is the last place this kit would accept a root
-container. Measured, not assumed:
-[ADR 0009](https://github.com/Linumed/Base/blob/main/docs/adr/0009-jodogne-orthanc-image-not-orthancteam.md).
-
-Orthanc serves Prometheus metrics natively at
-`/tools/metrics-prometheus`, so unlike BridgeLink it needs no exporter -
-the pre-check that #60 made mandatory gave the opposite answer here.
-
-The DICOM listener is **not** published to the host by default. Which
-modalities may reach the archive, from which network segment, is a
-decision about the institution's network; a published container port
-also bypasses ufw. Same reasoning as BridgeLink's channel listeners.
-
 ### backup (Ansible role)
 
 Encrypted backups with restic. Supported backends:
@@ -419,10 +399,11 @@ measured and, where it should not have been frozen, narrowed (ADR 0010).
 
 The scope of that promise is defined in
 [ADR 0008](https://github.com/Linumed/Base/blob/main/docs/adr/0008-what-the-v1-0-stability-guarantee-covers.md).
-The surface was measured, not estimated, and re-measured against all seven
-roles on 2026-08-21: 138 interface role variables (plus eight recorded as
-internal in `ansible/internal-variables.txt`, see ADR 0010), 13 container
-names, 16 alert rule names, four systemd units, nine variables a plain run
+The surface was measured, not estimated: re-measured against all seven roles on
+2026-08-21, then again against six roles on 2026-08-23 after Orthanc's removal
+(#92/ADR 0011). Current: 120 interface role variables (plus four recorded as
+internal in `ansible/internal-variables.txt`, see ADR 0010), 11 container
+names, 13 alert rule names, four systemd units, seven variables a plain run
 aborts without, and
 the Grafana dashboard and datasource UIDs that every operator-built panel
 references.

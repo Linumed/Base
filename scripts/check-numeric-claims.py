@@ -99,7 +99,6 @@ def shared_docker_networks() -> int:
         ("caddy", "caddy_external_network_name"),
         ("monitoring", "monitoring_metrics_network_name"),
         ("bridgelink", "bridgelink_exporter_metrics_network"),
-        ("orthanc", "orthanc_metrics_network"),
     ]:
         value = _cvd.literal_of(role, var)
         if value:
@@ -134,12 +133,12 @@ NUMERIC_CLAIMS: list[tuple[str, "callable[[], int]", str]] = [
     (
         "docs/adr/0008-what-the-v1-0-stability-guarantee-covers.md",
         role_variables_interface,
-        "**{n}** interface + 8 internal, seven roles",
+        "**{n}** interface + 4 internal, six roles",
     ),
     (
         "docs/adr/0008-what-the-v1-0-stability-guarantee-covers.md",
         role_variables_internal,
-        "**138** interface + {n} internal, seven roles",
+        "**120** interface + {n} internal, six roles",
     ),
     (
         "docs/adr/0008-what-the-v1-0-stability-guarantee-covers.md",

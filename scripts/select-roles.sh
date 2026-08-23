@@ -15,26 +15,15 @@
 # this repo (site.yml, node-baseline.yml) includes both, and dropping either is "write a
 # playbook of your own" territory per CONVENTIONS.md, not something this tool covers.
 #
-# `orthanc` is only offered once `monitoring` is selected, and this is checked at
-# selection time, not just deployment time: `orthanc_metrics_enabled` defaults to true
-# (ansible/roles/orthanc/defaults/main.yml), so orthanc without monitoring fails site.yml's
-# own preflight (issue #86 stage 1) the moment it is applied. Graying it out here means an
-# operator never reaches that error in the first place.
-#
-# `bridgelink` is NOT gated the same way, on purpose, not by oversight:
-# `bridgelink_exporter_enabled` defaults to FALSE (ansible/roles/bridgelink/defaults/main.yml),
-# so bridgelink alone, without monitoring, is a normal and supported combination under
-# defaults. Gating it here would be more restrictive than the kit actually is.
-#
-# These rules are duplicated from ansible/playbooks/site.yml's pre_tasks by necessity, the
-# same way the linumed-base-metrics network name is duplicated across three roles' defaults
-# (see ADR 0010) - there is no shared source a bash script and Ansible's Jinja can both
-# read. If site.yml's dependency preflights change, this file's comments say so and need
-# the same edit.
+# There used to be a second, gated step here for `orthanc` (dependent on `monitoring`).
+# Orthanc was removed from this kit entirely in #92/ADR 0011 - see
+# docs/operations/orthanc-recommendation.md for why and what replaced it. None of the
+# remaining four optional roles has a selection-time dependency on another, so this is a
+# single flat checklist now.
 #
 # Usage:
 #   ./select-roles.sh --file inventory/myhospital/group_vars/linumed/vars.yml
-#   ./select-roles.sh --file <path> --non-interactive "caddy monitoring orthanc backup"
+#   ./select-roles.sh --file <path> --non-interactive "caddy monitoring backup"
 #
 # --non-interactive takes the space-separated OPTIONAL roles (excluding common/docker,
 # which are always included) and skips whiptail entirely - used by the test suite, and
@@ -51,7 +40,7 @@ Usage: select-roles.sh --file PATH [--non-interactive "ROLE ROLE ..."]
 
   --file PATH            group_vars/linumed/vars.yml to write into (or create)
   --non-interactive LIST  space-separated optional roles (caddy monitoring bridgelink
-                          orthanc backup) - skips the whiptail dialogs
+                          backup) - skips the whiptail dialogs
 EOF
 }
 
@@ -70,9 +59,10 @@ if [ -z "$TARGET_FILE" ]; then
   exit 1
 fi
 
-# The known-good optional roles and the one dependency rule, in one place so both the
-# interactive and non-interactive paths validate identically.
-ALL_OPTIONAL="caddy monitoring bridgelink orthanc backup"
+# The known-good optional roles, in one place so both the interactive and
+# non-interactive paths validate identically. No dependency rule needed any more - it
+# existed only for orthanc (#92/ADR 0011).
+ALL_OPTIONAL="caddy monitoring bridgelink backup"
 
 validate_selection() {
   # $1: space-separated optional roles chosen
@@ -87,19 +77,6 @@ validate_selection() {
         ;;
     esac
   done
-  case " $chosen " in
-    *" orthanc "*)
-      case " $chosen " in
-        *" monitoring "*) ;;
-        *)
-          echo "::error:: orthanc needs monitoring - orthanc_metrics_enabled defaults to" >&2
-          echo "true, and site.yml's own preflight refuses to deploy orthanc without the" >&2
-          echo "network monitoring creates. Add monitoring, or deselect orthanc." >&2
-          return 1
-          ;;
-      esac
-      ;;
-  esac
 }
 
 render_roles_yaml() {
@@ -109,7 +86,7 @@ render_roles_yaml() {
   echo "  - common"
   echo "  - docker"
   local role
-  for role in caddy monitoring bridgelink orthanc backup; do
+  for role in caddy monitoring bridgelink backup; do
     case " $chosen " in
       *" $role "*) echo "  - $role" ;;
     esac
@@ -166,9 +143,9 @@ command -v whiptail >/dev/null 2>&1 || {
   exit 1
 }
 
-# Step 1: the roles with no selection-time dependency. All pre-checked, matching
-# site.yml's default (every role runs unless told otherwise).
-STEP1=$(whiptail --title "Linumed Base - role selection" --checklist \
+# All pre-checked, matching site.yml's default (every role runs unless told otherwise).
+# No dependency between any of these four, so one flat checklist is enough.
+CHOSEN=$(whiptail --title "Linumed Base - role selection" --checklist \
   "common and docker are always included. Choose the rest (space to toggle):" \
   16 70 4 \
   "caddy" "Reverse proxy with automatic TLS" ON \
@@ -177,28 +154,7 @@ STEP1=$(whiptail --title "Linumed Base - role selection" --checklist \
   "backup" "Encrypted restic backups" ON \
   3>&1 1>&2 2>&3) || { echo "Cancelled."; exit 1; }
 
-STEP1_CLEAN=$(echo "$STEP1" | tr -d '"')
-
-# Step 2: orthanc, offered only if monitoring was selected - the grayed-out behaviour
-# the issue asked for, done by not presenting the choice at all rather than presenting
-# and then rejecting it.
-ORTHANC=""
-case " $STEP1_CLEAN " in
-  *" monitoring "*)
-    if whiptail --title "Linumed Base - role selection" --yesno \
-      "Deploy orthanc (DICOM archive)?\n\nOnly offered because monitoring is selected - orthanc's metrics are on by default and need monitoring's network to exist." \
-      10 70; then
-      ORTHANC="orthanc"
-    fi
-    ;;
-  *)
-    whiptail --title "Linumed Base - role selection" --msgbox \
-      "orthanc is not offered: it is not selected, and orthanc's metrics default to on, which needs monitoring's network to exist. Select monitoring and run this again to include orthanc." \
-      10 70
-    ;;
-esac
-
-CHOSEN="$STEP1_CLEAN $ORTHANC"
+CHOSEN=$(echo "$CHOSEN" | tr -d '"')
 validate_selection "$CHOSEN"
 YAML="$(render_roles_yaml "$CHOSEN")"
 

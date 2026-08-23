@@ -61,44 +61,6 @@
     label: "{{ item.login | default('?') }}"
   no_log: true
 
-# The Orthanc scrape is the one place in this kit where the same credential has to exist in
-# two roles. Orthanc serves its own metrics endpoint rather than getting an exporter
-# (ADR 0009), the endpoint sits behind Orthanc's REST authentication, and Orthanc's only
-# user store is orthanc_users - so Prometheus needs an account that also exists there.
-# Until this check, the two were held together by a comment in vault.yml.example saying
-# "must match an account above" (issue #76). A drift showed up as a 401, which reads as
-# "target down", not as "wrong password".
-#
-# The orthanc_users check is skipped when the variable is absent or empty, which is the
-# case when the orthanc role is not part of the play at all - a monitoring-only playbook
-# pointed at an Orthanc deployed elsewhere is legitimate, and this check has nothing to
-# compare against there. Within site.yml the value is always visible, because a play makes
-# every role's variables available to every other role regardless of role order (measured;
-# see ADR 0010).
-#
-# Passwords are compared as hashes so that no plaintext can appear in output at any
-# verbosity, and no_log is deliberately NOT set: the failure message has to name what is
-# wrong, and it names accounts, not secrets.
-- name: Preflight - abort if the Orthanc scrape credentials match no Orthanc account
-  ansible.builtin.assert:
-    that:
-      - monitoring_orthanc_user | length > 0
-      - monitoring_orthanc_password | length > 0
-      - (orthanc_users | default({}) | length == 0) or
-        (monitoring_orthanc_user in orthanc_users)
-      - (orthanc_users | default({}) | length == 0) or
-        (monitoring_orthanc_user not in orthanc_users) or
-        ((orthanc_users[monitoring_orthanc_user] | hash('sha256')) ==
-         (monitoring_orthanc_password | hash('sha256')))
-    fail_msg: >-
-      monitoring_scrape_orthanc is on, but the scrape credentials do not match an account
-      in orthanc_users. monitoring_orthanc_user is
-      '{{ monitoring_orthanc_user | default('') }}' and orthanc_users defines
-      {{ orthanc_users | default({}) | list | sort }}. Both sides are set separately and
-      nothing else keeps them equal - fix the inventory rather than letting the scrape
-      fail with a 401 that only looks like a dead target.
-  when: monitoring_scrape_orthanc | bool
-
 - name: Ensure deploy directory exists
   ansible.builtin.file:
     path: "{{ monitoring_deploy_dir }}"
