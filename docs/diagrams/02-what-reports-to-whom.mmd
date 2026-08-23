@@ -7,7 +7,6 @@ graph LR
     nodeexp["Node Exporter<br/><small>host CPU, RAM, disk</small>"] --> prom
     cadvisor["cAdvisor<br/><small>every container</small>"] --> prom
     blexp["BridgeLink exporter<br/><small>channels, queues, errors</small>"] --> prom
-    orthanc["Orthanc<br/><small>native endpoint, no exporter</small>"] --> prom
 
     alloy["Alloy<br/><small>container logs</small>"] --> loki["Loki"]
 

@@ -43,7 +43,6 @@ All variables are prefixed `monitoring_*` and have sensible defaults in
 | `monitoring_scrape_bridgelink` | `false` | Adds the `bridgelink` scrape job - turn on together with `bridgelink_exporter_enabled`, see below |
 | `monitoring_metrics_network_name` | `linumed-base-metrics` | Docker network shared with exporters in other Compose stacks; Prometheus joins it |
 | `monitoring_bridgelink_exporter_target` | `linumed-base-bridgelink-exporter:9151` | Scrape target - a container name on that network and the port inside the container, not a host port. Compared against the bridgelink role's Compose template by `scripts/check-variable-docs.py` |
-| `monitoring_orthanc_target` | `linumed-base-orthanc:8042` | Scrape target for Orthanc's native metrics endpoint - a container name on the metrics network and the port *inside* that container, which `orthanc_http_port` no longer moves (issue #80). `scripts/check-variable-docs.py` compares both ends |
 
 ### Grafana users (issue #42)
 

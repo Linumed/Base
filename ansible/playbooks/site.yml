@@ -1,12 +1,15 @@
 ---
-# Full stack deployment: common, docker, caddy, monitoring, bridgelink, orthanc, backup
-# (#1/#3/#10/#5/#11, #17, #6, #8/#9, #12, #69, #7). orthanc runs after monitoring:
-# with metrics enabled it joins a network the monitoring role creates (#64).
+# Full stack deployment: common, docker, caddy, monitoring, bridgelink, backup
+# (#1/#3/#10/#5/#11, #17, #6, #8/#9, #12, #7). Orthanc was a seventh role (#69) and was
+# removed in #92/ADR 0011 - it held patient data as a genuine archive with no access-log
+# identity and no retention policy, which put it on the wrong side of README's own "no
+# application software" boundary. See docs/operations/orthanc-recommendation.md for what
+# replaced it: a documented external recommendation, not a maintained role.
 #
-# Every role runs by default. `linumed_base_roles` (default: all seven, see
+# Every role runs by default. `linumed_base_roles` (default: all six, see
 # group_vars/linumed/vars.yml) lets an operator deploy a subset - e.g. everything except
-# `orthanc` on a site with no imaging (issue #86). It is a play variable, not a role
-# variable: it adds nothing to the frozen surface ADR 0008 measures, and
+# `bridgelink` on a site with no integration engine (issue #86). It is a play variable, not
+# a role variable: it adds nothing to the frozen surface ADR 0008 measures, and
 # scripts/check-variable-docs.py does not need to know about it because it never appears
 # in a role's defaults/main.yml.
 #
@@ -26,7 +29,6 @@
       - caddy
       - monitoring
       - bridgelink
-      - orthanc
       - backup
   pre_tasks:
     # The default lives here, not in `vars:` above. `vars:` on a play outranks inventory
@@ -44,7 +46,7 @@
       tags: always
 
     # Fails loud on a typo rather than silently deploying the full stack - a boolean
-    # `orthanc_enabled: false` would be ignored on misspelling with no error at all; a
+    # `bridgelink_enabled: false` would be ignored on misspelling with no error at all; a
     # list at least has something to check membership against.
     - name: Preflight - abort if linumed_base_roles names an unknown role
       ansible.builtin.assert:
@@ -64,11 +66,11 @@
       ansible.builtin.assert:
         that:
           - >-
-            (['caddy', 'monitoring', 'bridgelink', 'orthanc'] | intersect(linumed_base_roles) | length == 0)
+            (['caddy', 'monitoring', 'bridgelink'] | intersect(linumed_base_roles) | length == 0)
             or ('docker' in linumed_base_roles)
         fail_msg: >-
           linumed_base_roles selects a Docker Compose role
-          ({{ ['caddy', 'monitoring', 'bridgelink', 'orthanc'] | intersect(linumed_base_roles) | join(', ') }})
+          ({{ ['caddy', 'monitoring', 'bridgelink'] | intersect(linumed_base_roles) | join(', ') }})
           without 'docker' - add it, Compose has nothing to run on otherwise.
       tags: always
 
@@ -101,7 +103,6 @@
         - { role: caddy, path: /opt/linumed-base/caddy }
         - { role: monitoring, path: /opt/linumed-base/monitoring }
         - { role: bridgelink, path: /opt/linumed-base/bridgelink }
-        - { role: orthanc, path: /opt/linumed-base/orthanc }
         - { role: backup, path: /etc/systemd/system/linumed-base-backup.timer }
       loop_control:
         label: "{{ item.role }}"
@@ -136,7 +137,5 @@
       when: "'monitoring' in linumed_base_roles"
     - role: bridgelink
       when: "'bridgelink' in linumed_base_roles"
-    - role: orthanc
-      when: "'orthanc' in linumed_base_roles"
     - role: backup
       when: "'backup' in linumed_base_roles"

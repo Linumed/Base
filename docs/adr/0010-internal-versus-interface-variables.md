@@ -2,6 +2,12 @@
 
 **Status:** accepted · **Date:** 2026-08-21 · **Affects:** every role; `CONVENTIONS.md`; [ADR 0008](0008-what-the-v1-0-stability-guarantee-covers.md); issue #72
 
+> **2026-08-23:** several worked examples below use `orthanc_*` variables. The `orthanc`
+> role they belonged to was removed in #92/[ADR 0011](0011-orthanc-removed-not-part-of-base.md).
+> The principle this ADR establishes is unaffected; the examples and the counts derived
+> from them (e.g. "27 variables", "three legs") describe the six-role kit as it stood on
+> 2026-08-21 and are left as written rather than restated for the current role set.
+
 ## The question answered here
 
 [ADR 0008](0008-what-the-v1-0-stability-guarantee-covers.md) settled *what* the v1.0

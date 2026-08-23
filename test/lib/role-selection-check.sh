@@ -23,25 +23,28 @@
 # Call right after run_node_baseline_check, before run_site_idempotency_check. The VM at
 # that point has common/docker/backup from node-baseline and nothing else - exactly the
 # clean state this probe needs, and reusing it costs nothing extra.
+#
+# Orthanc used to be the test case here (its metrics-network dependency on monitoring).
+# It was removed in #92/ADR 0011 along with the role itself, so this now exercises
+# site.yml's own remaining dependency preflight instead: a Compose role selected without
+# `docker` (docker is deliberately left out of the selection below, even though
+# node-baseline already installed it - the preflight checks linumed_base_roles, not what
+# is actually on the host).
 run_role_selection_dependency_check() {
   local inventory="${WORK_DIR}/inventory.yml"
 
-  # A selection that looks entirely reasonable - "just Orthanc, no observability stack" -
-  # has to fail with a clear message, not Compose's raw error (issue #86 stage 1).
-  # backup is included in the selection alongside orthanc so the residue preflight has
-  # nothing to object to: node-baseline already deployed it, and it stays selected here.
-  echo "==> Checking the dependency preflight refuses orthanc without monitoring"
+  echo "==> Checking the dependency preflight refuses a Compose role without docker"
   local dep_rc=0
   local dep_out
   dep_out="$(
     cd "${REPO_ROOT}/ansible"
     ansible-playbook -i "${inventory}" playbooks/site.yml \
-      -e '{"linumed_base_roles": ["common", "docker", "backup", "orthanc"]}' \
+      -e '{"linumed_base_roles": ["common", "backup", "caddy"]}' \
       2>&1
   )" || dep_rc=$?
   if [ "${dep_rc}" -eq 0 ]; then
-    echo "FAIL: site.yml accepted [common, docker, backup, orthanc] - orthanc_metrics_enabled" >&2
-    echo "defaults true and needs a network only monitoring creates" >&2
+    echo "FAIL: site.yml accepted [common, backup, caddy] - caddy needs docker, which was" >&2
+    echo "deliberately left out of the selection" >&2
     return 1
   fi
   if echo "${dep_out}" | grep -q "is not in linumed_base_roles, but"; then
@@ -50,16 +53,17 @@ run_role_selection_dependency_check() {
     echo "${dep_out}" | tail -20 >&2
     return 1
   fi
-  if ! echo "${dep_out}" | grep -q "orthanc_metrics_enabled is true"; then
-    echo "FAIL: the run aborted, but not on the metrics-network preflight - so this proves nothing" >&2
+  if ! echo "${dep_out}" | grep -q "without 'docker'"; then
+    echo "FAIL: the run aborted, but not on the docker-dependency preflight - so this proves nothing" >&2
     echo "${dep_out}" | tail -20 >&2
     return 1
   fi
-  echo "==> PASS: the dependency preflight refuses orthanc without monitoring"
+  echo "==> PASS: the dependency preflight refuses a Compose role without docker"
 }
 
 # Call after run_site_idempotency_check, against the fully deployed VM - the residue it
-# must detect (orthanc's deploy directory) is then real, not staged.
+# must detect (caddy's deploy directory) is then real, not staged. caddy stands in for
+# orthanc, the original test case, removed in #92/ADR 0011.
 run_role_selection_residue_check() {
   local inventory="${WORK_DIR}/inventory.yml"
 
@@ -69,14 +73,14 @@ run_role_selection_residue_check() {
   residue_out="$(
     cd "${REPO_ROOT}/ansible"
     ansible-playbook -i "${inventory}" playbooks/site.yml \
-      -e '{"linumed_base_roles": ["common", "docker", "caddy", "monitoring", "bridgelink", "backup"]}' \
+      -e '{"linumed_base_roles": ["common", "docker", "monitoring", "bridgelink", "backup"]}' \
       2>&1
   )" || residue_rc=$?
   if [ "${residue_rc}" -eq 0 ]; then
-    echo "FAIL: site.yml accepted deselecting orthanc although it is already deployed on this host" >&2
+    echo "FAIL: site.yml accepted deselecting caddy although it is already deployed on this host" >&2
     return 1
   fi
-  if ! echo "${residue_out}" | grep -q "orthanc is not in linumed_base_roles"; then
+  if ! echo "${residue_out}" | grep -q "caddy is not in linumed_base_roles"; then
     echo "FAIL: the run aborted, but not on the residue preflight - so this proves nothing" >&2
     echo "${residue_out}" | tail -20 >&2
     return 1

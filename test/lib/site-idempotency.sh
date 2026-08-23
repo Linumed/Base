@@ -83,13 +83,6 @@ all:
           # verify the role's own logic (init, backup, forget, check, metrics).
           backup_repository: "/var/backups/restic-test"
           backup_restic_password: "throwaway-test-restic-password"
-          # Orthanc (#69). Its preflight refuses to deploy without a database password and
-          # at least one REST account - Orthanc has no other user store, and an empty one
-          # would lock the instance out of its own healthcheck.
-          orthanc_db_password: "throwaway-test-password"
-          orthanc_users:
-            admin: "throwaway-test-password"
-            metrics: "throwaway-test-metrics-password"
 EOF
 
   if [ -n "${DOCKER_REGISTRY_MIRROR}" ]; then

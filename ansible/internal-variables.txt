@@ -29,8 +29,6 @@
 # configuration choice, it is a break.
 bridgelink_uid    # the DHI image runs as this UID, the value is not ours to choose
 bridgelink_gid    # see bridgelink_uid
-orthanc_uid       # the jodogne image runs as this UID, see the #61 trap
-orthanc_gid       # see orthanc_uid
 
 # PostgreSQL runs inside each role's own Compose stack with no host port at all - nothing
 # outside the stack can reach it, so a different database or role name buys an operator
@@ -39,5 +37,3 @@ orthanc_gid       # see orthanc_uid
 # with a default, not a knob.
 bridgelink_db_name    # stack-internal Postgres, no host port, no migration path
 bridgelink_db_user    # see bridgelink_db_name
-orthanc_db_name       # stack-internal Postgres, no host port, no migration path
-orthanc_db_user       # see orthanc_db_name

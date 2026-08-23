@@ -24,6 +24,15 @@ Written 2026-08-14, after an audit of the repository against its own stated requ
 >
 > **Update 2026-08-22: `v1.0.0` is tagged**, Stage 7 is complete. See below for what
 > shipped before it and what is deliberately still open.
+>
+> **Update 2026-08-23: Orthanc removed from the kit** (#92/[ADR
+> 0011](adr/0011-orthanc-removed-not-part-of-base.md)) - it held patient data as a
+> genuine, unbounded archive with no way to attribute an access to a person, which put it
+> on the wrong side of README's own "no application software" boundary. Six roles remain.
+> This is a breaking change against the v1.0.0 stability surface; see the ADR for what a
+> v2.0.0 release covers. #90 and #84, listed below as the two issues still open after
+> v1.0.0, are both resolved by this removal rather than by the fix each originally
+> described.
 
 ## Where this actually stands
 
@@ -399,10 +408,11 @@ someone wrote down what it applies to.
 
 **That is now written down (#66, closed 2026-08-20):**
 [ADR 0008](adr/0008-what-the-v1-0-stability-guarantee-covers.md) names the covered surface,
-measured rather than estimated - and re-measured against seven roles on 2026-08-21 (#73):
-138 interface role variables (plus eight internal, ADR 0010), deploy paths, 13 container
+measured rather than estimated - re-measured against seven roles on 2026-08-21 (#73),
+then again against six roles on 2026-08-23 after Orthanc's removal (#92/ADR 0011):
+120 interface role variables (plus four internal, ADR 0010), deploy paths, 11 container
 names, two shared networks, this kit's own
-metric names, 16 alert rule names, four systemd units, the nine variables a plain run
+metric names, 13 alert rule names, four systemd units, the seven variables a plain run
 aborts without, and the Grafana dashboard and datasource UIDs that every operator-built
 panel references. It also names what is deliberately *not* covered: pinned
 image versions have to keep moving, and #67 exists to make them move.
@@ -468,15 +478,18 @@ run) could still be added for free.
 | Role-selection TUI, `whiptail`-style over SSH | #87 |
 | A register for numeric claims in prose, so they stop aging silently | #88 |
 | A documented, tested upgrade path between kit versions | #89 |
-| An access log for Orthanc - the kit claims DGSVO-compliance and currently keeps none | #90 |
-| Re-measure system requirements including Orthanc | #84 |
+| An access log for Orthanc - the kit claims DGSVO-compliance and currently keeps none | #90, **resolved 2026-08-23 by removing Orthanc (#92/ADR 0011) rather than building one** |
+| Re-measure system requirements including Orthanc | #84, **done 2026-08-22, then re-measured again after removal (#92)** |
 
 #87 depends on #86 and only became plannable once #86 existed. #88, #89 and #90 came out
 of a deliberate brainstorm on 2026-08-22, once the tag itself no longer needed sequencing
 decisions - the point of asking "what comes after 1.0" only arrives once "what must come
 before" has an answer. #84 is the one item here found by measurement rather than
 proposed: the README's own requirements table claims to be measured and has not accounted
-for Orthanc since the role landed in v0.4.0.
+for Orthanc since the role landed in v0.4.0. Investigating #90 surfaced the findings that
+became #92, which removed Orthanc entirely - closing both #90 and #84 by removing the
+thing they were about, not by building the access log or re-measuring Orthanc's footprint
+forever.
 
 None of these five is a stability-surface change. That is what makes them safe to decide
 at leisure rather than under the same before-the-tag pressure #86 was built under.

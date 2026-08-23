@@ -40,13 +40,7 @@ expect_failure() {
 # A misspelled role name must be rejected, not silently dropped - the whole reason a
 # list was chosen over per-role booleans in #86.
 expect_failure "unknown role name is rejected" \
-  "${SCRIPT}" --file "${WORK_DIR}/a.yml" --non-interactive "orthancc"
-
-# orthanc's metrics default to true (ansible/roles/orthanc/defaults/main.yml) and need
-# monitoring's network - selecting it alone must fail here, not three steps into a
-# deploy.
-expect_failure "orthanc without monitoring is rejected" \
-  "${SCRIPT}" --file "${WORK_DIR}/b.yml" --non-interactive "orthanc backup"
+  "${SCRIPT}" --file "${WORK_DIR}/a.yml" --non-interactive "caddyy"
 
 # bridgelink_exporter_enabled defaults to false (ansible/roles/bridgelink/defaults/main.yml),
 # so bridgelink alone is a normal, supported combination and must NOT be rejected - if
@@ -57,12 +51,12 @@ expect_success "bridgelink without monitoring is accepted" \
 
 # The actual output, not just the exit code: common and docker are always prepended,
 # and only the requested optional roles appear.
-"${SCRIPT}" --file "${WORK_DIR}/d.yml" --non-interactive "caddy monitoring orthanc backup" >/dev/null
+"${SCRIPT}" --file "${WORK_DIR}/d.yml" --non-interactive "caddy monitoring backup" >/dev/null
 if diff -q <(python3 -c "
 import yaml
 d = yaml.safe_load(open('${WORK_DIR}/d.yml'))
 print(sorted(d['linumed_base_roles']))
-") <(echo "['backup', 'caddy', 'common', 'docker', 'monitoring', 'orthanc']") >/dev/null; then
+") <(echo "['backup', 'caddy', 'common', 'docker', 'monitoring']") >/dev/null; then
   echo "==> PASS: written selection matches exactly what was requested"
 else
   echo "FAIL: written role list does not match the requested selection" >&2
@@ -76,7 +70,7 @@ cat > "${WORK_DIR}/e.yml" <<'EOF'
 backup_repository: "/var/backups/restic"
 EOF
 "${SCRIPT}" --file "${WORK_DIR}/e.yml" --non-interactive "caddy backup" >/dev/null
-"${SCRIPT}" --file "${WORK_DIR}/e.yml" --non-interactive "monitoring orthanc" >/dev/null
+"${SCRIPT}" --file "${WORK_DIR}/e.yml" --non-interactive "monitoring" >/dev/null
 begin_count=$(grep -c '^# BEGIN linumed_base_roles' "${WORK_DIR}/e.yml")
 end_count=$(grep -c '^# END linumed_base_roles' "${WORK_DIR}/e.yml")
 if [ "${begin_count}" = "1" ] && [ "${end_count}" = "1" ]; then

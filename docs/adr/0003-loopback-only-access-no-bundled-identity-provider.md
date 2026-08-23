@@ -2,6 +2,13 @@
 
 **Status:** accepted · **Date:** 2026-08-14, criterion sharpened 2026-08-22 · **Affects:** every role; `ARCHITECTURE.md`; `CONVENTIONS.md`; issues #31, #32, #34
 
+> **2026-08-23:** the criterion table below lists `orthanc` as an example of level 2,
+> "ready but empty" - true of the access question this ADR answers, but a *different*
+> question (what the role does with the data it then receives) turned out to put Orthanc
+> outside README's separate "no application software" boundary instead. See
+> [ADR 0011](0011-orthanc-removed-not-part-of-base.md); the table below is left as
+> written, since it was correct for the question it answers.
+
 ## The question answered here
 
 `ARCHITECTURE.md` promised a shared Docker network (`linumed-net`) so that Caddy could

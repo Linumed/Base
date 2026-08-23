@@ -22,7 +22,6 @@ HL7/FHIR integration, monitoring, reverse proxy, and encrypted backups.
 | Debian 13 hardening | SSH, ufw, fail2ban, unattended-upgrades |
 | Caddy | Reverse proxy with automatic TLS |
 | BridgeLink | HL7 v2 / FHIR R4 integration engine (MPL-2.0 fork of Mirth Connect) |
-| Orthanc | DICOM archive (GPLv3) with a PostgreSQL index - runs unprivileged, DICOM port closed by default |
 | Prometheus + Grafana + Loki + Alertmanager | Observability stack (log shipping via Grafana Alloy, host metrics via native Node Exporter, optional BridgeLink channel metrics) |
 | restic | Encrypted backups |
 
@@ -41,7 +40,7 @@ is the wrong one. Each of these is a recorded decision with its reasoning, not a
 
   If you run Kubernetes, half of this kit is still yours: `common` (SSH hardening, ufw,
   fail2ban, unattended-upgrades, NTP), `docker` and `backup` are runtime-agnostic and work
-  on the nodes under your cluster. Only `caddy`, `monitoring`, `bridgelink` and `orthanc`
+  on the nodes under your cluster. Only `caddy`, `monitoring` and `bridgelink`
   are Compose-coupled. That subset has its own playbook -
   `ansible-playbook playbooks/node-baseline.yml` - which is applied to a fresh VM on every
   relevant change and checked for effect, not just for exit code.
@@ -99,8 +98,7 @@ number that predicts whether the next role you add will fit.
 |---|---|---|---|---|
 | common + docker + caddy | 1 GB / 381 MB | 1 | 1.6 GB | Minimum that deploys cleanly - no headroom for anything else |
 | + monitoring | 2 GB / 903 MB | 2 | 4.6 GB | Prometheus, Grafana, Loki, Alloy, Alertmanager, cAdvisor, native Node Exporter |
-| No imaging (`linumed_base_roles` without `orthanc`) | 1.5 GB / 1.3 GB | 2 | 7.0 GB | BridgeLink's JVM, not Orthanc, is the binding constraint - see below |
-| Full stack (all seven roles) | 1.5 GB / 1.3 GB | 2 | 7.0 GB | Minimum that deploys cleanly. 1 GB fails outright - BridgeLink's JVM never finishes starting |
+| Full stack (+ bridgelink + backup) | 1.5 GB / 1.3 GB | 2 | 7.0 GB | Minimum that deploys cleanly. 1 GB fails outright - BridgeLink's JVM never finishes starting |
 | Full stack, comfortable | 6 GB / 1.9 GB | 3 | 7.0 GB | What `test/vm-test.sh` uses - headroom for image pulls, restic runs, and Grafana/cAdvisor's own usage variance |
 
 A few things worth knowing before sizing a real host:
@@ -109,11 +107,13 @@ A few things worth knowing before sizing a real host:
   engine (`bridgelink_max_heap_mb: 512` default) with no channels configured - real HL7
   traffic and channel-side JavaScript transformers use more. Size the JVM heap for your
   actual channel load, not this baseline.
-- **Orthanc adds two containers but barely moves the RAM floor.** Re-measured for issue
-  #84: with `orthanc` selected or not, the seven- and six-role stacks both bottom out at
-  the same 1.5 GB - BridgeLink's JVM is the binding constraint either way, not Orthanc's
-  own PostgreSQL or the archive. Disk did move: pulling Orthanc's two images pushes a
-  fresh install from 6.0 GB to 7.0 GB.
+- **This table used to have a seventh role, Orthanc, and a "no imaging" row next to it.**
+  Orthanc was removed from this kit in #92/[ADR 0011](docs/adr/0011-orthanc-removed-not-part-of-base.md) -
+  see [docs/operations/orthanc-recommendation.md](docs/operations/orthanc-recommendation.md)
+  if you're looking for a DICOM server. The "Full stack" row above is the six-role
+  measurement from that same re-measurement pass (issue #84); the "comfortable" row
+  reuses the prior seven-role comfortable figure rather than a fresh VM cycle, since
+  every measurement in that pass showed Orthanc moving RAM by well under 50 MB.
 
 - **The optional BridgeLink exporter is not in these numbers.** Enabling
   `bridgelink_exporter_enabled` adds one more container (a pinned `python:3.13.15-alpine`
@@ -156,9 +156,9 @@ cp -r inventory/example inventory/myhospital
 # edit inventory/myhospital/hosts.yml: set ansible_host / ansible_user for your target
 
 # inventory/myhospital/group_vars/linumed/vars.yml holds plain config (edit
-# backup_repository at least). .../vault.yml.example lists the ten secrets with no safe
-# default; eight of them abort site.yml outright, the two monitoring_orthanc_* only once
-# the Orthanc scrape is switched on. Turn it into a real, encrypted vault file:
+# backup_repository at least). .../vault.yml.example lists six secrets with no safe
+# default; all of them abort site.yml outright once their role is selected. Turn it into
+# a real, encrypted vault file:
 cp inventory/myhospital/group_vars/linumed/vault.yml.example \
    inventory/myhospital/group_vars/linumed/vault.yml
 # edit vault.yml, replace every CHANGEME, then encrypt it:

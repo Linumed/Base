@@ -4,7 +4,7 @@
 # `common` hardens the host, `docker` installs the container runtime, `backup` takes
 # encrypted snapshots. None of the three deploys a Compose stack, and none depends on
 # another role being present - verified by counting rather than assuming: the Compose
-# stacks are `caddy`, `monitoring`, `bridgelink` and `orthanc`, and none of those three is
+# stacks are `caddy`, `monitoring` and `bridgelink`, and none of those three is
 # among them.
 #
 # Who this is for:
