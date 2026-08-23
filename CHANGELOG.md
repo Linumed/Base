@@ -11,6 +11,18 @@ click away instead of restated here.
 
 ## [Unreleased]
 
+### Changed
+
+- **README's "System requirements by stack" table re-measured to include `orthanc`**
+  (issue #84), same methodology as the original table: RAM sized down on a fresh VM
+  until `site.yml` still deployed cleanly, `free -m` "used" read after a 2-5 minute
+  settle. Finding: Orthanc barely moves the floor. With or without it, the stack bottoms
+  out at 1.5 GB - BridgeLink's JVM is the binding constraint, not Orthanc's PostgreSQL or
+  archive. 1 GB fails outright: BridgeLink never finishes starting. Disk did move, 6.0 GB
+  to 7.0 GB, from pulling Orthanc's two images. Table now has a "no imaging" row built on
+  `linumed_base_roles` (#86) next to "Full stack (all seven roles)", replacing the old
+  stopgap note that excluded Orthanc from the numbers entirely.
+
 ### Added
 
 - **`scripts/check-numeric-claims.py` re-verifies a curated list of numeric claims in

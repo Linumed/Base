@@ -99,8 +99,9 @@ number that predicts whether the next role you add will fit.
 |---|---|---|---|---|
 | common + docker + caddy | 1 GB / 381 MB | 1 | 1.6 GB | Minimum that deploys cleanly - no headroom for anything else |
 | + monitoring | 2 GB / 903 MB | 2 | 4.6 GB | Prometheus, Grafana, Loki, Alloy, Alertmanager, cAdvisor, native Node Exporter |
-| Full stack (+ bridgelink + backup) | 4 GB / 1.6 GB | 2 | 6.0 GB | BridgeLink's JVM is the largest single consumer (~350-480 MB) |
-| Full stack, comfortable | 6 GB / 1.7 GB | 3 | 6.0 GB | What `test/vm-test.sh` uses - headroom for image pulls, restic runs, and Grafana/cAdvisor's own usage variance |
+| No imaging (`linumed_base_roles` without `orthanc`) | 1.5 GB / 1.3 GB | 2 | 7.0 GB | BridgeLink's JVM, not Orthanc, is the binding constraint - see below |
+| Full stack (all seven roles) | 1.5 GB / 1.3 GB | 2 | 7.0 GB | Minimum that deploys cleanly. 1 GB fails outright - BridgeLink's JVM never finishes starting |
+| Full stack, comfortable | 6 GB / 1.9 GB | 3 | 7.0 GB | What `test/vm-test.sh` uses - headroom for image pulls, restic runs, and Grafana/cAdvisor's own usage variance |
 
 A few things worth knowing before sizing a real host:
 
@@ -108,12 +109,11 @@ A few things worth knowing before sizing a real host:
   engine (`bridgelink_max_heap_mb: 512` default) with no channels configured - real HL7
   traffic and channel-side JavaScript transformers use more. Size the JVM heap for your
   actual channel load, not this baseline.
-- **Orthanc is not in these numbers.** The table was measured before the `orthanc` role
-  existed (v0.4.0 added it), and the row named "full stack" therefore is not one. Orthanc
-  adds two containers - the archive and its own PostgreSQL - and DICOM images are the
-  largest thing this kit ever stores, so neither the RAM nor the disk figure transfers.
-  Re-measuring is issue #84; until it is done, treat the table as covering everything
-  except Orthanc rather than as a total.
+- **Orthanc adds two containers but barely moves the RAM floor.** Re-measured for issue
+  #84: with `orthanc` selected or not, the seven- and six-role stacks both bottom out at
+  the same 1.5 GB - BridgeLink's JVM is the binding constraint either way, not Orthanc's
+  own PostgreSQL or the archive. Disk did move: pulling Orthanc's two images pushes a
+  fresh install from 6.0 GB to 7.0 GB.
 
 - **The optional BridgeLink exporter is not in these numbers.** Enabling
   `bridgelink_exporter_enabled` adds one more container (a pinned `python:3.13.15-alpine`
