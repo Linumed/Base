@@ -47,10 +47,17 @@ run_upgrade_from_previous_tag() {
   # removes a variable the old tag still requires, this comment is where that breaks.
   [ -f "${inventory}" ] || write_test_inventory
 
+  # v1.0.0 still carries the orthanc role, removed on main in #92/ADR 0011 - the shared
+  # inventory above no longer sets its secrets, because nothing on main asks for them any
+  # more. Supplied here as extra-vars, scoped to only this old-tag deploy, rather than
+  # re-adding dead variables to the inventory every other step also uses. Drop this block
+  # once UPGRADE_FROM_TAG is bumped past v1.0.0/v1.1.x, whichever release orthanc is gone
+  # from on the "from" side too.
   echo "==> Deploying ${UPGRADE_FROM_TAG} (the 'before' side of the upgrade)"
   (
     cd "${worktree}/ansible"
-    ansible-playbook -i "${inventory}" playbooks/site.yml
+    ansible-playbook -i "${inventory}" playbooks/site.yml \
+      -e '{"orthanc_db_password": "throwaway-test-password", "orthanc_users": {"admin": "throwaway-test-password", "metrics": "throwaway-test-metrics-password"}}'
   ) || { echo "FAIL: ${UPGRADE_FROM_TAG} itself failed to deploy - the upgrade check can't start from a broken baseline" >&2; return 1; }
 
   echo "==> PASS: ${UPGRADE_FROM_TAG} deployed cleanly, ready to be upgraded"

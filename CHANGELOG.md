@@ -39,6 +39,13 @@ click away instead of restated here.
   deploys cleanly with no `orthanc` reference anywhere in the output, and a second apply
   is `changed=0`.
 
+  Caught by real CI, not locally: `test/lib/upgrade-check.sh` deploys `UPGRADE_FROM_TAG`
+  (`v1.0.0`, which still has `orthanc`) via a git worktree against the same shared test
+  inventory every other check uses - which no longer carries `orthanc_db_password`/
+  `orthanc_users` now that nothing on `main` asks for them. Fixed by supplying those two
+  as extra-vars scoped to just that one old-tag deploy, exactly the failure mode a
+  comment in that file already warned about before this change ever landed.
+
 ### Fixed
 
 - **`linumed_base_roles` set via inventory group_vars/host_vars was silently overridden
