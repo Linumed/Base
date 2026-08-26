@@ -26,11 +26,11 @@ run_teardown_check() {
   ssh "${ssh_opts[@]}" "${remote}" 'set -e
     sudo systemctl disable --now linumed-base-backup.timer linumed-base-restore-test.timer
 
-    # orthanc stays in this loop even though the role was removed in #92/ADR 0011 - this
-    # VM went through run_upgrade_from_previous_tag first, deploying v1.0.0 (which still
-    # has it), so a leftover orthanc stack is real state here, not a stale assumption.
-    # docs/operations/teardown.md keeps this entry for exactly this legacy-host case, and
-    # this loop has to match that page verbatim - see this file's own header.
+    # orthanc stays in this loop even though the role was removed in #92/ADR 0011: this VM
+    # went through run_upgrade_from_previous_tag first, which deploys v1.0.0, and that tag
+    # still has the role - so a leftover orthanc stack is real state here, not a stale
+    # assumption. docs/operations/teardown.md keeps the same entry, and this loop has to
+    # match that page verbatim - see this file's own header.
     for stack in orthanc bridgelink monitoring caddy; do
       [ -d "/opt/linumed-base/$stack" ] && \
         sudo docker compose -f "/opt/linumed-base/$stack/docker-compose.yml" down || true

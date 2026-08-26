@@ -110,8 +110,8 @@ upstream has stopped rebuilding.
 
 ## check-numeric-claims.py
 
-Checks that a small, deliberately curated list of numeric claims in prose - "138
-interface role variables", "13 container names" - still match what the repository
+Checks that a small, deliberately curated list of numeric claims in prose - "120
+interface role variables", "11 container names" - still match what the repository
 currently measures (issue #88).
 
 ```bash

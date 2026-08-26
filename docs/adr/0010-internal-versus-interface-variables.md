@@ -5,7 +5,7 @@
 > **2026-08-23:** several worked examples below use `orthanc_*` variables. The `orthanc`
 > role they belonged to was removed in #92/[ADR 0011](0011-orthanc-removed-not-part-of-base.md).
 > The principle this ADR establishes is unaffected; the examples and the counts derived
-> from them (e.g. "27 variables", "three legs") describe the six-role kit as it stood on
+> from them (e.g. "27 variables", "three legs") describe the seven-role kit as it stood on
 > 2026-08-21 and are left as written rather than restated for the current role set.
 
 ## The question answered here

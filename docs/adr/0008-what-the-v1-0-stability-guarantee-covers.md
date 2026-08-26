@@ -167,9 +167,12 @@ removal, not addition:
   The error is worth leaving visible rather than editing away: this ADR argued for
   measuring instead of estimating, and then estimated this one item from memory.
 - ~~**Decide whether any variables are internal**~~ **Done (#72, 2026-08-21):**
-  [ADR 0010](0010-internal-versus-interface-variables.md). Eight are - the two `*_uid`/`*_gid`
-  pairs and the two `*_db_name`/`*_db_user` pairs - listed in `ansible/internal-variables.txt`
-  with a reason each. The promise is therefore 138 interface variables, not 146.
+  [ADR 0010](0010-internal-versus-interface-variables.md). Four are - bridgelink's
+  `*_uid`/`*_gid` pair and its `*_db_name`/`*_db_user` pair - listed in
+  `ansible/internal-variables.txt` with a reason each. The promise is therefore 120
+  interface variables, not 124. (Eight and 138/146 when this was written on 2026-08-21;
+  orthanc contributed the other four internal names and 18 interface ones until #92/ADR
+  0011 removed the role.)
 
   The premise this item was written on was wrong: Ansible *does* have a mechanism
   (`vars/main.yml` outranks inventory `group_vars`, measured). It is deliberately not used,
@@ -178,8 +181,8 @@ removal, not addition:
   loud, and also checks the cross-role literals that until now were held together by nothing
   but a comment saying "must match".
 
-  The rule this item asked for is now stated: for the 13 `*_image` variables, **the value
-  moves, the name does not.**
+  The rule this item asked for is now stated: for the 11 `*_image` variables (13 before
+  orthanc's two went with the role, #92/ADR 0011), **the value moves, the name does not.**
 
 - ~~**Close the lifecycle questions (#68).**~~ **Done 2026-08-20.** Promising stability
   while being unable to say what happens at a Debian major upgrade is a promise about the

@@ -1,10 +1,9 @@
 # Removing Linumed Base from a host
 
-**Orthanc was a role in this kit from v0.4.0 to v1.x, removed in #92/[ADR
-0011](../adr/0011-orthanc-removed-not-part-of-base.md).** If your host still has it
-deployed from before that change, the `orthanc` entries below are exactly what you need
-to remove it - this page's procedures did not change, only the set of roles that can
-still deploy `orthanc` in the first place.
+The `orthanc` entries below cover a role that `v1.0.0` shipped and later releases do not -
+it was removed in #92/[ADR 0011](../adr/0011-orthanc-removed-not-part-of-base.md). They
+stay because `v1.0.0` is a real tag someone can have deployed, and because the automated
+check for this page runs against a host that went through it.
 
 **There is no uninstall playbook, and this page is the reason that is a defensible answer
 rather than a gap.** What the kit puts on a host is listed here completely, so removing it

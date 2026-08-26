@@ -1,21 +1,25 @@
 #!/usr/bin/env bash
-# Shared by test/vm-test.sh: prove the two preflights linumed_base_roles depends on
-# actually fire (issue #86). A preflight that has never refused anything is
-# indistinguishable from one that cannot - the same lesson #62 and #76 already taught
-# this repository, applied to the guards this file exists to add.
+# Shared by test/vm-test.sh: prove the preflights linumed_base_roles depends on actually
+# fire (issue #86). A preflight that has never refused anything is indistinguishable from
+# one that cannot - the same lesson #62 and #76 already taught this repository, applied to
+# the guards this file exists to add.
 #
 # Split into two functions because they need opposite host states, and getting that
 # wrong makes the test prove nothing:
 #
-#   * The dependency preflight (stage 1) needs a host where caddy/monitoring/bridgelink
+#   * The dependency preflights (stage 1) need a host where caddy/monitoring/bridgelink
 #     have NOT run - otherwise the residue preflight (stage 2) fires first on one of
 #     those, since it checks every deselected role, not just the one under test. So this
-#     runs right after node-baseline, before the full stack exists.
+#     runs right after node-baseline, before the full stack exists. Two are probed: the
+#     Compose-role-without-docker gate in site.yml's own pre_tasks, and bridgelink's
+#     metrics-network gate inside the role.
 #   * The residue preflight needs the opposite: a role that HAS already run and is then
 #     deselected. So this runs after run_site_idempotency_check, against the fully
 #     deployed VM.
 #
-# Both abort in `pre_tasks`, before any role runs, so each costs seconds, not an apply.
+# The site.yml gates abort in `pre_tasks` before any role runs, so they cost seconds. The
+# bridgelink one necessarily costs an idempotent common/docker pass first, because the
+# gate it proves lives inside the role.
 #
 # Not meant to be executed directly. Expects: REPO_ROOT, WORK_DIR, VM_IP, SSH_KEY,
 # ANSIBLE_USER, and an inventory written by write_test_inventory.
@@ -59,6 +63,42 @@ run_role_selection_dependency_check() {
     return 1
   fi
   echo "==> PASS: the dependency preflight refuses a Compose role without docker"
+
+  # The second dependency preflight, and the reason this function did not simply shrink
+  # when orthanc went away: bridgelink's metrics-network gate
+  # (roles/bridgelink/tasks/main.yml) is the surviving twin of the orthanc gate this
+  # probe used to exercise. Nothing else ever makes it refuse - run_bridgelink_exporter_check
+  # only reaches it on a host where monitoring is already deployed, so it passes there by
+  # construction. Without this probe, breaking that `when:` or the network-name literal
+  # leaves the whole suite green while an operator gets Compose's raw "network declared as
+  # external, but could not be found" - exactly what docs/operations/deployment.md
+  # promises is caught with a clear message.
+  #
+  # The exporter credentials are dummies on purpose: they only have to be non-empty to get
+  # past the credential preflight that runs first, and this run aborts before anything is
+  # deployed, so no real BridgeLink account is needed (unlike run_bridgelink_exporter_check,
+  # which does create one). backup stays selected for the same reason as above - node-baseline
+  # deployed it, so leaving it in gives the residue preflight nothing to object to.
+  echo "==> Checking the dependency preflight refuses the bridgelink exporter without monitoring"
+  local net_rc=0
+  local net_out
+  net_out="$(
+    cd "${REPO_ROOT}/ansible"
+    ansible-playbook -i "${inventory}" playbooks/site.yml \
+      -e '{"linumed_base_roles": ["common", "docker", "backup", "bridgelink"], "bridgelink_exporter_enabled": true, "bridgelink_exporter_user": "probe", "bridgelink_exporter_password": "probe"}' \
+      2>&1
+  )" || net_rc=$?
+  if [ "${net_rc}" -eq 0 ]; then
+    echo "FAIL: site.yml accepted bridgelink with its exporter on and no monitoring - the" >&2
+    echo "linumed-base-metrics network is created by monitoring and does not exist here" >&2
+    return 1
+  fi
+  if ! echo "${net_out}" | grep -q "network does not exist on this host"; then
+    echo "FAIL: the run aborted, but not on the metrics-network preflight - so this proves nothing" >&2
+    echo "${net_out}" | tail -20 >&2
+    return 1
+  fi
+  echo "==> PASS: the dependency preflight refuses the bridgelink exporter without monitoring"
 }
 
 # Call after run_site_idempotency_check, against the fully deployed VM - the residue it
