@@ -1,6 +1,6 @@
 # ADR 0011: Orthanc removed - not part of Linumed Base
 
-**Status:** accepted · **Date:** 2026-08-23 · **Affects:** the removed `orthanc` role; `monitoring`; README; ADR 0003; ADR 0008; ADR 0009 (superseded); issues #69, #90, #92
+**Status:** accepted · **Date:** 2026-08-23 · **Affects:** the removed `orthanc` role; `monitoring`; README; ADR 0003; ADR 0008; ADR 0009 (obsolete); issues #69, #90, #92
 
 ## The question answered here
 
@@ -98,8 +98,10 @@ roles - simpler, not smaller in any way that matters, since none of the other fo
 has ever depended on another.
 
 ADR 0009's image-choice analysis (`jodogne/orthanc-plugins` vs. `orthancteam/orthanc`) is
-marked **superseded by this ADR**, not deleted: the measurement is still correct and still
-useful to anyone who deploys Orthanc themselves per the recommendation page above.
+marked **obsolete, not superseded, and not deleted.** The distinction is deliberate: this
+ADR did not decide the image question differently, it removed the question. The
+measurement itself is untouched by that and still correct, which is why the ADR stays and
+the recommendation page above cites it.
 
 Issues #90 (access-log/DSGVO) and #92 (scope question) are both resolved by this decision
 rather than by a technical fix - closed with a comment pointing here, not silently.

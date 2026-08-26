@@ -32,7 +32,8 @@ click away instead of restated here.
   no installed base to carry forward and no reason to maintain an upgrade path nobody
   runs. Kept: `docs/operations/teardown.md`'s Orthanc removal steps, enough for anyone who
   deployed `v1.0.0` and what the automated teardown check exercises anyway; ADR 0009's
-  image-choice measurement, marked superseded rather than deleted. Replaced by
+  image-choice measurement, marked **obsolete** rather than deleted - obsolete and not
+  superseded, because this change did not pick a different image, it removed the question. Replaced by
   [docs/operations/orthanc-recommendation.md](operations/orthanc-recommendation.md) -
   Orthanc recommended for anyone who needs a DICOM server, with every finding above
   stated plainly and a starting-point configuration to build from.
