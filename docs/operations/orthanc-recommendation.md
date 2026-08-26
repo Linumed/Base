@@ -47,7 +47,7 @@ the other way for an operations-focused kit - measuring reversed it:
 metadata - names, dates of birth, referring physicians - a root container was not a
 trade-off this kit was willing to make when an alternative with the same core version and
 the same plugins runs unprivileged. Full comparison:
-[ADR 0009](../adr/0009-jodogne-orthanc-image-not-orthancteam.md) (superseded by ADR 0011,
+[ADR 0009](../adr/0009-jodogne-orthanc-image-not-orthancteam.md) (obsolete since ADR 0011,
 kept for the image-choice reasoning - still correct if you deploy Orthanc yourself).
 
 ## If you deploy it yourself: what to build in from day one

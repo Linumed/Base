@@ -1,11 +1,14 @@
 # ADR 0009: `jodogne/orthanc-plugins` as the Orthanc image, not `orthancteam/orthanc`
 
-**Status:** superseded by [ADR 0011](0011-orthanc-removed-not-part-of-base.md) · **Date:** 2026-08-21 · **Affects:** `orthanc`; issue #69
+**Status:** obsolete since [ADR 0011](0011-orthanc-removed-not-part-of-base.md) · **Date:** 2026-08-21 · **Affects:** `orthanc`; issue #69
 
 > **2026-08-23:** the `orthanc` role this ADR was written for no longer exists in this
-> kit (#92/ADR 0011). The measurement below is kept because it is still correct and still
-> useful to anyone deploying Orthanc themselves - see
-> [docs/operations/orthanc-recommendation.md](../operations/orthanc-recommendation.md).
+> kit (#92/ADR 0011), so this decision no longer applies to anything Linumed Base
+> deploys. **Obsolete, not superseded:** ADR 0011 did not pick a different image, it
+> removed the question. The measurement below is unaffected by that and still holds - it
+> is cited by
+> [docs/operations/orthanc-recommendation.md](../operations/orthanc-recommendation.md)
+> for anyone running Orthanc themselves.
 
 ## The question answered here
 

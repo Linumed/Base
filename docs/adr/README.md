@@ -12,6 +12,11 @@ The goal is not completeness. What lands here meets these criteria:
 
 Everything else belongs as a comment at the relevant spot, not here.
 
+A record stays once written; the status says what happened to it. **Superseded by N**
+means a later ADR decided the same question differently. **Obsolete since N** means the
+question stopped applying - the thing it decided about is gone - which is not the same
+event and should not be relabelled to the other one.
+
 | No. | Decision | Status |
 |---|---|---|
 | [0001](0001-bridgelink-statt-mirth-connect.md) | BridgeLink instead of Mirth Connect as the integration engine | accepted (2026-08-11) |
@@ -22,6 +27,6 @@ Everything else belongs as a comment at the relevant spot, not here.
 | [0006](0006-linumed-base-not-linumed-os.md) | The product is called Linumed Base, not Linumed OS | accepted (2026-08-18) |
 | [0007](0007-docker-compose-not-kubernetes.md) | Docker Compose, not Kubernetes | accepted (2026-08-20) |
 | [0008](0008-what-the-v1-0-stability-guarantee-covers.md) | What the v1.0 stability guarantee covers | accepted (2026-08-20) |
-| [0009](0009-jodogne-orthanc-image-not-orthancteam.md) | `jodogne/orthanc-plugins` as the Orthanc image | superseded by 0011 (2026-08-21) |
+| [0009](0009-jodogne-orthanc-image-not-orthancteam.md) | `jodogne/orthanc-plugins` as the Orthanc image | obsolete since 0011 (2026-08-21) |
 | [0010](0010-internal-versus-interface-variables.md) | Internal variables are a documented list, not an enforced one | accepted (2026-08-21) |
 | [0011](0011-orthanc-removed-not-part-of-base.md) | Orthanc removed - not part of Linumed Base | accepted (2026-08-23) |
