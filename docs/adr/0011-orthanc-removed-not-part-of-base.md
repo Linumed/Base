@@ -78,9 +78,14 @@ host.
 
 **Breaking change against the ADR 0008 stability guarantee**, requiring a major version
 bump: the `orthanc` role, its container names, its deploy path, and its share of the
-frozen variable/alert/volume counts all disappear. `docs/operations/teardown.md` already
-documents how to remove Orthanc's traces from a host that deployed it under v1.x - that
-procedure is unchanged and remains the migration path for existing installations.
+frozen variable/alert/volume counts all disappear.
+
+**No migration machinery was built for this, deliberately.** The kit has no users yet -
+`v1.0.0` was tagged three days before this decision - so there is no installed base to
+carry forward, and inventing an upgrade path for hypothetical hosts would have meant
+maintaining code nobody runs. The role is simply gone. `docs/operations/teardown.md`
+keeps its `orthanc` entries, which is enough for anyone who did deploy `v1.0.0`, and is
+what the automated teardown check exercises anyway.
 
 `monitoring` loses its Orthanc-specific scrape job, alert rule group
 (`OrthancDown`/`OrthancErrorRate`/`OrthancJobsStuck`), and the credential-matching

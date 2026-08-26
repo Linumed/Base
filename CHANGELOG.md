@@ -28,9 +28,11 @@ click away instead of restated here.
   (`OrthancDown`/`OrthancErrorRate`/`OrthancJobsStuck`) and credential-matching preflight
   from `monitoring`; its dependency gate from `scripts/select-roles.sh`, now a flat
   four-role checklist; its pinned-image entries from `security/accepted-image-findings.txt`.
-  Kept: `docs/operations/teardown.md`'s Orthanc removal steps, for hosts that still have
-  it deployed from before this change; ADR 0009's image-choice measurement, marked
-  superseded rather than deleted. Replaced by
+  No migration machinery was built, deliberately: the kit has no users yet, so there is
+  no installed base to carry forward and no reason to maintain an upgrade path nobody
+  runs. Kept: `docs/operations/teardown.md`'s Orthanc removal steps, enough for anyone who
+  deployed `v1.0.0` and what the automated teardown check exercises anyway; ADR 0009's
+  image-choice measurement, marked superseded rather than deleted. Replaced by
   [docs/operations/orthanc-recommendation.md](operations/orthanc-recommendation.md) -
   Orthanc recommended for anyone who needs a DICOM server, with every finding above
   stated plainly and a starting-point configuration to build from.
@@ -52,6 +54,19 @@ click away instead of restated here.
   from before this change - and the CI VM, having just deployed `v1.0.0` in the upgrade
   step, is exactly such a host. Reverted; the check now matches the page it verifies,
   verbatim, again.
+
+  A review pass over the whole removal found one real coverage loss and four stale
+  numbers. The coverage loss: `test/lib/role-selection-check.sh` had been repointed from
+  the removed orthanc metrics-network gate to `site.yml`'s simpler `docker` gate, which
+  left bridgelink's identical gate - now the only one of its kind - with no test that
+  ever makes it refuse, since `run_bridgelink_exporter_check` only reaches it on a host
+  where monitoring already exists. A second probe now exercises it directly, verified
+  against a real VM. The stale numbers were in ADR 0008's prose (which contradicted its
+  own re-measured table), ADR 0010, `scripts/README.md` and `vault.yml.example` - the
+  last of which additionally claimed `check-numeric-claims.py` verifies a count its own
+  docstring excludes. Also corrected: this changelog's `#84` entry above credited a
+  6.0 → 7.0 GB disk increase to Orthanc's images, which the measurements do not support -
+  six roles and seven both came in at 6983 MB.
 
 ### Fixed
 
@@ -76,8 +91,11 @@ click away instead of restated here.
   until `site.yml` still deployed cleanly, `free -m` "used" read after a 2-5 minute
   settle. Finding: Orthanc barely moves the floor. With or without it, the stack bottoms
   out at 1.5 GB - BridgeLink's JVM is the binding constraint, not Orthanc's PostgreSQL or
-  archive. 1 GB fails outright: BridgeLink never finishes starting. Disk did move, 6.0 GB
-  to 7.0 GB, from pulling Orthanc's two images. Table now has a "no imaging" row built on
+  archive. 1 GB fails outright: BridgeLink never finishes starting. Disk does not move
+  either: six roles and seven both measured 6983 MB. The table's old 6.0 GB was the
+  original pre-Orthanc measurement, not a fresh comparison run, so the 6.0 → 7.0 GB
+  difference is drift in the other images since that first pass - not Orthanc's two, as
+  an earlier draft of this entry claimed. Table now has a "no imaging" row built on
   `linumed_base_roles` (#86) next to "Full stack (all seven roles)", replacing the old
   stopgap note that excluded Orthanc from the numbers entirely.
 

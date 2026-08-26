@@ -39,9 +39,11 @@
   # pass added in #62).
   when: bridgelink_exporter_enabled | bool
 
-# Same defect as orthanc's, same fix: docker compose config does not resolve external
-# networks, so a missing linumed-base-metrics network only surfaces at docker_compose_v2
-# as a raw "network declared as external, but could not be found" (issue #86 stage 1).
+# docker compose config does not resolve external networks, so a missing
+# linumed-base-metrics network only surfaces at docker_compose_v2 as a raw "network
+# declared as external, but could not be found" (issue #86 stage 1). The orthanc role had
+# the identical gate until it was removed (#92/ADR 0011); this is now the only one, and
+# test/lib/role-selection-check.sh probes it directly for exactly that reason.
 - name: Check whether the shared metrics network exists
   ansible.builtin.command:
     cmd: docker network inspect {{ bridgelink_exporter_metrics_network }}

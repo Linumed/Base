@@ -16,10 +16,12 @@
 # plain text editor - that writes the decrypted content back to disk on save).
 #
 # Six variables below, all of which abort a plain site.yml run outright once their role
-# is selected (measured in ADR 0008 - re-measure after any change here rather than
-# updating this count by hand, see scripts/check-numeric-claims.py). Everything else
-# that's merely configuration, not a secret (e.g. backup_repository), lives in vars.yml
-# instead.
+# is selected. Counted by hand, and deliberately not machine-checked: "aborts a plain run"
+# means "unconditionally asserted, not merely present with a default", which needs reading
+# every preflight's `when:` - scripts/check-numeric-claims.py excludes this category for
+# exactly that reason (see its docstring). Re-count it by hand when adding or removing a
+# preflight. Everything else that's merely configuration, not a secret (e.g.
+# backup_repository), lives in vars.yml instead.
 #
 # If a role never runs on this host - see linumed_base_roles in vars.yml - its secrets
 # below are simply never asked for; nothing here needs conditioning on the selection.

@@ -114,6 +114,13 @@ A few things worth knowing before sizing a real host:
   measurement from that same re-measurement pass (issue #84); the "comfortable" row
   reuses the prior seven-role comfortable figure rather than a fresh VM cycle, since
   every measurement in that pass showed Orthanc moving RAM by well under 50 MB.
+- **The rows are not all from the same measurement pass, and the disk figures show it.**
+  The two "Full stack" rows were measured on 2026-08-22/23; the two rows above them date
+  from the original pass and have not been re-run since. Orthanc turned out not to move
+  disk at all - six roles and seven both measured 6983 MB - so the jump from the 6.0 GB
+  this table used to claim to today's 7.0 GB is the *other* images growing between the
+  two passes, not a role being added. Expect the same drift in the unrefreshed rows, and
+  treat all four as a floor with a margin rather than a current inventory.
 
 - **The optional BridgeLink exporter is not in these numbers.** Enabling
   `bridgelink_exporter_enabled` adds one more container (a pinned `python:3.13.15-alpine`
