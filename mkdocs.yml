@@ -88,11 +88,12 @@ nav:
       - "0010: Internal versus interface variables": adr/0010-internal-versus-interface-variables.md
       - "0011: Orthanc removed - not part of Linumed Base": adr/0011-orthanc-removed-not-part-of-base.md
 
-# Diagrams are pre-rendered to SVG by scripts/render-diagrams.sh and committed under
-# docs/img/ (issue #65), so no JavaScript renderer is loaded at all any more. That removed
-# the vendored mermaid.min.js, its init script, its stylesheet, and the deliberate
-# class-name mismatch that existed only to stop Material's own Mermaid support from
-# fetching its renderer off unpkg.com at runtime.
+# Diagrams are plain images committed under docs/img/ - drawn by hand, not generated.
+# No renderer runs at build time and none is loaded in the browser, which is why the
+# vendored mermaid.min.js, its init script, its stylesheet and the deliberate class-name
+# mismatch (which existed only to stop Material fetching a renderer off a CDN) are all
+# gone. Mermaid itself followed in #94: a build pipeline for three static pictures cost
+# more than it returned.
 
 # Rewrites docs/img/... image paths for pages that are symlinked in from the repository
 # root - see docs/hooks/image_paths.py for why that is necessary.
