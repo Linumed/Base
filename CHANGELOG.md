@@ -93,6 +93,12 @@ click away instead of restated here.
 
 ### Fixed
 
+- **No way back to linumed.com from the hosted docs site** (Website #12). The header had
+  only the docs logo (links within the docs) and a GitHub link - nothing left the docs
+  site itself except the browser's own back button. Added `linumed.com` as an external
+  nav entry in `mkdocs.yml`, which MkDocs links out as-is; renders at the top of the left
+  sidebar on every page, this theme has no header tab bar (`navigation.tabs` is off).
+
 - **`linumed_base_roles` set via inventory group_vars/host_vars was silently overridden
   by `site.yml`'s own default** (issue #91). The play's `vars:` block defined the default
   (all seven roles), and in Ansible's real precedence order play `vars:` outranks

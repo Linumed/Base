@@ -47,6 +47,11 @@ markdown_extensions:
       permalink: true
 
 nav:
+  # External nav entries are plain URLs - MkDocs links them out as-is, no page rendered.
+  # The only way back to linumed.com otherwise was the browser's own back button (Website
+  # #12): the header has the docs logo (links within the docs) and the GitHub link, and
+  # neither leaves this site.
+  - linumed.com: https://linumed.com
   - Home: index.md
   - Architecture: architecture.md
   - Roadmap: ROADMAP.md
