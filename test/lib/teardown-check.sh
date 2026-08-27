@@ -24,17 +24,31 @@ run_teardown_check() {
   echo "==> Running the documented teardown (docs/operations/teardown.md)"
 
   ssh "${ssh_opts[@]}" "${remote}" 'set -e
+    # Temporary diagnostics for the CI-only "sudo: command not found" failure (line 44 of
+    # this file in earlier reports) - reproduced against a real hand-built VM outside CI
+    # without any trouble, so something specific to the CI runners own session differs.
+    # Remove once that is understood; not meant to stay.
+    echo "DIAG: whoami=$(whoami) id=$(id)"
+    echo "DIAG: PATH=$PATH"
+    echo "DIAG: command -v sudo -> $(command -v sudo || echo NOTFOUND)"
+    echo "DIAG: type sudo -> $(type sudo 2>&1 || echo NOTFOUND)"
+    echo "DIAG: /usr/bin/sudo exists -> $(test -x /usr/bin/sudo && echo yes || echo no)"
+
     sudo systemctl disable --now linumed-base-backup.timer linumed-base-restore-test.timer
 
     # orthanc stays in this loop even though the role was removed in #92/ADR 0011: this VM
     # went through run_upgrade_from_previous_tag first, which deploys v1.0.0, and that tag
     # still has the role - so a leftover orthanc stack is real state here, not a stale
     # assumption. docs/operations/teardown.md keeps the same entry, and this loop has to
-    # match that page verbatim - see this file's own header.
+    # match that page verbatim - see this file'"'"'s own header.
     for stack in orthanc bridgelink monitoring caddy; do
-      [ -d "/opt/linumed-base/$stack" ] && \
-        sudo docker compose -f "/opt/linumed-base/$stack/docker-compose.yml" down || true
+      echo "DIAG: stack=$stack dir_exists=$([ -d "/opt/linumed-base/$stack" ] && echo yes || echo no) sudo_now=$(command -v sudo || echo NOTFOUND)"
+      if [ -d "/opt/linumed-base/$stack" ]; then
+        sudo docker compose -f "/opt/linumed-base/$stack/docker-compose.yml" down || echo "DIAG: compose down failed for $stack, rc=$?"
+      fi
     done
+
+    echo "DIAG: after loop, command -v sudo -> $(command -v sudo || echo NOTFOUND)"
 
     # The real procedure asks a human to look before removing volumes; a throwaway VM has
     # no data worth that pause. Deliberately the SAME filter the page gives operators, so
