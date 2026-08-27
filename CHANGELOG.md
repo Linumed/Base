@@ -31,6 +31,10 @@ click away instead of restated here.
   `docs-site` is green again as a side effect, so the documentation site publishes again -
   including the ADR 0009 status correction that had been stuck behind the red run.
 
+  The three diagrams themselves are now PNGs, redrawn by hand in Excalidraw rather than
+  regenerated from the retired `.mmd` sources - same content, no renderer involved.
+  `ARCHITECTURE.md`'s three image references updated from `.svg` to `.png` accordingly.
+
 - **The `orthanc` role - Orthanc is no longer part of this kit** (issue #92,
   [ADR 0011](adr/0011-orthanc-removed-not-part-of-base.md)). **Breaking change
   against the ADR 0008 v1.0 stability surface** - a major version bump, not a minor one.

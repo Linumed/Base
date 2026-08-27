@@ -46,7 +46,7 @@ are preferred for CI/CD.
 
 ![What runs where on a Linumed Base host: a Docker Engine group holding the Caddy,
 BridgeLink and monitoring stacks, and a second group of services that run natively -
-ufw/fail2ban/SSH hardening, Node Exporter and restic.](docs/img/01-what-runs-where.svg)
+ufw/fail2ban/SSH hardening, Node Exporter and restic.](docs/img/01-what-runs-where.png)
 
 Deliberately two figures rather than one. This one answers *what runs where* and carries
 no arrows at all; the flows are the next one. The previous single diagram mixed
@@ -57,7 +57,7 @@ thing the renderer reliably gets wrong (issue #65).
 ![What reports to whom: restic feeds the Node Exporter's textfile collector; Node
 Exporter, cAdvisor and the BridgeLink exporter all scrape into Prometheus; Alloy ships
 logs to Loki; Prometheus and Loki both feed Grafana, and Prometheus also feeds
-Alertmanager.](docs/img/02-what-reports-to-whom.svg)
+Alertmanager.](docs/img/02-what-reports-to-whom.png)
 
 ---
 
@@ -225,7 +225,7 @@ downsides:
 ![Access paths: the internet reaches Caddy on :80 and :443 only, which redirects to
 HTTPS and proxies the operator's own applications. Grafana, Prometheus and the BridgeLink
 admin interface are reachable exclusively through an SSH tunnel on
-127.0.0.1.](docs/img/03-access-paths.svg)
+127.0.0.1.](docs/img/03-access-paths.png)
 
 Caddy is the reverse proxy for the **institution's own applications**,
 not for this kit's management interfaces. It joins a second Docker
