@@ -63,11 +63,14 @@ accepted.
 
 ## Status
 
-**`v1.0.0` is tagged** - see [CHANGELOG.md](CHANGELOG.md). From here, the surface
+**`v2.0.0` is tagged** - see [CHANGELOG.md](CHANGELOG.md). From here, the surface
 ADR 0008 names (role variable names, deploy paths, container/network names, this kit's
 own metric and alert names, dashboard/datasource UIDs, systemd unit names) is covered by
-a stability guarantee: a breaking change to any of it requires a major version bump.
-Every role passed a full
+a stability guarantee: a breaking change to any of it requires a major version bump. Six
+roles now, not seven - Orthanc shipped in `v1.0.0` and was removed a week later
+([ADR 0011](docs/adr/0011-orthanc-removed-not-part-of-base.md)); see
+[docs/operations/orthanc-recommendation.md](docs/operations/orthanc-recommendation.md)
+if you're looking for a DICOM server. Every role passed a full
 `site.yml` double-run against a throwaway VM (idempotent - `changed=0` on the second run)
 and, separately, against a real Debian 13 netinst/preseed install via
 `scripts/bootstrap.sh` and `test/vm-test-netinst.sh` (issues #13/#14). That double-run now

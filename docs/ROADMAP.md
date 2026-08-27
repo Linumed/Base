@@ -33,6 +33,14 @@ Written 2026-08-14, after an audit of the repository against its own stated requ
 > v2.0.0 release covers. #90 and #84, listed below as the two issues still open after
 > v1.0.0, are both resolved by this removal rather than by the fix each originally
 > described.
+>
+> **Update 2026-08-27: `v2.0.0` is tagged.** Five days after `v1.0.0` - a major bump this
+> soon after a major release is not what ADR 0008's stability guarantee was written to
+> encourage, but it says what it says: a breaking change requires a major version, not a
+> grace period. `vm-test.yml` had also been red since the Orthanc removal, intermittently
+> failing on a teardown-step SSH flake that never reproduced against a hand-built VM
+> (diagnostic instrumentation left in `test/lib/teardown-check.sh` in case it recurs) -
+> the tag waited for a real green CI run, not just local verification.
 
 ## Where this actually stands
 

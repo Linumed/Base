@@ -9,7 +9,17 @@ German - a changelog addresses the same readers the
 documentation does. Every entry names its issue, so the reasoning behind a change is one
 click away instead of restated here.
 
-## [Unreleased]
+## [2.0.0] - 2026-08-27
+
+The major version ADR 0008 said the removed-role case would need. Orthanc shipped a
+week earlier as this kit's seventh role and is entirely gone again by this tag - not
+gated, not deprecated, removed - because it turned out to be application software by
+this project's own definition (ADR 0011). Everything ADR 0008 froze at v1.0.0 that
+touched Orthanc breaks here: the role name, its container names, its deploy path, its
+share of the interface variable/alert/volume counts. Nothing else in the frozen surface
+moves. `docs/operations/teardown.md` still documents removing an Orthanc left over from
+a `v1.0.0` install; no other migration path was built, because this kit has no installed
+base yet to carry forward (ADR 0011's own reasoning, not repeated here).
 
 ### Removed
 
