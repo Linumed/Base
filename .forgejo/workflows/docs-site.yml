@@ -63,31 +63,6 @@ jobs:
       # external Google Fonts request, dead ROADMAP issue links) into a hard failure
       # instead of a warning nobody reads - if a future doc change reintroduces a dead
       # link, this job fails instead of silently shipping it.
-      # The committed SVGs under docs/img/ are build output (issue #65). Re-render them
-      # here and fail on any difference: a diagram source edited without re-running the
-      # script would otherwise ship a picture that no longer matches its own source, and
-      # nothing would say so. Same class of silent drift as #48 and #63.
-      #
-      # Byte comparison is safe here, and that was measured rather than assumed: rendering
-      # the same source on the maintainer's host and inside this exact node:20-bookworm
-      # image produces an identical file (md5 verified 2026-08-20). It holds because
-      # mermaid-cli is pinned and brings its own pinned Chromium; if that ever stops being
-      # true, pin the font package too before weakening this check.
-      - name: Install Chromium's runtime libraries for the diagram renderer
-        run: |
-          apt-get install -y -qq --no-install-recommends \
-            libnss3 libatk-bridge2.0-0 libcups2 libdrm2 libxkbcommon0 libxcomposite1 \
-            libxdamage1 libxfixes3 libxrandr2 libgbm1 libasound2 libpango-1.0-0 \
-            libcairo2 fonts-dejavu-core
-
-      - name: Re-render the diagrams and fail if the committed SVGs are stale
-        run: |
-          ./scripts/render-diagrams.sh
-          if ! git diff --exit-code -- docs/img; then
-            echo "::error::docs/img is out of date - run scripts/render-diagrams.sh and commit the result" >&2
-            exit 1
-          fi
-
       - name: Build with mkdocs build --strict
         run: mkdocs build --strict --site-dir site
 

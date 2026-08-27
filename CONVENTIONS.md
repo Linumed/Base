@@ -142,12 +142,16 @@ linumed-base/
   is fixed by bumping; one on an image already at its newest tag is recorded with a reason
   and a date in `security/accepted-image-findings.txt`. Setting a pin and never looking at
   it again is how `SECURITY.md`'s own promise went unkept for months.
-- **Diagrams are Mermaid sources under `docs/diagrams/`, rendered to committed SVGs.**
-  Edit the `.mmd`, run `scripts/render-diagrams.sh`, commit both. They are not rendered in
-  the reader's browser: the same file is displayed by the MkDocs site, GitHub and Forgejo,
-  each with its own Mermaid theme, so styling only ever reached one of three surfaces
-  (issue #65). Never draw an edge to or from a `subgraph` - keep containment and flow in
-  separate figures; see `scripts/README.md` for that and the empty-`%%` parse trap.
+- **Diagrams are hand-drawn images committed under `docs/img/`, with no build step.**
+  Edit the picture in whatever tool drew it, export it over the existing file, commit it.
+  Nothing generates them and nothing renders in the reader's browser - the same file is
+  displayed by the MkDocs site, GitHub and Forgejo, which is why they were pre-rendered
+  rather than drawn client-side in the first place (issue #65). They were Mermaid sources
+  plus a renderer until #94: a pinned CLI, a Chromium in CI and a byte-exact drift check,
+  for three pictures that change a few times a year. **Keep containment and flow in
+  separate figures** - that lesson survives the tooling, it is what made the earlier
+  single diagram unreadable. Every image needs alt text that describes what it shows, not
+  just that it is a diagram; `ARCHITECTURE.md` has the three examples.
 - **A container that another Compose stack must reach joins a shared, explicitly named
   network - it does not get a host port.** A port published on `127.0.0.1` is unreachable
   from another container, and publishing on all interfaces bypasses ufw, because Docker
