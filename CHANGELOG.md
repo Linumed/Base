@@ -23,27 +23,10 @@ base yet to carry forward (ADR 0011's own reasoning, not repeated here).
 
 ### Removed
 
-- **The Mermaid diagram pipeline** (issue #94). The three architecture diagrams are
-  hand-drawn images committed under `docs/img/` now; nothing generates them. Gone:
-  `scripts/render-diagrams.sh`, the three `docs/diagrams/*.mmd` sources, and two steps
-  from `docs-site.yml` - a fourteen-package Chromium runtime install and a byte-exact
-  drift check.
-
-  The trigger was issue #93, where that drift check went red without anyone having
-  touched a diagram: `mermaid-cli` was pinned but the `mermaid` library under it was not
-  (`^11.0.2`, current 11.17.2), so CI resolved a newer renderer than the maintainer's
-  machine and a renamed CSS class produced a one-character difference in all three files.
-  Fixable - but the question it raised was whether three pictures that change a few times
-  a year justify a build chain at all. They do not. The check existed to catch a source
-  edited without re-rendering, which is not a failure mode that exists once there is no
-  generated output.
-
-  `docs-site` is green again as a side effect, so the documentation site publishes again -
-  including the ADR 0009 status correction that had been stuck behind the red run.
-
-  The three diagrams themselves are now PNGs, redrawn by hand in Excalidraw rather than
-  regenerated from the retired `.mmd` sources - same content, no renderer involved.
-  `ARCHITECTURE.md`'s three image references updated from `.svg` to `.png` accordingly.
+- **The Mermaid diagram pipeline** (issue #94) - build tooling only, nothing an operator
+  of this kit ever ran. The three architecture diagrams are hand-drawn PNGs under
+  `docs/img/` now, with no renderer, no pinned CLI and no Chromium in CI behind them.
+  Same diagrams, same content. Reasoning in #94.
 
 - **The `orthanc` role - Orthanc is no longer part of this kit** (issue #92,
   [ADR 0011](adr/0011-orthanc-removed-not-part-of-base.md)). **Breaking change
