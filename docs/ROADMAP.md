@@ -44,15 +44,18 @@ Written 2026-08-14, after an audit of the repository against its own stated requ
 
 ## Where this actually stands
 
-**As of 2026-08-22, `v1.0.0`:** all seven roles are implemented, VM-tested and idempotent -
-`common`, `docker`, `caddy`, `monitoring`, `bridgelink`, `backup` and `orthanc`. From this
-tag, the surface named in [ADR 0008](adr/0008-what-the-v1-0-stability-guarantee-covers.md)
-carries a stability guarantee. The repository is public, the documentation site is built
-and published from it, and there are no known defects and no open defect issues. Two
-issues remain open, both post-1.0 maintenance rather than tag prerequisites: #84
-(re-measuring system requirements for the seven-role stack) and the roadmap items opened
-during the pre-1.0 audit (#88-#90), which were deliberately left for after the tag - see
-[What comes after 1.0](#what-comes-after-10).
+**As of 2026-08-27, `v2.0.0`:** six roles - `common`, `docker`, `caddy`, `monitoring`,
+`bridgelink` and `backup` - implemented, VM-tested and idempotent. The surface named in
+[ADR 0008](adr/0008-what-the-v1-0-stability-guarantee-covers.md) carries a stability
+guarantee; `v2.0.0` is what a breach of it costs, five days after `v1.0.0`
+([Stage 8](#stage-8-v20-taking-a-role-back-out)). The repository is public, the
+documentation site is built and published from it, and there are no known defects and no
+open defect issues.
+
+A seventh role, `orthanc`, existed between v0.4.0 and v1.0.0 and was removed again -
+[ADR 0011](adr/0011-orthanc-removed-not-part-of-base.md) for why,
+[docs/operations/orthanc-recommendation.md](operations/orthanc-recommendation.md) for
+what replaced it.
 
 [What was open, and why it was not built earlier](#what-was-open-and-why-it-was-not-built-earlier)
 further down is kept as the record of the three items that carried that status until
@@ -501,3 +504,45 @@ forever.
 
 None of these five is a stability-surface change. That is what makes them safe to decide
 at leisure rather than under the same before-the-tag pressure #86 was built under.
+
+## Stage 8 - v2.0: taking a role back out
+
+Not a planned stage. `v1.0.0` was tagged on 2026-08-22 with seven roles; `v2.0.0`
+followed on 2026-08-27 with six, because `orthanc` turned out not to belong in this kit
+at all. The sequence is worth recording, because nothing about it was foreseen:
+
+| | Issue |
+|---|---|
+| Role-selection TUI, `whiptail`-style over SSH | #87, **done 2026-08-22** |
+| A register for numeric claims in prose | #88, **done 2026-08-23** |
+| A documented, tested upgrade path between kit versions | #89, **done 2026-08-23** |
+| Re-measure system requirements | #84, **done 2026-08-22**, re-measured again after #92 |
+| `linumed_base_roles` from inventory was silently ignored | #91, **found and fixed 2026-08-23** |
+| Is Orthanc in scope for Base at all? | #92, **decided 2026-08-23: no** |
+| Mermaid pipeline removed, diagrams are plain images | #93/#94, **done 2026-08-27** |
+
+**How #92 arose is the part worth keeping.** It did not come from a plan. Investigating
+#90 - "the kit claims GDPR-compliance and keeps no access log" - meant measuring what
+Orthanc actually logs. The answer was: nothing that identifies a user, at any verbosity.
+That led to the second measurement (an archive with no retention policy, holding patient
+data indefinitely), and the two together contradicted a sentence README had carried since
+before Orthanc existed: *no application software*. The role had entered in #69 as "the
+last service named in ARCHITECTURE.md that did not exist" - momentum, never weighed
+against that boundary.
+
+Removing it broke the ADR 0008 surface five days into a stability guarantee. That is
+expensive and it is exactly what the guarantee is for: it says a breaking change costs a
+major version, not that breaking changes are forbidden. Paying it immediately was
+cheaper than carrying a component the kit could not stand behind.
+
+**#91 is the second thing worth keeping**, for a different reason: the role-selection
+mechanism shipped in #86 had never actually worked from the inventory. A play-level
+`vars:` default silently outranked `group_vars`/`host_vars`, so every documented way an
+operator could select a subset was ignored. It was found by deploying a subset against a
+real VM and noticing a deselected role run anyway - not by reading the code, which had a
+comment confidently asserting the opposite precedence.
+
+**Deliberately still open after v2.0.0:** nothing. The kit has no known defects and no
+open defect issues. From here the work is maintenance: watching pinned images for
+deprecations and licence changes (`scripts/scan-images.py` runs weekly), and whatever
+real use turns up once someone deploys it.
