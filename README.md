@@ -15,7 +15,7 @@ On-premise by design. FOSS only.
 Linumed Base is not a custom Linux distribution. It is a collection of
 Ansible playbooks and roles that configure a standard Debian 13 (Trixie)
 server into a production-ready healthcare infrastructure stack - including
-HL7/FHIR integration, monitoring, reverse proxy, and encrypted backups.
+HL7 v2 integration, monitoring, reverse proxy, and encrypted backups.
 
 ## What it includes
 
@@ -23,7 +23,7 @@ HL7/FHIR integration, monitoring, reverse proxy, and encrypted backups.
 |---|---|
 | Debian 13 hardening | SSH, ufw, fail2ban, unattended-upgrades |
 | Caddy | Reverse proxy with automatic TLS |
-| BridgeLink | HL7 v2 / FHIR R4 integration engine (MPL-2.0 fork of Mirth Connect) |
+| BridgeLink | HL7 v2 integration engine (MPL-2.0 fork of Mirth Connect). FHIR endpoints can be built as HTTP/JSON channels; no FHIR data type ships with the engine - see [docs/roles/bridgelink.md](docs/roles/bridgelink.md) |
 | Prometheus + Grafana + Loki + Alertmanager | Observability stack (log shipping via Grafana Alloy, host metrics via native Node Exporter, optional BridgeLink channel metrics) |
 | restic | Encrypted backups |
 

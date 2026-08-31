@@ -1,7 +1,8 @@
 # bridgelink
 
-HL7/FHIR integration engine plus its PostgreSQL backend, as a Docker Compose stack
-(issue #12).
+HL7 v2 integration engine plus its PostgreSQL backend, as a Docker Compose stack
+(issue #12). No FHIR data type ships with the engine - see the FHIR section in
+`docs/roles/bridgelink.md` for what is and is not possible (issue #97).
 
 ## Why BridgeLink and not Mirth Connect
 

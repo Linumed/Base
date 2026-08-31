@@ -51,7 +51,7 @@ linumed-base/
 │   ├── roles/
 │   │   ├── common/          # Hardening, firewall, SSH, updates
 │   │   ├── docker/          # Docker Engine + compose plugin, shared prerequisite
-│   │   ├── bridgelink/      # HL7/FHIR integration engine (MPL-2.0 Mirth fork)
+│   │   ├── bridgelink/      # HL7 v2 integration engine (MPL-2.0 Mirth fork)
 │   │   ├── monitoring/      # Prometheus + Grafana + Loki + Node Exporter
 │   │   ├── caddy/           # Reverse proxy with automatic TLS
 │   │   └── backup/          # restic-based backup (local + optional S3)
@@ -185,7 +185,7 @@ linumed-base/
 | common | ansible/roles/common | SSH hardening, ufw, fail2ban, unattended-upgrades |
 | Docker | ansible/roles/docker | Docker Engine + compose plugin, shared prerequisite for every Docker-based role |
 | Caddy | ansible/roles/caddy | Reverse proxy, automatic TLS via ACME |
-| BridgeLink | ansible/roles/bridgelink | HL7 v2, FHIR R4 integration engine - MPL-2.0 fork of Mirth Connect, which went proprietary in March 2025 |
+| BridgeLink | ansible/roles/bridgelink | HL7 v2 integration engine - MPL-2.0 fork of Mirth Connect, which went proprietary in March 2025. No FHIR data type, see docs/roles/bridgelink.md |
 | Prometheus | ansible/roles/monitoring | Metrics collection |
 | Grafana | ansible/roles/monitoring | Dashboards, loopback-only by default |
 | Loki | ansible/roles/monitoring | Log aggregation |
