@@ -115,7 +115,7 @@ stack has to account for that trap deliberately.
 
 ### bridgelink (Ansible role)
 
-HL7/FHIR integration engine, run as a Docker Compose stack.
+HL7 v2 integration engine, run as a Docker Compose stack.
 The engine used is **BridgeLink**.
 
 This is not a replacement for Mirth Connect, but **the same codebase
@@ -133,8 +133,22 @@ Engine, licensed Mirth 4.6+, frozen 4.5.2), accepted downsides and
 revision triggers:
 [ADR 0001](https://github.com/Linumed/Base/blob/main/docs/adr/0001-bridgelink-statt-mirth-connect.md).
 
-Protocols supported out of the box: HL7 v2.x, FHIR R4, DICOM, CSV, XML,
-database connectors.
+Protocols supported out of the box, measured against the pinned image's
+own extension list: HL7 v2.x, HL7 v3, DICOM, EDI/X12, NCPDP, delimited
+text (CSV), XML, JSON, raw - with MLLP, TCP, HTTP, file, JMS, SMTP and
+JDBC connectors.
+
+**FHIR is not among them.** The engine ships no FHIR data type and no
+FHIR connector: FHIR was never part of Mirth Connect's open-source core,
+only of NextGen's commercial extensions, so the open fork does not
+inherit it. A FHIR endpoint can be *built* here - an HTTP listener with
+the JSON data type - but that gives transport and parsing, not a
+resource model, validation, search semantics or a CapabilityStatement.
+The FOSS route to those is the HAPI FHIR libraries in the engine's
+`custom-jars` directory; that route is known, not tested by this repo,
+and not yet prepared by the role (issue #97). Anyone whose requirement
+is a FHIR *server* wants a real one next to this kit, which by this
+repo's own boundary is application software (ADR 0011).
 
 Docker Compose stack:
 - BridgeLink (hardened image: Debian 13, no shell, non-root)

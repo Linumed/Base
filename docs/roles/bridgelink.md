@@ -1,4 +1,4 @@
-# bridgelink: HL7/FHIR integration engine
+# bridgelink: HL7 v2 integration engine
 
 ## Problem
 
@@ -6,6 +6,33 @@ Clinical systems talk to each other in HL7 v2, FHIR, DICOM and a good number of
 home-grown formats. An integration engine receives messages, transforms them and routes
 them onward - it's the connective tissue between HIS, LIS, PACS and everything else.
 This role deploys **BridgeLink** with a PostgreSQL backend as a Docker Compose stack.
+
+## Which protocols this engine actually speaks
+
+Measured against the pinned image's own extension list, not taken from a
+product page: data types for **HL7 v2.x**, HL7 v3, **DICOM**, EDI/X12, NCPDP,
+delimited text (CSV), XML, JSON and raw, with **MLLP**, TCP, HTTP, file, JMS, SMTP
+and JDBC connectors. That covers the classic clinical interfaces.
+
+### FHIR, precisely
+
+**No FHIR data type and no FHIR connector ship with this engine.** FHIR was never part
+of Mirth Connect's open-source core - it was a NextGen extension, free as a pilot at
+first and part of the commercial bundle since - so the open fork does not inherit it,
+and a licensed extension would collide with this kit's FOSS-only rule ([ADR
+0001](../adr/0001-bridgelink-statt-mirth-connect.md)).
+
+What is possible, in order of increasing effort:
+
+| Goal | How | Status here |
+|---|---|---|
+| Send/receive FHIR JSON over HTTP | HTTP listener/sender + `datatype-json`, transformers in JavaScript | Works with what ships - transport and parsing only |
+| Resource model, validation | HAPI FHIR (Apache-2.0) JARs in the engine's `custom-jars` directory, used from transformers | Known route, **not tested by this repo**, and the role does not mount `custom-jars` yet (issue #97) |
+| FHIR server: search, CapabilityStatement, conformance | A real FHIR server next to the engine | Out of scope - application software by this kit's own boundary ([ADR 0011](../adr/0011-orthanc-removed-not-part-of-base.md)) |
+
+Stated this plainly because tenders ask for FHIR by name. "An HTTP channel that moves
+FHIR JSON" and "FHIR R4 support" are not the same promise, and only the first one is
+one this role can keep today.
 
 ## Why BridgeLink and not Mirth Connect
 
@@ -309,4 +336,5 @@ has consequences beyond this role:
   that's the difference between "securing infrastructure" and "processing health data" -
   plan encryption and retention accordingly.
 - **No channel is pre-configured**, so no data flows immediately after deployment.
-  Processing only begins with the first channel.
+  Processing only begins with the first channel. What `site.yml` leaves behind is an
+  integration engine, not an integration.

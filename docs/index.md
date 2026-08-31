@@ -39,7 +39,7 @@ day to day, and why specific decisions were made. For installing it, start with 
 |---|---|
 | Debian 13 hardening | SSH, ufw, fail2ban, unattended-upgrades |
 | Caddy | Reverse proxy with automatic TLS |
-| BridgeLink | HL7 v2 / FHIR R4 integration engine (MPL-2.0 fork of Mirth Connect) |
+| BridgeLink | HL7 v2 integration engine (MPL-2.0 fork of Mirth Connect). FHIR endpoints can be built as HTTP/JSON channels; no FHIR data type ships with the engine - see [bridgelink](roles/bridgelink.md) |
 | Prometheus + Grafana + Loki + Alertmanager | Observability stack |
 | restic | Encrypted backups |
 

@@ -13,6 +13,21 @@ click away instead of restated here.
 
 ### Changed
 
+- **The engine is described as an HL7 v2 integration engine, no longer as "HL7 v2 / FHIR
+  R4"** (issue #97). Measured, not assumed: the pinned image
+  `innovarhealthcare/bridgelink:26.6.0-dhi-slim` carries 44 extensions - data types for
+  HL7 v2, HL7 v3, DICOM, EDI/X12, NCPDP, delimited text, XML, JSON and raw, with MLLP,
+  TCP, HTTP, file, JMS, SMTP and JDBC connectors - and **zero** occurrences of "fhir"
+  anywhere in its filesystem. FHIR was never in Mirth Connect's open-source core, only in
+  NextGen's commercial extensions, so the open fork does not inherit it.
+  `docs/roles/bridgelink.md` gains a section that says what is possible instead: FHIR JSON
+  over an HTTP channel works with what ships; a resource model and validation need the
+  HAPI FHIR libraries in `custom-jars`, a route this repo has not tested and the role does
+  not prepare yet; a FHIR server is out of scope by the same boundary that removed Orthanc
+  (ADR 0011). The `fhir` galaxy tag is gone from the role's metadata for the same reason -
+  a tag people search by is a promise like any other line of documentation. Documentation
+  only, no behaviour change; the engine can do exactly what it could do before.
+
 - **The kit describes itself as "GDPR-aware", no longer as "GDPR-compliant"** (issue #96).
   Compliance is a property of a processing activity, not of a software package: it depends
   on the legal basis, the processing register, the data processing agreements, the
