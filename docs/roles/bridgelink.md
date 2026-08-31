@@ -27,8 +27,19 @@ What is possible, in order of increasing effort:
 | Goal | How | Status here |
 |---|---|---|
 | Send/receive FHIR JSON over HTTP | HTTP listener/sender + `datatype-json`, transformers in JavaScript | Works with what ships - transport and parsing only |
-| Resource model, validation | HAPI FHIR (Apache-2.0) JARs in the engine's `custom-jars` directory, used from transformers | Known route, **not tested by this repo**, and the role does not mount `custom-jars` yet (issue #97) |
+| Resource model, validation | HAPI FHIR (Apache-2.0) libraries loaded into the engine, used from transformers | **Route not established** - see below (issue #98) |
 | FHIR server: search, CapabilityStatement, conformance | A real FHIR server next to the engine | Out of scope - application software by this kit's own boundary ([ADR 0011](../adr/0011-orthanc-removed-not-part-of-base.md)) |
+
+**Where a library would have to go is not settled**, and the directory names mislead.
+Measured against the image, not read off a listing: the launcher's classpath entry is
+`custom-lib` - a directory this image does not contain. `custom-jars` exists but is only
+the extraction target of the `CUSTOM_JARS_DOWNLOAD` environment variable in the image's
+entrypoint; nothing else in the entrypoint or the launcher refers to it. `custom-extensions`
+is real but expects `*.zip` in Mirth's extension format, which the entrypoint unpacks into
+`extensions/` on every start - that is not the same thing as dropping a library on the
+classpath. Which of these actually loads a plain JAR here is a runtime question, and
+until someone has run it, this table says "not established" rather than naming a
+directory (issue #98).
 
 Stated this plainly because tenders ask for FHIR by name. "An HTTP channel that moves
 FHIR JSON" and "FHIR R4 support" are not the same promise, and only the first one is

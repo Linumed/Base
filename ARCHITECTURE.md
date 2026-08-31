@@ -144,9 +144,10 @@ only of NextGen's commercial extensions, so the open fork does not
 inherit it. A FHIR endpoint can be *built* here - an HTTP listener with
 the JSON data type - but that gives transport and parsing, not a
 resource model, validation, search semantics or a CapabilityStatement.
-The FOSS route to those is the HAPI FHIR libraries in the engine's
-`custom-jars` directory; that route is known, not tested by this repo,
-and not yet prepared by the role (issue #97). Anyone whose requirement
+The FOSS route to those would be the HAPI FHIR libraries loaded into
+the engine; how a library reaches the classpath in this image is not
+established, and the directory names in it are misleading - see
+`docs/roles/bridgelink.md` and issue #98. Anyone whose requirement
 is a FHIR *server* wants a real one next to this kit, which by this
 repo's own boundary is application software (ADR 0011).
 
