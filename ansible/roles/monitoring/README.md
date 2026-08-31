@@ -44,7 +44,8 @@ constant, not one derived from a project name.
 ## Decisions and why
 
 **Grafana Alloy, not Promtail.** Promtail reached end-of-life on 2026-03-02 and gets no
-more security fixes - not an option for a kit that markets itself as DSGVO-compliant.
+more security fixes - not an option for a kit built for environments that process
+health data.
 Alloy is Grafana's own replacement and does the same job (ship host/container logs to
 Loki).
 

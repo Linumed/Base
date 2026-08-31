@@ -9,6 +9,21 @@ German - a changelog addresses the same readers the
 documentation does. Every entry names its issue, so the reasoning behind a change is one
 click away instead of restated here.
 
+## [Unreleased]
+
+### Changed
+
+- **The kit describes itself as "GDPR-aware", no longer as "GDPR-compliant"** (issue #96).
+  Compliance is a property of a processing activity, not of a software package: it depends
+  on the legal basis, the processing register, the data processing agreements, the
+  retention periods, the application running on top and who is given access - none of
+  which this kit knows or controls. What it contributes is unchanged and stated where the
+  claim used to be (`ARCHITECTURE.md`, Overview): hardening, TLS, encrypted backups with a
+  restore test that runs, loopback-bound management interfaces, no outbound telemetry.
+  That makes a compliant deployment possible; it does not make one. Documentation only, no
+  behaviour change. The landing page on linumed.com already said "aware" - this closes the
+  gap in the other direction (Website#21).
+
 ## [2.0.0] - 2026-08-27
 
 The major version ADR 0008 said the removed-role case would need. Orthanc shipped a
