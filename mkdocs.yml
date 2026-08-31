@@ -1,7 +1,7 @@
 site_name: Linumed Base
 site_description: >-
   Ansible-based IaC kit that turns a standard Debian 13 installation into a hardened,
-  GDPR-compliant healthcare infrastructure platform.
+  GDPR-aware healthcare infrastructure platform.
 repo_url: https://github.com/Linumed/Base
 repo_name: Linumed/Base
 edit_uri: edit/main/docs/

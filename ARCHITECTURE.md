@@ -4,8 +4,18 @@
 
 Linumed Base is not a custom operating system and not a bootable image.
 It is an Infrastructure-as-Code kit built on Ansible that turns a
-standard Debian 13 (Trixie) installation into a hardened, GDPR-compliant
+standard Debian 13 (Trixie) installation into a hardened, GDPR-aware
 healthcare infrastructure platform.
+
+**"GDPR-aware", deliberately not "GDPR-compliant".** Compliance is a
+property of a processing activity, not of a software package - it depends
+on the legal basis, the processing register, the data processing
+agreements, the retention periods, the application running on top and who
+is given access, none of which this kit knows or controls. What it does
+contribute is concrete and testable: host hardening, TLS on every exposed
+path, encrypted backups with a restore test that actually runs, every
+management interface bound to loopback, and no telemetry leaving the
+host. That makes a compliant deployment possible; it does not make one.
 
 The target audience is IT departments and system administrators at
 clinics and care facilities who want to run open-source software but
@@ -381,7 +391,8 @@ gets an optional connection to an **existing** one (OIDC).
 
 Application software (HIS, DMS, document management) is deliberately
 not part of Linumed Base. The clinic runs its own applications. Linumed
-Base provides the secure, GDPR-compliant foundation.
+Base provides the hardened foundation they run on - see the note on
+"GDPR-aware" under Overview for where that foundation stops.
 
 Every release is tagged as a git tag, and versions follow Semantic
 Versioning. For a 0.x project that means the opposite of what an earlier

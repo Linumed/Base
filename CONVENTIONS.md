@@ -8,7 +8,7 @@ Always read this file before making any changes.
 ## What is Linumed Base?
 
 Linumed Base is an Ansible-based Infrastructure-as-Code kit that turns a
-standard Debian installation into a hardened, DSGVO-compliant healthcare
+standard Debian installation into a hardened, GDPR-aware healthcare
 infrastructure platform. It is fully open source (MIT). It is NOT a custom
 Linux distribution and does NOT produce a bootable ISO.
 
