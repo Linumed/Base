@@ -22,8 +22,10 @@ click away instead of restated here.
   NextGen's commercial extensions, so the open fork does not inherit it.
   `docs/roles/bridgelink.md` gains a section that says what is possible instead: FHIR JSON
   over an HTTP channel works with what ships; a resource model and validation would need the
-  HAPI FHIR libraries loaded into the engine, and how a library reaches the classpath in
-  this image is not established (issue #98); a FHIR server is out of scope by the same boundary that removed Orthanc
+  HAPI FHIR libraries loaded into the engine; the launcher's classpath directory
+  (`custom-lib`, gated by `server.includecustomlib` in `mirth.properties`, which ships
+  `false`) is identified but not yet wired into this role or proven with a real class load
+  (issue #98); a FHIR server is out of scope by the same boundary that removed Orthanc
   (ADR 0011). The `fhir` galaxy tag is gone from the role's metadata for the same reason -
   a tag people search by is a promise like any other line of documentation. Documentation
   only, no behaviour change; the engine can do exactly what it could do before.
