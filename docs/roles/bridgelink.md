@@ -27,19 +27,34 @@ What is possible, in order of increasing effort:
 | Goal | How | Status here |
 |---|---|---|
 | Send/receive FHIR JSON over HTTP | HTTP listener/sender + `datatype-json`, transformers in JavaScript | Works with what ships - transport and parsing only |
-| Resource model, validation | HAPI FHIR (Apache-2.0) libraries loaded into the engine, used from transformers | **Route not established** - see below (issue #98) |
+| Resource model, validation | HAPI FHIR (Apache-2.0) libraries loaded into the engine, used from transformers | **Identified, not yet wired into this role** - see below (issue #98) |
 | FHIR server: search, CapabilityStatement, conformance | A real FHIR server next to the engine | Out of scope - application software by this kit's own boundary ([ADR 0011](../adr/0011-orthanc-removed-not-part-of-base.md)) |
 
-**Where a library would have to go is not settled**, and the directory names mislead.
-Measured against the image, not read off a listing: the launcher's classpath entry is
-`custom-lib` - a directory this image does not contain. `custom-jars` exists but is only
-the extraction target of the `CUSTOM_JARS_DOWNLOAD` environment variable in the image's
-entrypoint; nothing else in the entrypoint or the launcher refers to it. `custom-extensions`
-is real but expects `*.zip` in Mirth's extension format, which the entrypoint unpacks into
-`extensions/` on every start - that is not the same thing as dropping a library on the
-classpath. Which of these actually loads a plain JAR here is a runtime question, and
-until someone has run it, this table says "not established" rather than naming a
-directory (issue #98).
+**Where a library goes, and why it silently does nothing without a second step.**
+Measured against the running image, not read off a listing: the launcher's classpath
+entry is `custom-lib` - a directory this image does not ship, so it has to be created and
+mounted. Two other candidates turned out to be dead ends. `custom-jars` exists but is only
+the extraction target of the `CUSTOM_JARS_DOWNLOAD` environment variable; nothing in the
+entrypoint or the launcher reads from it afterward - Innovar's own image documentation
+names it as "custom JARs," which does not match what the shipped code does with it.
+`custom-extensions` is real but expects `*.zip` in Mirth's extension format, unpacked into
+`extensions/` on every start - not the same thing as dropping a library on the classpath.
+
+`custom-lib` alone is not enough, either: whether its contents reach the classpath is
+gated by `server.includecustomlib` in `conf/mirth.properties`, which **ships `false`** -
+confirmed against the file baked into the pinned image, and its own comment says exactly
+what it does ("Determines whether libraries in the custom-lib directory will be included
+on the server classpath"). Mounting the directory without also setting this to `true`
+would deploy a library that is never loaded, with nothing to say so. Setting it means one
+more line in the `mirth_properties` secret this role already manages - not a new secret.
+
+**Not yet proven end-to-end.** A heap dump of a running container showed the mounted
+directory's URL reachable from the server's classloaders with the property set, consistent
+with real inclusion - but nothing in this spike forced an actual class to load from it, the
+way a HAPI-FHIR call from a channel transformer would. That is the next step before this
+role changes: mount `custom-lib`, set `server.includecustomlib = true`, deploy a channel
+that instantiates a class from a real HAPI-FHIR JAR placed there, and confirm it resolves
+(issue #98).
 
 Stated this plainly because tenders ask for FHIR by name. "An HTTP channel that moves
 FHIR JSON" and "FHIR R4 support" are not the same promise, and only the first one is
