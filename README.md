@@ -168,9 +168,21 @@ cp -r inventory/example inventory/myhospital
 # edit inventory/myhospital/hosts.yml: set ansible_host / ansible_user for your target
 
 # inventory/myhospital/group_vars/linumed/vars.yml holds plain config (edit
-# backup_repository at least). .../vault.yml.example lists six secrets with no safe
-# default; all of them abort site.yml outright once their role is selected. Turn it into
-# a real, encrypted vault file:
+# backup_repository at least). Pick optional roles here too - by hand, or via the
+# whiptail checklist below:
+./scripts/select-roles.sh --file inventory/myhospital/group_vars/linumed/vars.yml
+```
+
+![Role-selection checklist: caddy and backup checked, monitoring and bridgelink unchecked, run from a terminal.](docs/img/select-roles-tui.png)
+
+`common` and `docker` are always included; the checklist only covers the four optional
+roles. See `scripts/README.md` for the non-interactive form used by CI and scripted
+onboarding.
+
+```bash
+# .../vault.yml.example lists six secrets with no safe default; all of them abort
+# site.yml outright once their role is selected. Turn it into a real, encrypted vault
+# file:
 cp inventory/myhospital/group_vars/linumed/vault.yml.example \
    inventory/myhospital/group_vars/linumed/vault.yml
 # edit vault.yml, replace every CHANGEME, then encrypt it:
