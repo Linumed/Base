@@ -319,7 +319,7 @@ outside the repository and references the roles.
 
 Optional roles (everything but `common` and `docker`, which are always applied) are
 picked via `scripts/select-roles.sh`, a `whiptail` checklist that writes
-`linumed_base_roles` into `vars.yml` - see [README.md](README.md#quick-start) and
+`linumed_base_roles` into `vars.yml` - see `README.md`'s Quick start section and
 `scripts/README.md` for usage:
 
 ![Role-selection checklist: caddy and backup checked, monitoring and bridgelink unchecked, run from a terminal.](docs/img/select-roles-tui.png)
