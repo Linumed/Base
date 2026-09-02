@@ -150,7 +150,7 @@ CHOSEN=$(whiptail --title "Linumed Base - role selection" --checklist \
   16 70 4 \
   "caddy" "Reverse proxy with automatic TLS" ON \
   "monitoring" "Prometheus, Grafana, Loki, Alertmanager" ON \
-  "bridgelink" "HL7/FHIR integration engine" ON \
+  "bridgelink" "HL7 v2 integration engine" ON \
   "backup" "Encrypted restic backups" ON \
   3>&1 1>&2 2>&3) || { echo "Cancelled."; exit 1; }
 
