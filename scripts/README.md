@@ -10,7 +10,7 @@ by default (issue #13).
 you're not sure `python3`/`sudo` are present. Log in as root (console or SSH) and run:
 
 ```bash
-./bootstrap.sh --user linumed --key "ssh-ed25519 AAAA... you@host"
+./bootstrap.sh --user <username> --key "ssh-ed25519 AAAA... you@host"
 ```
 
 **When you don't need it:** the official Debian 13 genericcloud/cloud images (used by

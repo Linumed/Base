@@ -9,9 +9,9 @@
 # gets you to the point where `site.yml` can start.
 #
 # Usage:
-#   sudo ./bootstrap.sh --user linumed --key "ssh-ed25519 AAAA... you@host"
-#   sudo ./bootstrap.sh --user linumed --key-file ~/.ssh/id_ed25519.pub
-#   sudo ./bootstrap.sh --user linumed --key-file ~/.ssh/id_ed25519.pub --nopasswd
+#   sudo ./bootstrap.sh --user <username> --key "ssh-ed25519 AAAA... you@host"
+#   sudo ./bootstrap.sh --user <username> --key-file ~/.ssh/id_ed25519.pub
+#   sudo ./bootstrap.sh --user <username> --key-file ~/.ssh/id_ed25519.pub --nopasswd
 #
 # --nopasswd grants the user passwordless sudo (NOPASSWD in /etc/sudoers.d/). Off by
 # default - a hardening-focused kit shouldn't default to that. Without it, Ansible needs
