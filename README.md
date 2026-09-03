@@ -160,7 +160,9 @@ git clone https://github.com/Linumed/Base.git
 cd Base
 
 scp scripts/bootstrap.sh root@<target>:~
-ssh root@<target> ./bootstrap.sh --user linumed --key "ssh-ed25519 AAAA... you@host"
+ssh root@<target> ./bootstrap.sh --user <username> --key "ssh-ed25519 AAAA... you@host"
+# <username> is whatever you want the sudo-capable user to be called - it does not have
+# to be "linumed". Whatever you pick here has to match ansible_user in hosts.yml below.
 ```
 
 ```bash
