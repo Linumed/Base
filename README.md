@@ -99,7 +99,16 @@ measured after a 2-5 minute settle period so short-lived install-time spikes don
 inflate the number. `free -m` "used" (not "available") is what's reported - it's the
 number that predicts whether the next role you add will fit.
 
-| Stack | RAM (allocated / used) | vCPUs | Disk (used) | Notes |
+**Recommended for a real deployment: at least 2 vCPUs, 3 for the full stack** - a busy
+first apply (package installs, image pulls) is visibly slower on a single core, and this
+repo has already chased down enough hard-to-reproduce timing issues during real testing
+(see `ansible/roles/docker/README.md` and `ansible/roles/common/README.md`, "become: true
+on every privileged task" / "Stolperfallen" for the specific bug this repo already found
+and fixed once) to not want to reintroduce that risk on a production host to save one
+vCPU. `test/vm-test.sh` itself runs with 3 for exactly that reason. The vCPU column below
+is the measured floor each stack still deploys on, not a target to build toward.
+
+| Stack | RAM (allocated / used) | vCPUs (measured floor) | Disk (used) | Notes |
 |---|---|---|---|---|
 | common + docker + caddy | 1 GB / 381 MB | 1 | 1.6 GB | Minimum that deploys cleanly - no headroom for anything else |
 | + monitoring | 2 GB / 903 MB | 2 | 4.6 GB | Prometheus, Grafana, Loki, Alloy, Alertmanager, cAdvisor, native Node Exporter |
@@ -135,15 +144,6 @@ A few things worth knowing before sizing a real host:
   install; Loki and Prometheus retention (30/90 days by default, see
   `docs/roles/monitoring.md`) and BridgeLink's message storage are what actually
   consumes disk over time - budget accordingly, not from this table.
-- **1 vCPU is the minimum, not a recommendation**, even for the smallest stack -
-  `test/vm-test.sh` itself runs with 3 for exactly that reason: a busy first apply
-  (package installs, image pulls) is visibly slower on a single core, and this repo has
-  already chased down enough hard-to-reproduce timing issues during real testing (see
-  `ansible/roles/docker/README.md` and `ansible/roles/common/README.md`) to not want to
-  reintroduce that risk on a production host to save one vCPU. See
-  `ansible/roles/common/README.md` ("become: true on every privileged task") and
-  `docs/roles/docker.md` ("Stolperfallen") for the specific bug this repo already found
-  and fixed once.
 
 ## Quick start
 
