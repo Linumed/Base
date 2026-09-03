@@ -148,18 +148,23 @@ A few things worth knowing before sizing a real host:
 ## Quick start
 
 On a **freshly installed Debian 13 minimal/netinst** target, `python3` and `sudo` aren't
-guaranteed to be present - run `scripts/bootstrap.sh` from the target itself first (see
+guaranteed to be present - run `scripts/bootstrap.sh` on the target first (see
 `scripts/README.md`). Skip this if the target already has a working sudo user (e.g. any
 cloud image, or a host you've set up before).
 
-```bash
-# On the target host, as root, only if it's a fresh minimal install:
-./scripts/bootstrap.sh --user linumed --key "ssh-ed25519 AAAA... you@host"
-```
+The target itself has no `git` at this point, so clone on your own machine first and copy
+just the script over:
 
 ```bash
 git clone https://github.com/Linumed/Base.git
-cd Base/ansible
+cd Base
+
+scp scripts/bootstrap.sh root@<target>:~
+ssh root@<target> ./bootstrap.sh --user linumed --key "ssh-ed25519 AAAA... you@host"
+```
+
+```bash
+cd ansible
 # Every ansible-playbook/ansible-vault/ansible-lint command in this repo runs from here,
 # not the repo root - ansible.cfg (roles_path, default inventory) lives in this
 # directory and Ansible only picks up an ansible.cfg from the current working directory.
