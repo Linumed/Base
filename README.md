@@ -177,7 +177,7 @@ cp -r inventory/example inventory/myhospital
 # inventory/myhospital/group_vars/linumed/vars.yml holds plain config (edit
 # backup_repository at least). Pick optional roles here too - by hand, or via the
 # whiptail checklist below:
-./scripts/select-roles.sh --file inventory/myhospital/group_vars/linumed/vars.yml
+../scripts/select-roles.sh --file inventory/myhospital/group_vars/linumed/vars.yml
 ```
 
 ![Role-selection checklist: caddy and backup checked, monitoring and bridgelink unchecked, run from a terminal.](docs/img/select-roles-tui.png)
@@ -196,7 +196,10 @@ cp inventory/myhospital/group_vars/linumed/vault.yml.example \
 ansible-vault encrypt inventory/myhospital/group_vars/linumed/vault.yml
 
 ansible-playbook playbooks/site.yml -i inventory/myhospital --ask-vault-pass
-# add --ask-become-pass unless bootstrap.sh was run with --nopasswd
+# Add --ask-become-pass, unless bootstrap.sh ran with --nopasswd. Note that
+# --ask-become-pass only works if <username> HAS a login password: bootstrap.sh never
+# sets one on its own, so the account is locked by default. Set one yourself first
+# (passwd <username>, as root on the target) - see scripts/bootstrap.sh's own output.
 ```
 
 ## Documentation

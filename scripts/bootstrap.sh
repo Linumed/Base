@@ -14,8 +14,14 @@
 #   sudo ./bootstrap.sh --user <username> --key-file ~/.ssh/id_ed25519.pub --nopasswd
 #
 # --nopasswd grants the user passwordless sudo (NOPASSWD in /etc/sudoers.d/). Off by
-# default - a hardening-focused kit shouldn't default to that. Without it, Ansible needs
-# `--ask-become-pass` (see README.md).
+# default - a hardening-focused kit shouldn't default to that.
+#
+# Without it, this is the ONLY unattended path: `useradd` below never sets a login
+# password, so the account is locked (`!` in /etc/shadow) and `--ask-become-pass` has no
+# password that would ever authenticate against it - found by literally running the
+# README's own quick start (issue #106). To use `--ask-become-pass` instead of
+# `--nopasswd`, set a login password on the target yourself first: `passwd <username>`,
+# run as root on the target, after this script.
 set -euo pipefail
 
 TARGET_USER=""
@@ -139,6 +145,8 @@ fi
 echo
 echo "==> Done. '${TARGET_USER}' (UID ${UID_NUM}) is sudo-capable with an SSH key installed."
 if [ "${NOPASSWD}" -eq 0 ]; then
-  echo "    sudo requires a password - pass --ask-become-pass to ansible-playbook, or"
-  echo "    re-run this script with --nopasswd for unattended use."
+  echo "    '${TARGET_USER}' has no login password (account is locked) - sudo cannot ask"
+  echo "    for one and succeed. Either re-run this script with --nopasswd, or set a"
+  echo "    password yourself (passwd ${TARGET_USER}, as root on this host) before using"
+  echo "    --ask-become-pass with ansible-playbook."
 fi

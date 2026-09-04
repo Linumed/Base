@@ -21,9 +21,14 @@
 # remaining four optional roles has a selection-time dependency on another, so this is a
 # single flat checklist now.
 #
-# Usage:
-#   ./select-roles.sh --file inventory/myhospital/group_vars/linumed/vars.yml
-#   ./select-roles.sh --file <path> --non-interactive "caddy monitoring backup"
+# Usage (run from ansible/, where --file's default target lives):
+#   ../scripts/select-roles.sh --file inventory/myhospital/group_vars/linumed/vars.yml
+#   ../scripts/select-roles.sh --file <path> --non-interactive "caddy monitoring backup"
+#
+# --file is a plain relative path, resolved against the current directory - it works
+# equally from scripts/ itself (./select-roles.sh --file ../ansible/inventory/...) or
+# anywhere else. The form above just matches where every other command in the README's
+# quick start already put you.
 #
 # --non-interactive takes the space-separated OPTIONAL roles (excluding common/docker,
 # which are always included) and skips whiptail entirely - used by the test suite, and

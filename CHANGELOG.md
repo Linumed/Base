@@ -11,6 +11,27 @@ click away instead of restated here.
 
 ## [Unreleased]
 
+### Fixed
+
+- **`./scripts/select-roles.sh` in the quick start no longer points at a path that
+  cannot exist** (issue #106). The command followed `cd ansible`, but `scripts/` only
+  exists at the repo root - `inventory/myhospital/...` only exists under `ansible/`. The
+  two relative paths in that one line could never both resolve from any single working
+  directory. Now `../scripts/select-roles.sh`, matching where the rest of the quick
+  start already put you. Same fix in `scripts/README.md` and the script's own usage
+  comment. Found by literally executing the quick start end to end rather than reading
+  it (see `docs/ROADMAP.md`, 2026-09-04).
+- **`--ask-become-pass` is documented honestly: it needs a login password that
+  `bootstrap.sh` never sets** (issue #106). Without `--nopasswd`, `useradd` leaves the
+  account locked (`!` in `/etc/shadow`) - no password typed at the `--ask-become-pass`
+  prompt was ever going to succeed, contradicting what the quick start implied. The
+  script's own closing message and the README now say what actually works: run
+  `--nopasswd`, or set a password yourself (`passwd <username>`, as root on the target)
+  before relying on `--ask-become-pass`. No script behaviour changed - this is honest
+  output, not a new code path. Also confirmed why nobody had hit this: `test/vm-test-netinst.sh`
+  always calls `bootstrap.sh --nopasswd`, so the plain `--ask-become-pass` path the quick
+  start shows had never been exercised by CI.
+
 ## [2.0.1] - 2026-09-04
 
 A documentation release. No role, variable or default changed, so nothing in the
