@@ -11,6 +11,17 @@ click away instead of restated here.
 
 ## [Unreleased]
 
+### Added
+
+- **`test/vm-test-quickstart.sh`**: runs the README's "Quick start" section verbatim,
+  block by block, against a real netinst install (issue #106) - `git clone`,
+  `scp`+`ssh` bootstrap, `select-roles.sh`, `vault.yml`, deploy, a second idempotent
+  run, and a check that Caddy is actually up. Not part of regular CI, same reasoning as
+  `test/vm-test-netinst.sh` - run before releases. Replaces a claim this same README
+  section used to make about `test/vm-test-netinst.sh` covering this ("clone, copy the
+  example inventory, fill in the vault, deploy" - it never did any of that); this script
+  is what makes the claim true. It caught both defects below on its first real run.
+
 ### Fixed
 
 - **`./scripts/select-roles.sh` in the quick start no longer points at a path that
