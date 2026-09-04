@@ -77,10 +77,15 @@ if you're looking for a DICOM server. Every role passed a full
 and, separately, against a real Debian 13 netinst/preseed install via
 `scripts/bootstrap.sh` and `test/vm-test-netinst.sh` (issues #13/#14). That double-run now
 happens in CI on every change under `ansible/`, `docker/`, `test/` or `scripts/`, not only
-when someone remembers to start it (#45). The onboarding path itself is verified too, not
-just the roles: a full double-run following this README's own quick start verbatim -
-clone, copy the example inventory, fill in the vault, deploy - with no repository
-knowledge beyond what's written below (issues #27/#28/#29).
+when someone remembers to start it (#45). The onboarding path itself is checked too, run
+before releases rather than on every push: `test/vm-test-quickstart.sh` executes this
+quick start section verbatim - clone, copy the example inventory, select roles, fill in
+the vault, deploy - and is what actually caught the two defects fixed in issue #106 that
+this same paragraph used to claim were already covered by `vm-test-netinst.sh` alone (they
+were not: that script never clones, never runs `select-roles.sh`, never touches
+`vault.yml`). Not part of regular CI for the same reason `vm-test-netinst.sh` isn't - a
+real installer run is slow - so it stays a manual, pre-release check rather than a claim
+about every commit.
 
 The full plan, in order, with the reasoning behind the sequencing:
 [`docs/ROADMAP.md`](docs/ROADMAP.md).
