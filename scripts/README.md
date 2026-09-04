@@ -106,7 +106,7 @@ Interactive role selection for `linumed_base_roles` (issue #86), so picking a su
 the six roles doesn't mean hand-editing YAML.
 
 ```bash
-./scripts/select-roles.sh --file inventory/myhospital/group_vars/linumed/vars.yml
+../scripts/select-roles.sh --file inventory/myhospital/group_vars/linumed/vars.yml
 ```
 
 `whiptail` - the same toolkit Debian's own installer uses. Runs on the control node
@@ -127,7 +127,7 @@ linumed_base_roles` / `# END` markers) rather than piling up duplicate blocks - 
 run again after changing your mind.
 
 ```bash
-./scripts/select-roles.sh --file inventory/myhospital/group_vars/linumed/vars.yml \
+../scripts/select-roles.sh --file inventory/myhospital/group_vars/linumed/vars.yml \
   --non-interactive "caddy monitoring backup"
 ```
 
