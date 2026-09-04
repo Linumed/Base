@@ -47,14 +47,13 @@ docker/*/secrets/
 id_rsa
 id_ed25519
 
-# Claude Code local settings. Machine-specific and not shareable: this file records
-# per-machine permission grants, which on this repo's own dev box include the internal
-# Tailscale hostname of the Forgejo instance and local scratchpad paths. It was only
-# kept out of the repo by a *global* gitignore in the maintainer's home directory
+# Local tooling settings. Machine-specific and not shareable: this file records
+# per-machine grants that can include internal hostnames and local scratch paths. It was
+# only kept out of the repo by a *global* gitignore in the maintainer's home directory
 # (~/.config/git/ignore) - that protects one machine and does not travel with a clone,
 # so a `git add -A` on any other checkout would have committed it. Ignored here so the
 # protection ships with the repository (found while auditing for publication, #50).
-# Deliberately only settings.local.json: a shared .claude/settings.json is committable.
+# Deliberately only settings.local.json: a shared settings.json is committable.
 .claude/settings.local.json
 
 # Editor
@@ -74,10 +73,9 @@ site/
 # Logs
 *.log
 
-# Local-only redirect stub for this project's AI-agent instructions file. The real,
-# public content lives in CONVENTIONS.md (renamed 2026-08-19, see the commit that did
-# it) - kept out of the public repo deliberately, not left off as an oversight. This
-# stub just tells Claude Code (which specifically auto-loads a file named exactly
-# CLAUDE.md) where the real content is, so per-machine auto-loading keeps working
-# without ever committing that literal filename again.
+# Local-only redirect stub. The real, public content lives in CONVENTIONS.md (renamed
+# 2026-08-19) - kept out of the public repo deliberately, not left off as an oversight.
+# Some local tooling auto-loads a file of exactly this name; the stub points such tooling
+# at CONVENTIONS.md so per-machine auto-loading keeps working without the stub itself
+# ever being committed.
 CLAUDE.md
