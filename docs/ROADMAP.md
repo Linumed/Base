@@ -41,10 +41,18 @@ Written 2026-08-14, after an audit of the repository against its own stated requ
 > failing on a teardown-step SSH flake that never reproduced against a hand-built VM
 > (diagnostic instrumentation left in `test/lib/teardown-check.sh` in case it recurs) -
 > the tag waited for a real green CI run, not just local verification.
+>
+> **Update 2026-09-04: `v2.0.1` is tagged**, a documentation release. The quick start
+> shipped in `v2.0.0` could not be followed: it put `scripts/bootstrap.sh` on a
+> freshly installed target *before* the clone, on a host that therefore has neither `git`
+> nor the script. Found by reading the published page against the README rather than by a
+> test - a documented path that nothing executes is a path nothing verifies, which is why
+> it survived a major release. Fixed together with four smaller documentation defects
+> found in the same pass; nothing in the stability surface moved.
 
 ## Where this actually stands
 
-**As of 2026-08-27, `v2.0.0`:** six roles - `common`, `docker`, `caddy`, `monitoring`,
+**As of 2026-09-04, `v2.0.1`:** six roles - `common`, `docker`, `caddy`, `monitoring`,
 `bridgelink` and `backup` - implemented, VM-tested and idempotent. The surface named in
 [ADR 0008](adr/0008-what-the-v1-0-stability-guarantee-covers.md) carries a stability
 guarantee; `v2.0.0` is what a breach of it costs, five days after `v1.0.0`
@@ -542,7 +550,9 @@ operator could select a subset was ignored. It was found by deploying a subset a
 real VM and noticing a deselected role run anyway - not by reading the code, which had a
 comment confidently asserting the opposite precedence.
 
-**Deliberately still open after v2.0.0:** nothing. The kit has no known defects and no
-open defect issues. From here the work is maintenance: watching pinned images for
-deprecations and licence changes (`scripts/scan-images.py` runs weekly), and whatever
-real use turns up once someone deploys it.
+**Deliberately still open after v2.0.1:** the classpath question in issue #98 - the
+launcher directory that would let FHIR libraries be loaded into the engine is identified
+but not proven with a real class load. Nothing else: no known defects, no open defect
+issues. From here the work is maintenance: watching pinned images for deprecations and
+licence changes (`scripts/scan-images.py` runs weekly), and whatever real use turns up
+once someone deploys it.
