@@ -11,6 +11,38 @@ click away instead of restated here.
 
 ## [Unreleased]
 
+## [2.0.1] - 2026-09-04
+
+A documentation release. No role, variable or default changed, so nothing in the
+[ADR 0008](adr/0008-what-the-v1-0-stability-guarantee-covers.md) stability surface
+moves. It exists because the quick start shipped in `v2.0.0` did not work: it told the
+reader to run `scripts/bootstrap.sh` on a freshly installed target *before* cloning
+anything, on a host that therefore has no `git` and no copy of the script. Someone
+following the documented path from the release page could not get past step one.
+
+### Fixed
+
+- **The quick start now clones first and copies the bootstrap script to the target**
+  (issue #102). `git clone` happens on the machine you run Ansible from, then
+  `scp scripts/bootstrap.sh root@<target>:~` and `ssh root@<target> ./bootstrap.sh`. The
+  previous order read as a single sequence on one host and was impossible to follow on the
+  minimal/netinst install it was written for.
+- **`--user linumed` is written as `--user <username>`** (issue #103). It was an example
+  value that read like a required one - `bootstrap.sh` creates whatever name it is given.
+  The README now says so and points out that the choice has to match `ansible_user` in
+  `hosts.yml`. Same change in `scripts/README.md` and the script's own usage comment.
+- **`select-roles.sh` no longer calls BridgeLink a "HL7/FHIR integration engine"**
+  (follow-up to issue #97). The role checklist still carried the claim that `v2.0.0`
+  removed everywhere else, and it is the line a first-time user sees on screen - it also
+  reached the screenshot on the project website before it was caught.
+- **`mkdocs build --strict` no longer breaks** on a dead `README.md` link in
+  `ARCHITECTURE.md`. The file is not part of the documentation site, so the link resolved
+  locally and failed in the build.
+- **The `.gitignore` no longer names internal infrastructure** (issue #105). Two comment
+  blocks described the maintainer's internal host and named the local tooling the
+  repository deliberately keeps out of public files. The ignore patterns themselves are
+  unchanged; only the prose around them is now generic.
+
 ### Changed
 
 - **The engine is described as an HL7 v2 integration engine, no longer as "HL7 v2 / FHIR
@@ -40,6 +72,15 @@ click away instead of restated here.
   That makes a compliant deployment possible; it does not make one. Documentation only, no
   behaviour change. The landing page on linumed.com already said "aware" - this closes the
   gap in the other direction (Website#21).
+
+- **The vCPU recommendation stands above the requirements table instead of contradicting
+  it afterwards** (issue #104). The table showed `1` for the smallest stack, and a
+  paragraph further down explained that one vCPU is a floor rather than a recommendation.
+  The recommendation - two vCPUs, three for the full stack - now comes first, and the
+  column is labelled as the measured floor. The measurements themselves are unchanged.
+- **The role-selection checklist is shown as a screenshot** in `README.md` and
+  `ARCHITECTURE.md`, so the interactive path is visible before installing anything.
+- **An MIT licence badge** in the README.
 
 ## [2.0.0] - 2026-08-27
 

@@ -434,6 +434,11 @@ arrive by itself - it is a deliberate promise about future releases, made only o
 surface it covers had been measured and, where it should not have been frozen, narrowed
 (ADR 0010).
 
+**`v2.0.1` followed on 2026-09-04** and is what the other side of that promise looks like:
+a documentation release that touches no role, variable or default, so nothing in the ADR
+0008 surface moves. It exists because the quick start shipped in `v2.0.0` could not be
+followed at all.
+
 The scope of that promise is defined in
 [ADR 0008](https://github.com/Linumed/Base/blob/main/docs/adr/0008-what-the-v1-0-stability-guarantee-covers.md).
 The surface was measured, not estimated: re-measured against all seven roles on
