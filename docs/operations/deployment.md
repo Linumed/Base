@@ -53,7 +53,7 @@ deselecting does not remove anything; see [teardown](teardown.md) for that.
 the one aimed at a named audience rather than a general mechanism:
 
 ```bash
-ansible-playbook -i inventory/myhospital playbooks/node-baseline.yml --ask-vault-pass
+ansible-playbook -i inventory/<myhospital> playbooks/node-baseline.yml --ask-vault-pass
 ```
 
 It is a thin wrapper setting `linumed_base_roles: [common, docker, backup]` - the roles

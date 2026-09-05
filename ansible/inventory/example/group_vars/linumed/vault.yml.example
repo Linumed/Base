@@ -3,9 +3,9 @@
 # real inventory, fill in real values, then encrypt it - never commit the plaintext:
 #
 #   cp ansible/inventory/example/group_vars/linumed/vault.yml.example \
-#      ansible/inventory/myhospital/group_vars/linumed/vault.yml
+#      ansible/inventory/<myhospital>/group_vars/linumed/vault.yml
 #   # edit vault.yml, replace every CHANGEME
-#   ansible-vault encrypt ansible/inventory/myhospital/group_vars/linumed/vault.yml
+#   ansible-vault encrypt ansible/inventory/<myhospital>/group_vars/linumed/vault.yml
 #
 # Ansible merges every file under group_vars/linumed/ automatically - vars.yml (plain
 # config) and vault.yml (encrypted secrets) both apply to the `linumed` group, no extra

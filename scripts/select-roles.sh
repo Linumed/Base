@@ -22,7 +22,7 @@
 # single flat checklist now.
 #
 # Usage (run from ansible/, where --file's default target lives):
-#   ../scripts/select-roles.sh --file inventory/myhospital/group_vars/linumed/vars.yml
+#   ../scripts/select-roles.sh --file inventory/<myhospital>/group_vars/linumed/vars.yml
 #   ../scripts/select-roles.sh --file <path> --non-interactive "caddy monitoring backup"
 #
 # --file is a plain relative path, resolved against the current directory - it works

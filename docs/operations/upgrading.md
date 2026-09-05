@@ -4,7 +4,7 @@
 claim rather than an assumption.** The command is the same one used for the first deploy:
 
 ```bash
-ansible-playbook -i inventory/myhospital playbooks/site.yml --ask-vault-pass
+ansible-playbook -i inventory/<myhospital> playbooks/site.yml --ask-vault-pass
 ```
 
 Pull the new version, run that, done. What follows is why that is actually true, not just
