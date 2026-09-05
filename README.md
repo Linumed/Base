@@ -168,6 +168,10 @@ scp scripts/bootstrap.sh root@<target>:~
 ssh root@<target> ./bootstrap.sh --user <username> --key "ssh-ed25519 AAAA... you@host"
 # <username> is whatever you want the sudo-capable user to be called - it does not have
 # to be "linumed". Whatever you pick here has to match ansible_user in hosts.yml below.
+# root is only needed for this one command: a fresh minimal install has no sudo user and
+# no sudo package yet, so nobody could have sudo rights to use instead. Every step after
+# this one connects as <username>, never root again - the common role that runs later
+# locks root SSH login out entirely (PermitRootLogin no).
 ```
 
 ```bash
