@@ -177,6 +177,9 @@ cd ansible
 # directory and Ansible only picks up an ansible.cfg from the current working directory.
 
 cp -r inventory/example inventory/myhospital
+# "myhospital" is an example name for this inventory directory, not a required one -
+# call it whatever you like (a customer name, a site name). Whatever you pick here is
+# what every path below reads back, so keep using the same name once you've chosen it.
 # edit inventory/myhospital/hosts.yml: set ansible_host / ansible_user for your target
 
 # inventory/myhospital/group_vars/linumed/vars.yml holds plain config (edit
