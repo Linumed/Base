@@ -176,16 +176,16 @@ cd ansible
 # not the repo root - ansible.cfg (roles_path, default inventory) lives in this
 # directory and Ansible only picks up an ansible.cfg from the current working directory.
 
-cp -r inventory/example inventory/myhospital
-# "myhospital" is an example name for this inventory directory, not a required one -
-# call it whatever you like (a customer name, a site name). Whatever you pick here is
-# what every path below reads back, so keep using the same name once you've chosen it.
-# edit inventory/myhospital/hosts.yml: set ansible_host / ansible_user for your target
+cp -r inventory/example inventory/<myhospital>
+# <myhospital> is any name you like for this inventory directory (a customer name, a
+# site name) - not a required one. Whatever you pick here is what every path below
+# reads back, so keep using the same name once you've chosen it.
+# edit inventory/<myhospital>/hosts.yml: set ansible_host / ansible_user for your target
 
-# inventory/myhospital/group_vars/linumed/vars.yml holds plain config (edit
+# inventory/<myhospital>/group_vars/linumed/vars.yml holds plain config (edit
 # backup_repository at least). Pick optional roles here too - by hand, or via the
 # whiptail checklist below:
-../scripts/select-roles.sh --file inventory/myhospital/group_vars/linumed/vars.yml
+../scripts/select-roles.sh --file inventory/<myhospital>/group_vars/linumed/vars.yml
 ```
 
 ![Role-selection checklist: caddy and backup checked, monitoring and bridgelink unchecked, run from a terminal.](docs/img/select-roles-tui.png)
@@ -198,12 +198,12 @@ onboarding.
 # .../vault.yml.example lists six secrets with no safe default; all of them abort
 # site.yml outright once their role is selected. Turn it into a real, encrypted vault
 # file:
-cp inventory/myhospital/group_vars/linumed/vault.yml.example \
-   inventory/myhospital/group_vars/linumed/vault.yml
+cp inventory/<myhospital>/group_vars/linumed/vault.yml.example \
+   inventory/<myhospital>/group_vars/linumed/vault.yml
 # edit vault.yml, replace every CHANGEME, then encrypt it:
-ansible-vault encrypt inventory/myhospital/group_vars/linumed/vault.yml
+ansible-vault encrypt inventory/<myhospital>/group_vars/linumed/vault.yml
 
-ansible-playbook playbooks/site.yml -i inventory/myhospital --ask-vault-pass
+ansible-playbook playbooks/site.yml -i inventory/<myhospital> --ask-vault-pass
 # Add --ask-become-pass, unless bootstrap.sh ran with --nopasswd. Note that
 # --ask-become-pass only works if <username> HAS a login password: bootstrap.sh never
 # sets one on its own, so the account is locked by default. Set one yourself first
