@@ -11,6 +11,12 @@ click away instead of restated here.
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-09-11
+
+No role, variable or default changed, so nothing in the
+[ADR 0008](adr/0008-what-the-v1-0-stability-guarantee-covers.md) stability surface moves.
+A new permanent release test plus two quick-start defects it found on its first real run.
+
 ### Added
 
 - **`test/vm-test-quickstart.sh`**: runs the README's "Quick start" section verbatim,
