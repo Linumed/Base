@@ -439,6 +439,12 @@ a documentation release that touches no role, variable or default, so nothing in
 0008 surface moves. It exists because the quick start shipped in `v2.0.0` could not be
 followed at all.
 
+**`v2.1.0` followed on 2026-09-11** - `test/vm-test-quickstart.sh`, a permanent release
+test that runs the quick start verbatim against a real netinst install, plus two more
+quick-start defects (#106) that its first run found. Again no role, variable or default
+changed, so nothing in the ADR 0008 surface moves; the minor bump is for the new test
+script, not for anything a deployed instance would notice.
+
 The scope of that promise is defined in
 [ADR 0008](https://github.com/Linumed/Base/blob/main/docs/adr/0008-what-the-v1-0-stability-guarantee-covers.md).
 The surface was measured, not estimated: re-measured against all seven roles on

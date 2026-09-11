@@ -49,10 +49,18 @@ Written 2026-08-14, after an audit of the repository against its own stated requ
 > test - a documented path that nothing executes is a path nothing verifies, which is why
 > it survived a major release. Fixed together with four smaller documentation defects
 > found in the same pass; nothing in the stability surface moved.
+>
+> **Update 2026-09-11: `v2.1.0` is tagged.** `test/vm-test-quickstart.sh` (#107) now runs
+> the README's quick start verbatim, block by block, against a real netinst install -
+> replacing a claim `test/vm-test-netinst.sh` used to make about covering that path
+> without ever doing so. Its first real run found two more quick-start defects (#106): a
+> `select-roles.sh` path that could never resolve, and `--ask-become-pass` documented
+> against a login password `bootstrap.sh` never sets. Nothing in the stability surface
+> moved.
 
 ## Where this actually stands
 
-**As of 2026-09-04, `v2.0.1`:** six roles - `common`, `docker`, `caddy`, `monitoring`,
+**As of 2026-09-11, `v2.1.0`:** six roles - `common`, `docker`, `caddy`, `monitoring`,
 `bridgelink` and `backup` - implemented, VM-tested and idempotent. The surface named in
 [ADR 0008](adr/0008-what-the-v1-0-stability-guarantee-covers.md) carries a stability
 guarantee; `v2.0.0` is what a breach of it costs, five days after `v1.0.0`
