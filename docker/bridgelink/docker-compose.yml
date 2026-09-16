@@ -22,7 +22,7 @@
 # than a mirror.
 services:
   bridgelink:
-    image: innovarhealthcare/bridgelink:26.6.0-dhi-slim
+    image: innovarhealthcare/bridgelink:26.6.1-dhi-slim
     restart: unless-stopped
     # Upstream's launcher drains queues for up to 30s; Docker's default 10s would cut
     # that short and risk losing in-flight messages.

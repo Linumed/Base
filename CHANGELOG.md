@@ -11,6 +11,18 @@ click away instead of restated here.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Weekly `image-scan` had gone red on 2026-09-07 and 2026-09-14** (#108). Four pins
+  (`prom/prometheus`, `grafana/grafana`, `grafana/loki`,
+  `innovarhealthcare/bridgelink`) had fallen behind a patch release that demonstrably
+  clears findings - bumped to `v3.13.3`, `13.1.6`, `3.7.7`, `26.6.1-dhi-slim`. Every
+  other pinned image is already on its newest tag but had accumulated findings since
+  `security/accepted-image-findings.txt` was last produced (2026-08-20); refreshed
+  against a real `trivy` scan run today rather than assumed unchanged - the earlier list
+  no longer covered several CVEs that have appeared since. `scripts/scan-images.py` now
+  exits 0 again.
+
 ## [2.1.0] - 2026-09-11
 
 No role, variable or default changed, so nothing in the
