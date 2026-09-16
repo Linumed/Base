@@ -9,7 +9,7 @@ Written 2026-08-14, after an audit of the repository against its own stated requ
 
 ## Where this actually stands
 
-**As of 2026-09-11, `v2.1.0`:** six roles - `common`, `docker`, `caddy`, `monitoring`,
+**As of 2026-09-16, `v2.1.1`:** six roles - `common`, `docker`, `caddy`, `monitoring`,
 `bridgelink` and `backup` - implemented, VM-tested and idempotent. The surface named in
 [ADR 0008](adr/0008-what-the-v1-0-stability-guarantee-covers.md) carries a stability
 guarantee; `v2.0.0` is what a breach of it costs, five days after `v1.0.0`
@@ -76,6 +76,18 @@ itself.
 > `select-roles.sh` path that could never resolve, and `--ask-become-pass` documented
 > against a login password `bootstrap.sh` never sets. Nothing in the stability surface
 > moved.
+>
+> **Update 2026-09-16: `v2.1.1` is tagged.** Six fixes, nothing in the stability surface
+> moved. The weekly `image-scan` job had gone red on 2026-09-07 and 2026-09-14 (#108):
+> four pins had fallen behind a patch release that clears findings, which in turn
+> surfaced a stale pin table in `docs/operations/updates.md` and a `vm-test.sh`
+> throwaway-VM disk too small for the current image set - all three now verified green
+> against a real CI run. The other five (#109, #110, #111, Website#31, Website#32) were
+> reported from outside by cc@prod against the published documentation site: a wording
+> contradiction between `ARCHITECTURE.md` and the on-premise licensing next to it, a
+> stale version-plan bullet, this file's own update-block readability (the fix you are
+> reading right now), a RAM-table figure that looked wrong but wasn't, and a quick-start
+> caveat easy to miss inside a code block.
 
 ## The audit behind Stage 1-5
 
