@@ -140,6 +140,15 @@ A few things worth knowing before sizing a real host:
   this table used to claim to today's 7.0 GB is the *other* images growing between the
   two passes, not a role being added. Expect the same drift in the unrefreshed rows, and
   treat all four as a floor with a margin rather than a current inventory.
+- **The "allocated" column is a step-search floor, not a cumulative total, and it looks
+  non-monotonic because of that** (found via issue #31, an outside reader flagged it as
+  looking like a copy-paste error): "Full stack" needing less allocated RAM (1.5 GB) than
+  "+ monitoring" alone (2 GB) is real, not a typo. Each row was found independently by
+  shrinking a VM's RAM until deployment still succeeded, and the two rows were not
+  searched at the same granularity in the same pass - a coarser step in the "+ monitoring"
+  measurement can land on a higher floor than a finer one finds for a stack with more
+  services. The **used** column (903 MB vs. 1.3 GB) is the one that is directly
+  comparable and does increase with the stack, as expected.
 
 - **The optional BridgeLink exporter is not in these numbers.** Enabling
   `bridgelink_exporter_enabled` adds one more container (a pinned `python:3.13.15-alpine`
@@ -208,11 +217,14 @@ cp inventory/<myhospital>/group_vars/linumed/vault.yml.example \
 ansible-vault encrypt inventory/<myhospital>/group_vars/linumed/vault.yml
 
 ansible-playbook playbooks/site.yml -i inventory/<myhospital> --ask-vault-pass
-# Add --ask-become-pass, unless bootstrap.sh ran with --nopasswd. Note that
-# --ask-become-pass only works if <username> HAS a login password: bootstrap.sh never
-# sets one on its own, so the account is locked by default. Set one yourself first
-# (passwd <username>, as root on the target) - see scripts/bootstrap.sh's own output.
 ```
+
+**If `bootstrap.sh` did not run with `--nopasswd`, add `--ask-become-pass` to that
+command** - but only after setting a login password for `<username>` on the target host
+first (`passwd <username>`, as root). `bootstrap.sh` never sets one on its own, so the
+account is locked by default; `--ask-become-pass` silently cannot work without this step,
+and copying just the code block above without reading this paragraph is the most likely
+way to hit it (issue #32). See `scripts/bootstrap.sh`'s own output for the exact command.
 
 ## Documentation
 
