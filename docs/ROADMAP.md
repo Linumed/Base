@@ -7,6 +7,25 @@ it.
 Written 2026-08-14, after an audit of the repository against its own stated requirements
 (`CONVENTIONS.md`, `ARCHITECTURE.md`).
 
+## Where this actually stands
+
+**As of 2026-09-11, `v2.1.0`:** six roles - `common`, `docker`, `caddy`, `monitoring`,
+`bridgelink` and `backup` - implemented, VM-tested and idempotent. The surface named in
+[ADR 0008](adr/0008-what-the-v1-0-stability-guarantee-covers.md) carries a stability
+guarantee; `v2.0.0` is what a breach of it costs, five days after `v1.0.0`
+([Stage 8](#stage-8-v20-taking-a-role-back-out)). The repository is public, the
+documentation site is built and published from it, and there are no known defects and no
+open defect issues.
+
+A seventh role, `orthanc`, existed between v0.4.0 and v1.0.0 and was removed again -
+[ADR 0011](adr/0011-orthanc-removed-not-part-of-base.md) for why,
+[docs/operations/orthanc-recommendation.md](operations/orthanc-recommendation.md) for
+what replaced it.
+
+The chronological update log below records how each release got here, oldest first; the
+stage sections further down are the audit and reasoning behind the order of the work
+itself.
+
 > **Update 2026-08-17: every stage written up to that point is done and `v0.2.0` is
 > tagged.** A second pass over the repository afterwards - deliberately looking for what a green test suite does
 > not prove - turned up one real defect (#48, a Compose reference broken by the #44 fix
@@ -58,20 +77,7 @@ Written 2026-08-14, after an audit of the repository against its own stated requ
 > against a login password `bootstrap.sh` never sets. Nothing in the stability surface
 > moved.
 
-## Where this actually stands
-
-**As of 2026-09-11, `v2.1.0`:** six roles - `common`, `docker`, `caddy`, `monitoring`,
-`bridgelink` and `backup` - implemented, VM-tested and idempotent. The surface named in
-[ADR 0008](adr/0008-what-the-v1-0-stability-guarantee-covers.md) carries a stability
-guarantee; `v2.0.0` is what a breach of it costs, five days after `v1.0.0`
-([Stage 8](#stage-8-v20-taking-a-role-back-out)). The repository is public, the
-documentation site is built and published from it, and there are no known defects and no
-open defect issues.
-
-A seventh role, `orthanc`, existed between v0.4.0 and v1.0.0 and was removed again -
-[ADR 0011](adr/0011-orthanc-removed-not-part-of-base.md) for why,
-[docs/operations/orthanc-recommendation.md](operations/orthanc-recommendation.md) for
-what replaced it.
+## The audit behind Stage 1-5
 
 [What was open, and why it was not built earlier](#what-was-open-and-why-it-was-not-built-earlier)
 further down is kept as the record of the three items that carried that status until

@@ -21,7 +21,23 @@ click away instead of restated here.
   `security/accepted-image-findings.txt` was last produced (2026-08-20); refreshed
   against a real `trivy` scan run today rather than assumed unchanged - the earlier list
   no longer covered several CVEs that have appeared since. `scripts/scan-images.py` now
-  exits 0 again.
+  exits 0 again. Fixing this surfaced two more red CI jobs: the pin table in
+  `docs/operations/updates.md` still named the old versions (ADR 0010's variable-docs
+  check catches exactly this), and `test/vm-test.sh`'s throwaway VM ran out of disk
+  pulling the full image set (10G was no longer enough - BridgeLink alone is over 1GB;
+  raised to 20G). All three - `image-scan`, `ansible-lint`, `vm-test` - verified green
+  against the real CI run, not assumed.
+- **`ARCHITECTURE.md` called Linumed Shifts a "commercial SaaS application"** (#109),
+  contradicting the on-premise licensing described one line below and on linumed.com.
+  Changed to "commercial, on-premise application".
+- **`ARCHITECTURE.md`'s versioning-strategy plan still described v0.4 as shipping
+  Orthanc/DICOM** (#110) with no note that it was removed again five days into v2.0.0
+  (ADR 0011) - a reader stopping at that bullet got a wrong picture of the current kit.
+  Cross-referenced to the release history below it, which already had this right.
+- **`docs/ROADMAP.md` made a reader scroll past eight chronological update blocks**
+  (going back to 2026-08-14) **before reaching the current-status summary** (#111). Moved
+  "Where this actually stands" to the top of the file, right after the intro; the
+  chronological log and the Stage 1-5 audit both stay in place below it, unchanged.
 
 ## [2.1.0] - 2026-09-11
 
