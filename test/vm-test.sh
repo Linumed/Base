@@ -65,7 +65,13 @@ echo "==> ansible-lint"
 
 echo "==> Downloading Debian 13 genericcloud image"
 curl -fsSL -o "${WORK_DIR}/base.qcow2" "${IMAGE_URL}"
-qemu-img create -f qcow2 -F qcow2 -b "${WORK_DIR}/base.qcow2" "${WORK_DIR}/disk.qcow2" 10G
+# 10G ran out of room during a full-stack run (issue #108, 2026-09-16): the base OS plus
+# apt packages plus every pinned container image (bridgelink alone is >1GB, plus
+# postgres/prometheus/grafana/loki/alloy/alertmanager/cadvisor/caddy) left too little
+# headroom, and a failed pull's retry loop compounds it by leaving partial layers behind
+# on each attempt. Measured against the actual image set at the time: comfortably under
+# 8GB total, so 20G is real headroom, not an arbitrary round number.
+qemu-img create -f qcow2 -F qcow2 -b "${WORK_DIR}/base.qcow2" "${WORK_DIR}/disk.qcow2" 20G
 chmod 644 "${WORK_DIR}/base.qcow2" "${WORK_DIR}/disk.qcow2"
 
 ssh-keygen -t ed25519 -N "" -f "${SSH_KEY}" -C "linumed-base-vmtest" >/dev/null
