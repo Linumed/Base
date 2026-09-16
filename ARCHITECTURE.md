@@ -449,6 +449,16 @@ quick-start defects (#106) that its first run found. Again no role, variable or 
 changed, so nothing in the ADR 0008 surface moves; the minor bump is for the new test
 script, not for anything a deployed instance would notice.
 
+**`v2.1.1` followed on 2026-09-16** - six documentation and CI-maintenance fixes, none of
+them touching the ADR 0008 surface. Four pinned images had fallen behind (#108, caught by
+the weekly `image-scan` job), which in turn surfaced a stale pin table
+(`docs/operations/updates.md`) and a `vm-test.sh` throwaway VM disk too small for the
+current image set. The other five (#109, #110, #111, and Website#31/#32) were reported
+from outside by cc@prod against the published documentation site: a wording
+contradiction, a stale version-plan bullet, a ROADMAP.md readability fix, a RAM-table
+figure that looked wrong but wasn't, and a quick-start caveat easy to miss inside a code
+block.
+
 The scope of that promise is defined in
 [ADR 0008](https://github.com/Linumed/Base/blob/main/docs/adr/0008-what-the-v1-0-stability-guarantee-covers.md).
 The surface was measured, not estimated: re-measured against all seven roles on

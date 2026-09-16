@@ -11,6 +11,15 @@ click away instead of restated here.
 
 ## [Unreleased]
 
+## [2.1.1] - 2026-09-16
+
+A documentation and CI-maintenance release. No role, variable or default that a deployed
+instance would notice changed - the image pin bumps are exactly the kind of movement
+[ADR 0008](adr/0008-what-the-v1-0-stability-guarantee-covers.md) excludes from the
+stability surface. Six fixes: one triggered by the weekly `image-scan` job going red
+(which then surfaced two more red CI jobs), five reported from outside by cc@prod
+against the published documentation site.
+
 ### Fixed
 
 - **Weekly `image-scan` had gone red on 2026-09-07 and 2026-09-14** (#108). Four pins
@@ -38,6 +47,15 @@ click away instead of restated here.
   (going back to 2026-08-14) **before reaching the current-status summary** (#111). Moved
   "Where this actually stands" to the top of the file, right after the intro; the
   chronological log and the Stage 1-5 audit both stay in place below it, unchanged.
+- **The system-requirements RAM table's "allocated" column looked non-monotonic**
+  ("Full stack" needing less than "+ monitoring" alone) and read as a copy-paste error
+  from the outside (#31). It is real: each row is an independent step-search minimum, not
+  a cumulative figure, and rows were not searched at the same granularity. Explained as
+  its own point, pointing at the "used" column for the figure that is directly
+  comparable.
+- **The `--ask-become-pass` caveat lived only as a comment line inside the quick start's
+  code block** (#32), easy to miss when copying the block rather than reading it. Pulled
+  out into a visible paragraph right after the code block.
 
 ## [2.1.0] - 2026-09-11
 
