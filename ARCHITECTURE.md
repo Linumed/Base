@@ -363,7 +363,7 @@ picked via `scripts/select-roles.sh`, a `whiptail` checklist that writes
 
 | | Linumed Base | Linumed Shifts |
 |---|---|---|
-| Type | open-source IaC kit | commercial SaaS application |
+| Type | open-source IaC kit | commercial, on-premise application |
 | License | MIT | proprietary |
 | Content | infra stack, integration engine, monitoring | shift scheduling for care wards |
 | Repo | Linumed/Base | Linumed/Shifts (private) |
@@ -389,7 +389,11 @@ Linumed Shifts is not in this repository and is not documented here.
   single-host assumption), and a playbook for the runtime-agnostic
   subset. See `docs/ROADMAP.md`, Stage 6. Orthanc was earmarked as v0.3
   until 2026-08-20; that number went to the rename and the observability
-  work instead.
+  work instead. **This entry is what was planned, not what stands today:
+  Orthanc shipped in v0.4 and was removed again five days later in
+  v2.0.0** ([ADR 0011](https://github.com/Linumed/Base/blob/main/docs/adr/0011-orthanc-removed-not-part-of-base.md)) -
+  see the release-by-release history below this list for what actually
+  happened from v1.0 onward.
 - v1.0: the point from which breaking changes require a major version
   bump. What that promise covers is written down rather than left to
   interpretation - variable names, deploy paths, container and network
