@@ -12,7 +12,7 @@ bridgelink_deploy_dir: "/opt/linumed-base/bridgelink"
 # admin client from the image; server and REST API are unaffected, only the Java Web Start
 # landing page is gone - Web Start has been dead since JDK 11, admins use the standalone
 # Administrator Launcher or WebAdmin instead.
-bridgelink_image: "innovarhealthcare/bridgelink:26.6.0-dhi-slim"
+bridgelink_image: "innovarhealthcare/bridgelink:26.6.1-dhi-slim"
 bridgelink_postgres_image: "postgres:17.11-alpine"
 
 # The DHI image runs as this UID; any bind-mounted appdata directory has to be owned by it
