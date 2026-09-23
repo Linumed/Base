@@ -72,8 +72,9 @@ None of them are passed as environment variables, deliberately: env vars are rea
 anyone who can run `docker inspect` and are written into the container's config JSON on
 disk.
 
-`.gitignore` excludes `docker/*/secrets/` so a local test run can never accidentally
-commit credentials.
+Ignore this path locally (`docker/*/secrets/`, e.g. via `.git/info/exclude` or a global
+excludesFile) so a local test run can never accidentally commit credentials - this repo
+does not ship a `.gitignore` of its own (public repo, see CONVENTIONS.md).
 
 ## Monitoring
 

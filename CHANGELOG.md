@@ -11,6 +11,13 @@ click away instead of restated here.
 
 ## [Unreleased]
 
+### Removed
+
+- **`.gitignore` is no longer part of the repository** (follow-up to #105). A committed
+  ignore file in a public repo lists exactly the file patterns meant to stay hidden. The
+  same rules now live in a machine-local `core.excludesFile`; a fresh clone does not
+  inherit them and needs its own.
+
 ## [2.1.1] - 2026-09-16
 
 A documentation and CI-maintenance release. No role, variable or default that a deployed
