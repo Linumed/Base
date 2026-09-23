@@ -34,6 +34,11 @@ repository.
   added must be evaluated for data residency and logging behavior.
 - No credentials, secrets, or real IP addresses in any committed file.
   Always use .env.example templates and Ansible Vault references.
+- This repo ships no `.gitignore` (removed 2026-09-23, follow-up to issue #105's cleanup of
+  the same file). A committed ignore file in a public repo is itself a map of what to
+  hide - it named the local redirect stub for AI tooling directly. Ignore rules for this
+  machine live in a global `core.excludesFile` instead; a fresh clone gets none for free
+  and must set up its own.
 - Target host baseline is not assumed: `python3` and `sudo` are both `Priority: optional`
   in Debian 13, so a minimal/netinst install has neither. `scripts/bootstrap.sh` (shell,
   no Ansible dependency) establishes that baseline before any playbook runs - see
