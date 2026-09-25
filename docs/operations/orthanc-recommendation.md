@@ -36,7 +36,7 @@ side of that line:
 
 None of this is a defect in Orthanc. It is a defect in *this kit shipping it as a role*
 without an audit story or a retention story - the same gap #90 (access-log/KRITIS) and
-#92 (scope) both converged on independently in the same week.
+\#92 (scope) both converged on independently in the same week.
 
 ## What was actually tested (from ADR 0009, preserved below)
 
