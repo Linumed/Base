@@ -278,7 +278,7 @@ as issue #25. Verified against a real VM with both outcomes actually provoked, n
 assumed: a clean restore reports `success=1`, a deliberate post-backup change reports
 `success=0` with the diff counted, not just detected.
 
-#35 - re-measuring the system requirements - is closed along with the
+\#35 - re-measuring the system requirements - is closed along with the
 Authentik role: without four additional containers there is nothing to re-measure. It
 returns if the stack grows.
 
@@ -526,7 +526,7 @@ run) could still be added for free.
 | An access log for Orthanc - the kit claims DGSVO-compliance and currently keeps none | #90, **resolved 2026-08-23 by removing Orthanc (#92/ADR 0011) rather than building one** |
 | Re-measure system requirements including Orthanc | #84, **done 2026-08-22, then re-measured again after removal (#92)** |
 
-#87 depends on #86 and only became plannable once #86 existed. #88, #89 and #90 came out
+\#87 depends on #86 and only became plannable once #86 existed. #88, #89 and #90 came out
 of a deliberate brainstorm on 2026-08-22, once the tag itself no longer needed sequencing
 decisions - the point of asking "what comes after 1.0" only arrives once "what must come
 before" has an answer. #84 is the one item here found by measurement rather than
@@ -556,7 +556,7 @@ at all. The sequence is worth recording, because nothing about it was foreseen:
 | Mermaid pipeline removed, diagrams are plain images | #93/#94, **done 2026-08-27** |
 
 **How #92 arose is the part worth keeping.** It did not come from a plan. Investigating
-#90 - "the kit claims GDPR-compliance and keeps no access log" - meant measuring what
+\#90 - "the kit claims GDPR-compliance and keeps no access log" - meant measuring what
 Orthanc actually logs. The answer was: nothing that identifies a user, at any verbosity.
 That led to the second measurement (an archive with no retention policy, holding patient
 data indefinitely), and the two together contradicted a sentence README had carried since

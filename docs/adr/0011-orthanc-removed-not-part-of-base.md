@@ -13,7 +13,7 @@ not deprecated, not gated behind a flag, removed - and what replaces it.
 
 Three findings surfaced independently in the same week, while working two other issues
 (#90 - a DSGVO/KRITIS access-log question - and a follow-up scope question that became
-#92):
+\#92):
 
 1. **No access identity in Orthanc's own logs, at any verbosity.** Tested against a real
    instance: default logging emits nothing per HTTP request; `--verbose` logs method,
