@@ -1,8 +1,8 @@
 # Linumed Base
 
-Ansible-based Infrastructure-as-Code kit that turns a standard Debian 13 installation
-into a hardened, GDPR-aware healthcare infrastructure platform. On-premise by
-design. FOSS only.
+Ansible-based Infrastructure-as-Code kit that turns a standard
+[Debian 13](https://www.debian.org/distrib/netinst) installation into a hardened,
+GDPR-aware healthcare infrastructure platform. On-premise by design. FOSS only.
 
 This site is the operator's handbook: how the pieces fit together, how to run the kit
 day to day, and why specific decisions were made. For installing it, start with the

@@ -13,6 +13,10 @@ click away instead of restated here.
 
 ### Documentation
 
+- **Debian is now linked** from the README requirements and the documentation start page,
+  pointing at the netinst download page - the image the quick start and the netinst VM test
+  assume. Until now the docs required Debian 13 everywhere and linked to it nowhere.
+
 - **`bridgelink_extensions` is now explained** (#98). The volume appeared only in the
   teardown list; `docs/roles/bridgelink.md` now says what it is for (Mirth-format
   extension ZIPs, unpacked on every start), who fills it, and what teardown does to it.
