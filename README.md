@@ -92,7 +92,7 @@ The full plan, in order, with the reasoning behind the sequencing:
 
 ## Requirements
 
-- Target: Debian 13 (Trixie), bare metal or VM
+- Target: Debian 13 (Trixie), bare metal or VM - the [netinst image](https://www.debian.org/distrib/netinst) is the one this kit is tested against
 - Control node: any Linux machine with Ansible installed
 - SSH access to the target host
 
