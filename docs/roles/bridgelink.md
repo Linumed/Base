@@ -136,6 +136,21 @@ inventory.
   `secrets/exporter_password` file (UID 65532, 0400) and the container
   `linumed-base-bridgelink-exporter`.
 
+### The `bridgelink_extensions` volume
+
+The role mounts a named volume, `bridgelink_extensions`, on `/opt/bridgelink/custom-extensions`.
+On every container start the image's bootstrap unpacks each `*.zip` found there into the
+engine's `extensions/` directory. What it expects is Mirth's **extension format** (a
+packaged extension), not a bare library: a plain JAR dropped in here is not put on the
+classpath (see "FHIR, precisely" above for the directory that is, and why it is not wired
+up yet).
+
+The operator fills it - the kit ships no extensions. The volume survives container
+rebuilds and image updates, which is the point of it. `teardown` removes it together with
+the other volumes (`bridgelink_bridgelink_extensions`, see
+[Teardown](../operations/teardown.md)), so extensions that exist only there are gone
+afterwards - keep the original ZIPs elsewhere.
+
 ## Access
 
 ```bash

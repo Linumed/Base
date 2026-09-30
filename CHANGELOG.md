@@ -11,6 +11,12 @@ click away instead of restated here.
 
 ## [Unreleased]
 
+### Documentation
+
+- **`bridgelink_extensions` is now explained** (#98). The volume appeared only in the
+  teardown list; `docs/roles/bridgelink.md` now says what it is for (Mirth-format
+  extension ZIPs, unpacked on every start), who fills it, and what teardown does to it.
+
 ### Removed
 
 - **`.gitignore` is no longer part of the repository** (follow-up to #105). A committed
