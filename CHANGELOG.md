@@ -27,6 +27,17 @@ click away instead of restated here.
   teardown list; `docs/roles/bridgelink.md` now says what it is for (Mirth-format
   extension ZIPs, unpacked on every start), who fills it, and what teardown does to it.
 
+### Fixed
+
+- **`docs/roles/bridgelink.md` no longer claims `custom-lib` is ignored without
+  `server.includecustomlib = true`** (#113). Measured with a real class load from a channel
+  script against the unmodified upstream image: every new channel is assigned BridgeLink's
+  `[Default Resource]`, a Directory Resource on `custom-lib`, so a mounted library is found
+  with the property at its shipped `false`. The property only adds a second path, the server
+  classpath. `custom-jars` (filled by `CUSTOM_JARS_DOWNLOAD`) is not loaded by default, but
+  works with a Directory Resource pointing at it - the page called it a dead end. The
+  2.0.1 entry for #97 below repeats the old claim and is left as released.
+
 ### Removed
 
 - **`.gitignore` is no longer part of the repository** (follow-up to #105). A committed
