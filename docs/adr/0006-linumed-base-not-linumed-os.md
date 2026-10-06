@@ -3,6 +3,10 @@
 **Status:** accepted · **Date:** 2026-08-18 · **Affects:** the whole repository, the
 Forgejo repository slug, container names, deploy paths, linumed.com; issue #51
 
+> **2026-10-06:** this ADR covers the *name*. Why the project is a configuration kit and
+> not the distribution "LinumedOS" was originally meant to be is recorded separately, after
+> the fact, in [ADR 0012](0012-configuration-kit-not-a-distribution.md).
+
 ## The question answered here
 
 The project shipped two tagged releases as "Linumed OS". It is not an operating system.

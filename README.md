@@ -16,6 +16,8 @@ Linumed Base is not a custom Linux distribution. It is a collection of
 Ansible playbooks and roles that configure a standard Debian 13 (Trixie)
 server into a production-ready healthcare infrastructure stack - including
 HL7 v2 integration, monitoring, reverse proxy, and encrypted backups.
+It started out as a planned distribution; why it isn't one is
+[ADR 0012](docs/adr/0012-configuration-kit-not-a-distribution.md).
 
 ## What it includes
 
