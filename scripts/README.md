@@ -78,6 +78,28 @@ Entries in the accepted-findings file older than 90 days are reported, not faile
 re-check them rather than refreshing the date, because an ageing entry usually means an
 upstream has stopped rebuilding.
 
+## ci-failure-issue.py and ci-log.sh
+
+Make a red CI run reach someone (issue #117). Every workflow ends with a step that runs
+only on failure and opens a Forgejo issue titled `CI rot: <workflow>`, with the run link,
+the commit, and the last 120 lines of the job's output. If an open issue with that title
+already exists, the failure is added as a comment instead - a scan that stays red every
+week grows one thread, not a pile of issues. Closing it is left to a person, with the
+reason in the closing comment.
+
+`ci-log.sh` supplies the log. It is not executed but loaded through `BASH_ENV`, so every
+`run:` step - including ones added later - copies its output into `$CI_LOG_FILE` while the
+normal job log stays as it was.
+
+**Why both exist** (#115, #116): in September 2026 the weekly image scan was red for three
+weeks and a `vm-test` run failed, and nothing reported either one. When the `vm-test`
+failure was finally looked at, Forgejo had not archived its task log, so its cause can no
+longer be determined. The issue carries the end of the log where it cannot expire.
+
+Limits: a job that fails before the checkout step has neither script and reports nothing;
+pull-request runs are skipped (a fork's token is read-only, and the failure belongs in the
+PR). Tested against a recording stand-in for the Forgejo API before it went into CI.
+
 ## check-numeric-claims.py
 
 Checks that a small, deliberately curated list of numeric claims in prose - "120

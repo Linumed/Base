@@ -36,6 +36,15 @@ on:
 
 permissions:
   contents: read
+  # The failure step opens an issue (#117). Forgejo may ignore this key; if it
+  # honours it, the step needs it.
+  issues: write
+
+# Every `run:` step loads scripts/ci-log.sh through BASH_ENV, which keeps a copy of the
+# job's output; on failure, the last step turns it into a Forgejo issue (issue #117).
+env:
+  BASH_ENV: ${{ github.workspace }}/scripts/ci-log.sh
+  CI_LOG_FILE: /tmp/ci-job.log
 
 jobs:
   docs-site:
@@ -117,3 +126,10 @@ jobs:
           echo "$(cat base-docs-site.tar.gz.sha256)  fetched.tar.gz" | sha256sum -c -
           rm -f fetched.tar.gz
 
+      # A red run used to reach nobody (#115, #116). Not for pull requests: a fork's PR
+      # gets a read-only token, and its failure belongs in the PR, not the issue tracker.
+      - name: "Report a failure as a Forgejo issue (issue #117)"
+        if: failure() && github.event_name != 'pull_request'
+        env:
+          FORGEJO_TOKEN: ${{ github.token }}
+        run: python3 scripts/ci-failure-issue.py

@@ -283,6 +283,12 @@ Four workflows under `.forgejo/workflows/`:
   from the roles. Uses the trivy binary rather than a container: the runner deliberately
   has no broad Docker socket access.
 
+**A failed run opens an issue** (issue #117). Every workflow loads `scripts/ci-log.sh`
+through `BASH_ENV` and ends with an `if: failure()` step running
+`scripts/ci-failure-issue.py`, which opens `CI rot: <workflow>` or comments on the open
+one, quoting the end of the log. A new workflow gets the same `env:` block and last step.
+Background: two failures went unnoticed for weeks in September 2026 (#115, #116).
+
 `runs-on: docker`, never `ubuntu-latest` - the runner registers that label only.
 
 Keep workflows portable. If a GitHub mirror is ever added it stays a mirror; do not

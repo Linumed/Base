@@ -29,6 +29,12 @@ on:
       - '.forgejo/workflows/vm-test.yml'
   workflow_dispatch:
 
+# Every `run:` step loads scripts/ci-log.sh through BASH_ENV, which keeps a copy of the
+# job's output; on failure, the last step turns it into a Forgejo issue (issue #117).
+env:
+  BASH_ENV: ${{ github.workspace }}/scripts/ci-log.sh
+  CI_LOG_FILE: /tmp/ci-job.log
+
 jobs:
   vm-test:
     runs-on: docker
@@ -108,3 +114,11 @@ jobs:
 
       - name: Run the full site.yml double-run against a fresh VM
         run: bash test/vm-test.sh
+
+      # A red run used to reach nobody (#115, #116). Not for pull requests: a fork's PR
+      # gets a read-only token, and its failure belongs in the PR, not the issue tracker.
+      - name: "Report a failure as a Forgejo issue (issue #117)"
+        if: failure() && github.event_name != 'pull_request'
+        env:
+          FORGEJO_TOKEN: ${{ github.token }}
+        run: python3 scripts/ci-failure-issue.py
