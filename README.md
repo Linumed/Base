@@ -245,6 +245,6 @@ MIT - see [LICENSE](LICENSE)
 ## Part of the Linumed ecosystem
 
 - **Linumed Base** (this repo) - open source infrastructure platform
-- **Linumed Shifts** - nurse shift scheduling SaaS (commercial)
+- **Linumed Shifts** - nurse shift scheduling, commercial on-premise application
 
 [linumed.com](https://linumed.com)
