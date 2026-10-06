@@ -92,6 +92,7 @@ nav:
       - "0009: jodogne/orthanc-plugins as the Orthanc image": adr/0009-jodogne-orthanc-image-not-orthancteam.md
       - "0010: Internal versus interface variables": adr/0010-internal-versus-interface-variables.md
       - "0011: Orthanc removed - not part of Linumed Base": adr/0011-orthanc-removed-not-part-of-base.md
+      - "0012: A configuration kit, not a distribution": adr/0012-configuration-kit-not-a-distribution.md
 
 # Diagrams are plain images committed under docs/img/ - drawn by hand, not generated.
 # No renderer runs at build time and none is loaded in the browser, which is why the

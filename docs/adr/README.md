@@ -30,3 +30,4 @@ event and should not be relabelled to the other one.
 | [0009](0009-jodogne-orthanc-image-not-orthancteam.md) | `jodogne/orthanc-plugins` as the Orthanc image | obsolete since 0011 (2026-08-21) |
 | [0010](0010-internal-versus-interface-variables.md) | Internal variables are a documented list, not an enforced one | accepted (2026-08-21) |
 | [0011](0011-orthanc-removed-not-part-of-base.md) | Orthanc removed - not part of Linumed Base | accepted (2026-08-23) |
+| [0012](0012-configuration-kit-not-a-distribution.md) | A configuration kit, not a distribution | accepted (spring 2026, recorded 2026-10-06) |

@@ -13,6 +13,12 @@ click away instead of restated here.
 
 ### Documentation
 
+- **ADR 0012 records why this is a configuration kit, not a distribution** (#112). The
+  project began as a planned Debian-based distribution; that was dropped in spring 2026,
+  before the first commit, and the reasoning was never written down. README and
+  `CONVENTIONS.md` only denied the alternative, and ADR 0006 covered the later rename
+  rather than the decision behind it. Written after the fact, and labelled as such.
+
 - **Debian is now linked** from the README requirements and the documentation start page,
   pointing at the netinst download page - the image the quick start and the netinst VM test
   assume. Until now the docs required Debian 13 everywhere and linked to it nowhere.
