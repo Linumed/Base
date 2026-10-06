@@ -57,6 +57,9 @@ the bump, and distinguishes three cases:
   `security/accepted-image-findings.txt` with a reason and a date; unrecorded ones fail
 - **newer series available** (13.1 -> 13.2, v0.33 -> v0.34) - reported, never enforced.
   That is a decision, not a security patch.
+- **a scan failed**, for the pin or for the candidate it is compared against - failure,
+  listed on its own. A failed scan is not a result: until #119 a failed candidate scan
+  read as "clears nothing" and let a pin pass that the bump would have fixed.
 
 The alternative, failing on any finding at all, would leave the check permanently red -
 and a check that always says the same thing stops being read. This repository has hit that

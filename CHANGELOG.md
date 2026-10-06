@@ -38,6 +38,12 @@ click away instead of restated here.
 
 ### Fixed
 
+- **`scan-images.py` no longer treats a failed scan as a result** (#119). When the scan
+  of a patch candidate failed, the pin was reported as "newer patch, clears nothing" and,
+  with its findings recorded, passed silently - CI run 335 did that to cadvisor while the
+  same bump cleared 14 findings locally. Failed scans, of the pin or the candidate, are now
+  listed on their own and fail the run.
+
 - **README and `CONVENTIONS.md` still called Linumed Shifts "SaaS"** (#114) - the same
   error #109 fixed in `ARCHITECTURE.md`, missed in the two other places that said it.
   Shifts is on-premise; both now use #109's wording, "commercial on-premise application".
