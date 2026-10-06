@@ -42,8 +42,11 @@ permissions:
 
 # Every `run:` step loads scripts/ci-log.sh through BASH_ENV, which keeps a copy of the
 # job's output; on failure, the last step turns it into a Forgejo issue (issue #117).
+# ${GITHUB_WORKSPACE} is left for bash to expand when each step starts: the runner
+# evaluates ${{ github.workspace }} to an empty string at this level, and bash silently
+# skips a BASH_ENV file that does not exist - the first version captured nothing (#117).
 env:
-  BASH_ENV: ${{ github.workspace }}/scripts/ci-log.sh
+  BASH_ENV: ${GITHUB_WORKSPACE}/scripts/ci-log.sh
   CI_LOG_FILE: /tmp/ci-job.log
 
 jobs:

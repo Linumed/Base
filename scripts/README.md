@@ -98,7 +98,10 @@ longer be determined. The issue carries the end of the log where it cannot expir
 
 Limits: a job that fails before the checkout step has neither script and reports nothing;
 pull-request runs are skipped (a fork's token is read-only, and the failure belongs in the
-PR). Tested against a recording stand-in for the Forgejo API before it went into CI.
+PR). The issue step was tested against a recording stand-in for the Forgejo API; the log
+capture with `forgejo-runner exec` against the same runner image CI uses, because its first
+version passed locally and captured nothing in CI (`${{ github.workspace }}` is empty in a
+workflow-level `env:` - the workflows now leave `${GITHUB_WORKSPACE}` for bash to expand).
 
 ## check-numeric-claims.py
 
