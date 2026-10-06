@@ -59,7 +59,7 @@ jobs:
       # installed above, for PyYAML's stdlib-free load isn't available, so pip install it)
       # and whiptail for --help/argument parsing, though the tested path is
       # --non-interactive and never opens a dialog.
-      - name: scripts/select-roles.sh behaves correctly (issue #87)
+      - name: "scripts/select-roles.sh behaves correctly (issue #87)"
         run: |
           apt-get install -y -qq --no-install-recommends whiptail
           pip install --no-cache-dir --break-system-packages pyyaml
@@ -69,7 +69,7 @@ jobs:
       # needed. Reuses check-variable-docs.py's own counting functions rather than
       # re-deriving them, so the two checks cannot silently disagree about what "138
       # interface variables" means.
-      - name: Registered numeric claims in prose match what the repository measures (issue #88)
+      - name: "Registered numeric claims in prose match what the repository measures (issue #88)"
         run: ./scripts/check-numeric-claims.py
 
       # A red run used to reach nobody (#115, #116). Not for pull requests: a fork's PR
