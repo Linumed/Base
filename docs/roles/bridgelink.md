@@ -30,31 +30,37 @@ What is possible, in order of increasing effort:
 | Resource model, validation | HAPI FHIR (Apache-2.0) libraries loaded into the engine, used from transformers | **Identified, not yet wired into this role** - see below (issue #98) |
 | FHIR server: search, CapabilityStatement, conformance | A real FHIR server next to the engine | Out of scope - application software by this kit's own boundary ([ADR 0011](../adr/0011-orthanc-removed-not-part-of-base.md)) |
 
-**Where a library goes, and why it silently does nothing without a second step.**
-Measured against the running image, not read off a listing: the launcher's classpath
-entry is `custom-lib` - a directory this image does not ship, so it has to be created and
-mounted. Two other candidates turned out to be dead ends. `custom-jars` exists but is only
-the extraction target of the `CUSTOM_JARS_DOWNLOAD` environment variable; nothing in the
-entrypoint or the launcher reads from it afterward - Innovar's own image documentation
-names it as "custom JARs," which does not match what the shipped code does with it.
-`custom-extensions` is real but expects `*.zip` in Mirth's extension format, unpacked into
-`extensions/` on every start - not the same thing as dropping a library on the classpath.
+**Where a library goes, measured with a real class load.** A channel's scripts see a
+library through a **Resource**, not through a directory name. The engine ships one, the
+`[Default Resource]`: a Directory Resource on `custom-lib` that every new channel is
+assigned to. `custom-lib` itself does not exist in the image, so it has to be created and
+mounted. Measured on 2026-10-06 against the unmodified upstream image
+(`26.6.1-dhi-slim`, issue #113): a marker JAR mounted at `custom-lib` was found from a
+channel script; the same JAR, with the channel's Default Resource removed, was not.
 
-`custom-lib` alone is not enough, either: whether its contents reach the classpath is
-gated by `server.includecustomlib` in `conf/mirth.properties`, which **ships `false`** -
-confirmed against the file baked into the pinned image, and its own comment says exactly
-what it does ("Determines whether libraries in the custom-lib directory will be included
-on the server classpath"). Mounting the directory without also setting this to `true`
-would deploy a library that is never loaded, with nothing to say so. Setting it means one
-more line in the `mirth_properties` secret this role already manages - not a new secret.
+`server.includecustomlib` in `conf/mirth.properties` (ships `false`) is a **second,
+independent** path, not a gate on the first: with `true`, `custom-lib` is also put on the
+server classpath, and a channel without any Resource finds the class too. The property's
+own comment advises against that ("To reduce potential classpath conflicts you should
+create Resources and use them on specific channels/connectors instead, and then set this
+value to false"). An earlier version of this page claimed the mount did nothing without
+the property; that came from a heap dump that looked at classloaders and not at Resources,
+and a real class load disproved it.
 
-**Not yet proven end-to-end.** A heap dump of a running container showed the mounted
-directory's URL reachable from the server's classloaders with the property set, consistent
-with real inclusion - but nothing in this spike forced an actual class to load from it, the
-way a HAPI-FHIR call from a channel transformer would. That is the next step before this
-role changes: mount `custom-lib`, set `server.includecustomlib = true`, deploy a channel
-that instantiates a class from a real HAPI-FHIR JAR placed there, and confirm it resolves
-(issue #98).
+The two other directories in the image are not classpath entries on their own:
+
+- **`custom-jars`** is the extraction target of the `CUSTOM_JARS_DOWNLOAD` environment
+  variable, which expects a **ZIP** (a bare JAR would be unpacked into loose class files).
+  Nothing loads from it by default - a JAR delivered this way was not found by a channel,
+  with or without `server.includecustomlib`. It works once a Directory Resource pointing at
+  `/opt/bridgelink/custom-jars` is created and assigned to the channel. Innovar's image
+  documentation describes the variable as "custom JARs" and does not mention that step.
+- **`custom-extensions`** expects `*.zip` in Mirth's extension format, unpacked into
+  `extensions/` on every start - not the same thing as a library.
+
+**Still open before this role changes** (issue #98): the marker JAR proves the mechanism,
+not a real HAPI-FHIR load with its dependency tree. The role change itself would then be
+the `custom-lib` mount alone - `server.includecustomlib` can stay `false`.
 
 Stated this plainly because tenders ask for FHIR by name. "An HTTP channel that moves
 FHIR JSON" and "FHIR R4 support" are not the same promise, and only the first one is
