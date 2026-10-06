@@ -55,8 +55,11 @@ def log_tail():
     path = env("CI_LOG_FILE")
     if not path or not os.path.isfile(path):
         return None
-    with open(path, encoding="utf-8", errors="replace") as f:
-        lines = f.read().splitlines()
+    # newline="" keeps a bare \r as it is: progress output ("Reading database ... 5%\r...")
+    # redraws one line, and Python's default newline handling would turn every redraw
+    # into a line of its own - run 339's issue was mostly apt progress because of that.
+    with open(path, encoding="utf-8", errors="replace", newline="") as f:
+        lines = [line.rstrip("\r").rsplit("\r", 1)[-1] for line in f.read().split("\n")]
     tail = [ANSI.sub("", line)[:LINE_MAX_CHARS] for line in lines[-LOG_TAIL_LINES:]]
     # A ``` inside the log would end the code block early.
     return "\n".join(tail).replace("```", "'''")
