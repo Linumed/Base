@@ -293,7 +293,7 @@ def main() -> int:
     print(f"{'image':50} {'fixable':>7}  {'patch':16} {'series':16} verdict")
     print("-" * 116)
 
-    behind, unaccepted, series_notes = [], [], []
+    behind, unaccepted, series_notes, failed = [], [], [], []
     for image in sorted(pinned):
         count, cves = trivy_findings(image)
         patch, series = newer_tag(image)
@@ -302,7 +302,7 @@ def main() -> int:
 
         if count < 0:
             verdict = "SCAN FAILED"
-            unaccepted.append(image)
+            failed.append(image)
         elif count == 0:
             verdict = "ok"
         elif patch:
@@ -313,7 +313,13 @@ def main() -> int:
             # is the noise this script exists to avoid.
             repo, _ = split_ref(image)
             cand_count, _ = trivy_findings(f"{repo}:{patch}")
-            if 0 <= cand_count < count:
+            if cand_count < 0:
+                # Not "clears nothing": nothing is known about the candidate. Treating a
+                # failed scan as a result let cadvisor's pin pass silently in CI run 335
+                # while the same bump cleared 14 findings locally (#119).
+                verdict = f"SCAN FAILED for {patch}"
+                failed.append(f"{repo}:{patch}")
+            elif cand_count < count:
                 verdict = f"BEHIND - bump clears {count - cand_count}"
                 behind.append((image, patch, count, cand_count))
             else:
@@ -354,6 +360,14 @@ def main() -> int:
         for image, series in series_notes:
             print(f"  {image} -> {series}")
         print()
+
+    if failed:
+        print("Scans that failed - no verdict is possible for these, so this run proves nothing")
+        print("about them (registry or network trouble, a tag that was pulled, a scanner fault):")
+        for image in failed:
+            print(f"  {image}")
+        print()
+        exit_code = 1
 
     if unaccepted:
         print(f"Images with findings that are not recorded in {ACCEPTED_FILE.relative_to(REPO_ROOT)}:")
