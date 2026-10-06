@@ -11,6 +11,15 @@ click away instead of restated here.
 
 ## [Unreleased]
 
+### Added
+
+- **A failed CI run now opens a Forgejo issue** (#117), titled `CI rot: <workflow>`,
+  with the run link, the commit and the last 120 lines of the job's output - or adds a
+  comment if that issue is still open. The log is copied by `scripts/ci-log.sh`, loaded
+  into every step through `BASH_ENV`, because Forgejo does not reliably archive task logs.
+  Prompted by a weekly image scan that stayed red for three weeks (#115) and a `vm-test`
+  failure whose log was gone by the time anyone looked (#116).
+
 ### Documentation
 
 - **ADR 0012 records why this is a configuration kit, not a distribution** (#112). The
