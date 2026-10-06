@@ -29,6 +29,10 @@ click away instead of restated here.
 
 ### Fixed
 
+- **README and `CONVENTIONS.md` still called Linumed Shifts "SaaS"** (#114) - the same
+  error #109 fixed in `ARCHITECTURE.md`, missed in the two other places that said it.
+  Shifts is on-premise; both now use #109's wording, "commercial on-premise application".
+
 - **`docs/roles/bridgelink.md` no longer claims `custom-lib` is ignored without
   `server.includecustomlib = true`** (#113). Measured with a real class load from a channel
   script against the unmodified upstream image: every new channel is assigned BridgeLink's

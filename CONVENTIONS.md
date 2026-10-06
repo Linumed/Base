@@ -12,8 +12,8 @@ standard Debian installation into a hardened, GDPR-aware healthcare
 infrastructure platform. It is fully open source (MIT). It is NOT a custom
 Linux distribution and does NOT produce a bootable ISO.
 
-Linumed Shifts (the nurse scheduling SaaS product) is a separate commercial
-product that can optionally run on top of Linumed Base. It is NOT part of this
+Linumed Shifts (nurse shift scheduling, a commercial on-premise application) is a
+separate product that can optionally run on top of Linumed Base. It is NOT part of this
 repository.
 
 ---
