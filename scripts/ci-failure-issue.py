@@ -28,7 +28,9 @@ import urllib.parse
 import urllib.request
 
 LOG_TAIL_LINES = 120
-LINE_MAX_CHARS = 300
+# Generous on purpose: trivy reports why a registry fetch failed in one long line, and
+# 300 characters cut it off right before the reason (run 348, #115).
+LINE_MAX_CHARS = 1000
 ANSI = re.compile(r"\x1b\[[0-9;?]*[A-Za-z]|\x1b\]8;;[^\x1b]*\x1b\\")
 
 
