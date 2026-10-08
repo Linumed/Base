@@ -280,8 +280,11 @@ Four workflows under `.forgejo/workflows/`:
   without anything in this repository changing. Fails when a pin is behind a patch release
   that demonstrably clears findings, when a finding is not recorded with a reason in
   `security/accepted-image-findings.txt`, or when the `docker/` references have drifted
-  from the roles. Uses the trivy binary rather than a container: the runner deliberately
-  has no broad Docker socket access.
+  from the roles. Uses the trivy binary rather than a container. Job containers do have
+  the host's Docker socket (`docker_host: automount`, a deliberate choice recorded in
+  ADR 0004), and trivy uses it: an image already present on the host is read from the
+  local daemon, anything else from the registry - with `GITHUB_TOKEN` removed, because the
+  forge's token in that variable makes ghcr.io refuse the pull (#115, #122).
 
 **A failed run opens an issue** (issue #117). Every workflow loads `scripts/ci-log.sh`
 through `BASH_ENV` and ends with an `if: failure()` step running

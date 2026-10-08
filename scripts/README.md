@@ -43,8 +43,11 @@ checks that the `docker/` references pin the same versions.
 ./scripts/scan-images.py --report   # same output, always exits 0
 ```
 
-Uses `trivy` from PATH if present, otherwise runs it in a container. CI uses the binary,
-because the runner deliberately has no broad Docker socket access.
+Uses `trivy` from PATH if present, otherwise runs it in a container. CI uses the binary.
+CI jobs do reach the host's Docker daemon (ADR 0004), and trivy tries it first, so an image
+already pulled on the host is scanned from there rather than fetched (#122). `GITHUB_TOKEN`
+is removed from trivy's environment: in CI it holds the forge's own token, and ghcr.io
+answers a foreign token with "DENIED" instead of an anonymous pull (#115).
 
 **Why it is not a plain `trivy && exit $?`** (issue #67): a finding is only actionable if a
 newer tag would clear it, and that is not the same as the pin being behind. Measured on
