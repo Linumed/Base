@@ -38,6 +38,19 @@ click away instead of restated here.
 
 ### Fixed
 
+- **Weekly `image-scan` had been red since 2026-09-21** (#115), three weeks before anyone
+  noticed - the gap #117 now closes. Four pins had fallen behind a patch release that
+  demonstrably clears findings and were bumped: `caddy:2.11.7-alpine` (clears all 16),
+  `ghcr.io/google/cadvisor:v0.60.6` (14 of 18), `grafana/grafana:13.1.7` (13 of 15),
+  `prom/prometheus:v3.13.4` (1 of 2). `security/accepted-image-findings.txt` drops the 63
+  entries for the replaced tags and records the 17 findings that remain on newest patches,
+  generated in a container identical to CI rather than from a local scanner cache. A failed
+  scan now prints the end of trivy's error instead of the first 200 characters - the end is
+  where it says why the registry fetch failed, and three CI runs on 2026-10-06 that could
+  not scan `cadvisor:v0.60.6` left no cause behind. The newer series (alloy 1.20, grafana
+  13.2, BridgeLink 26.9.0, alertmanager 0.34, prometheus 3.15) are not part of this: each
+  is a separate decision.
+
 - **`scan-images.py` no longer treats a failed scan as a result** (#119). When the scan
   of a patch candidate failed, the pin was reported as "newer patch, clears nothing" and,
   with its findings recorded, passed silently - CI run 335 did that to cadvisor while the

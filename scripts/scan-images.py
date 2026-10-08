@@ -194,7 +194,12 @@ def trivy_findings(image: str) -> tuple[int, set[str]]:
         ]
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0 and not result.stdout.strip():
-        print(f"  ! scan failed for {image}: {result.stderr.strip()[:200]}", file=sys.stderr)
+        # The tail, not the head: trivy lists each image source it tried (docker,
+        # containerd, podman, remote) and the reason it gave up, and the remote one -
+        # the only source CI has - comes last. Cutting at 200 characters kept only
+        # "unable to find" in runs 335/339/343, and the cause stayed unknown (#115).
+        err = " ".join(result.stderr.split())
+        print(f"  ! scan failed for {image}: ...{err[-700:]}", file=sys.stderr)
         return -1, set()
     try:
         data = json.loads(result.stdout)
