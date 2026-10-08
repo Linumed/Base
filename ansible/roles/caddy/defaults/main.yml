@@ -1,5 +1,5 @@
 ---
-caddy_image: "caddy:2.11.4-alpine"
+caddy_image: "caddy:2.11.7-alpine"
 caddy_deploy_dir: "/opt/linumed-base/caddy"
 caddy_http_port: 80
 caddy_https_port: 443

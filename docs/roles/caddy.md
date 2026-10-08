@@ -14,7 +14,7 @@ All variables are prefixed `caddy_*` and have sensible defaults in
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `caddy_image` | `"caddy:2.11.4-alpine"` | Pinned image, never `latest` |
+| `caddy_image` | `"caddy:2.11.7-alpine"` | Pinned image, never `latest` |
 | `caddy_deploy_dir` | `/opt/linumed-base/caddy` | Target directory on the host for the Caddyfile and docker-compose.yml |
 | `caddy_http_port` / `caddy_https_port` | `80` / `443` | Host ports. Caddy needs both for ACME HTTP-01 and normal traffic - **do not** restrict them to `127.0.0.1`, unlike the usual convention for purely internal services on this machine |
 | `caddy_email` | `""` (off) | ACME account email for Let's Encrypt notifications. Empty is valid, but not recommended |

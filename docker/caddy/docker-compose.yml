@@ -1,6 +1,6 @@
 services:
   caddy:
-    image: caddy:2.11.4-alpine
+    image: caddy:2.11.7-alpine
     restart: unless-stopped
     # A container can't reach the host's own 127.0.0.1 - host-gateway resolves
     # host.docker.internal to the host, for reverse_proxy targets that run natively on
