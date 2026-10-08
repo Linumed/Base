@@ -42,6 +42,7 @@ from __future__ import annotations
 import argparse
 import datetime
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -192,7 +193,14 @@ def trivy_findings(image: str) -> tuple[int, set[str]]:
             "-v", f"{TRIVY_CACHE}:/root/.cache/",
             TRIVY_IMAGE, *args,
         ]
-    result = subprocess.run(cmd, capture_output=True, text=True)
+    # Without GITHUB_TOKEN: every image here is public, so a token can only get in the way -
+    # and it does. CI jobs carry the forge's own token under that name; trivy presents it to
+    # ghcr.io, which answers a foreign token with "DENIED" instead of falling back to an
+    # anonymous pull. That is why cadvisor v0.60.6 could not be scanned in CI from
+    # 2026-10-06 on while the same scan worked everywhere else (#115); v0.60.5 only passed
+    # because it was already in the host's Docker daemon, which trivy tries first.
+    env = {k: v for k, v in os.environ.items() if k != "GITHUB_TOKEN"}
+    result = subprocess.run(cmd, capture_output=True, text=True, env=env)
     if result.returncode != 0 and not result.stdout.strip():
         # The tail, not the head: trivy lists each image source it tried (docker,
         # containerd, podman, remote) and the reason it gave up, and the remote one -

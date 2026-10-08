@@ -47,7 +47,11 @@ click away instead of restated here.
   generated in a container identical to CI rather than from a local scanner cache. A failed
   scan now prints the end of trivy's error instead of the first 200 characters - the end is
   where it says why the registry fetch failed, and three CI runs on 2026-10-06 that could
-  not scan `cadvisor:v0.60.6` left no cause behind. The newer series (alloy 1.20, grafana
+  not scan `cadvisor:v0.60.6` left no cause behind. The cause, once visible: CI jobs carry
+  the forge's own token as `GITHUB_TOKEN`, trivy presents it to ghcr.io, and ghcr.io answers
+  a foreign token with "DENIED" rather than an anonymous pull; `scan-images.py` now runs
+  trivy without it. `CONVENTIONS.md` and `scripts/README.md` claimed CI jobs had no Docker
+  socket access - they do, by ADR 0004's deliberate choice (#122). The newer series (alloy 1.20, grafana
   13.2, BridgeLink 26.9.0, alertmanager 0.34, prometheus 3.15) are not part of this: each
   is a separate decision.
 
