@@ -23,7 +23,7 @@ building an image ourselves.
 
 ## Which image variant
 
-`innovarhealthcare/bridgelink:26.6.0-dhi-slim`:
+`innovarhealthcare/bridgelink:26.9.0-dhi-slim` (the variant, not the version, is what this section is about):
 
 - **`-dhi`** is the Docker Hardened Image build: Amazon Corretto on **Debian 13** (the
   same base OS this repo targets), **no shell, no package manager**, non-root **UID

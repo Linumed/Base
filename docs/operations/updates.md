@@ -29,14 +29,14 @@ conscious action:
 | Role | Variable | Current pin |
 |---|---|---|
 | caddy | `caddy_image` | `caddy:2.11.7-alpine` |
-| bridgelink | `bridgelink_image` | `innovarhealthcare/bridgelink:26.6.1-dhi-slim` |
+| bridgelink | `bridgelink_image` | `innovarhealthcare/bridgelink:26.9.0-dhi-slim` |
 | bridgelink | `bridgelink_postgres_image` | `postgres:17.11-alpine` |
 | bridgelink | `bridgelink_exporter_image` | `python:3.13.15-alpine` |
 | monitoring | `monitoring_prometheus_image` | `prom/prometheus:v3.13.4` |
 | monitoring | `monitoring_grafana_image` | `grafana/grafana:13.1.7` |
 | monitoring | `monitoring_loki_image` | `grafana/loki:3.7.7` |
-| monitoring | `monitoring_alloy_image` | `grafana/alloy:v1.18.1` |
-| monitoring | `monitoring_alertmanager_image` | `prom/alertmanager:v0.33.1` |
+| monitoring | `monitoring_alloy_image` | `grafana/alloy:v1.20.1` |
+| monitoring | `monitoring_alertmanager_image` | `prom/alertmanager:v0.34.1` |
 | monitoring | `monitoring_cadvisor_image` | `ghcr.io/google/cadvisor:v0.60.6` |
 | monitoring | `monitoring_docker_socket_proxy_image` | `tecnativa/docker-socket-proxy:0.3.0` |
 
