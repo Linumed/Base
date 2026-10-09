@@ -257,6 +257,32 @@ def check_pin_table() -> list[str]:
     return problems
 
 
+# `| `variable` | `"image:tag"` |` rows in the role pages' variable tables.
+ROLE_PAGE_ROW = re.compile(r'^\| *`([a-z][a-z0-9_]*_image)` *\| *`"?([^`"]+)"?` *\|', re.M)
+
+
+def check_role_page_defaults() -> list[str]:
+    """Image defaults quoted in docs/roles/*.md must match what the roles pin.
+
+    The pin table above was the only place this was checked, and the role pages drifted
+    instead: docs/roles/bridgelink.md named 26.6.0-dhi-slim and postgres 17.10 for two weeks
+    after the role had moved to 26.6.1 and 17.11 (issue #125). Same rule as the pin table -
+    a default column that claims a version has to be the version.
+    """
+    defined: dict[str, str] = {}
+    for path in ROLE_DEFAULTS:
+        for match in IMAGE_DEF.finditer(path.read_text(encoding="utf-8")):
+            defined[match.group(1)] = match.group(2)
+    problems = []
+    for page in sorted((REPO_ROOT / "docs" / "roles").glob("*.md")):
+        for match in ROLE_PAGE_ROW.finditer(page.read_text(encoding="utf-8")):
+            variable, quoted = match.groups()
+            if variable in defined and defined[variable] != quoted:
+                problems.append(f"{page.relative_to(REPO_ROOT)}: {variable} is documented as "
+                                f"{quoted}, the role pins {defined[variable]}")
+    return problems
+
+
 def container_port(role: str, container: str) -> tuple[str | None, str]:
     """The container-side port a role's Compose template publishes for one container.
 
@@ -322,7 +348,7 @@ def main() -> int:
 
     orphaned = sorted(name for name in internal if name not in all_variables)
     coupling = check_coupled_literals() + check_scrape_targets()
-    pins = check_pin_table()
+    pins = check_pin_table() + check_role_page_defaults()
 
     total = sum(len(v) for v in variables.values())
     print(f"{total} variables across {len(variables)} roles; {len(internal)} recorded internal.")
@@ -370,9 +396,10 @@ def main() -> int:
         exit_code = 1
 
     if pins:
-        print("The pin table in docs/operations/updates.md disagrees with the roles. It is")
-        print("what documents the image variable names for ADR 0010, so a wrong row is not")
-        print("cosmetic - it is the documentation being wrong about what it documents:")
+        print("Image pins documented in docs/ disagree with the roles - the pin table in")
+        print("docs/operations/updates.md or a default column in docs/roles/. The pin table")
+        print("documents the image variable names for ADR 0010, and both claim versions, so")
+        print("a wrong row is the documentation being wrong about what it documents:")
         for problem in pins:
             print(f"  {problem}")
         print()
