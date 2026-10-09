@@ -49,6 +49,21 @@
     mode: "0755"
   become: true
 
+# Pulled before the Caddyfile is written and validated (#126): "Validate Caddyfile" runs
+# `docker run {{ caddy_image }}`, which pulled implicitly and without retries. A failed
+# pull then counted as an invalid Caddyfile and removed it on a first deploy. Retried like
+# the monitoring and bridgelink pulls - a hiccup becomes a slower run, a genuinely missing
+# image still fails.
+- name: Pull the caddy image ahead of validation
+  community.docker.docker_image:
+    name: "{{ caddy_image }}"
+    source: pull
+  become: true
+  register: caddy_image_pull
+  until: caddy_image_pull is succeeded
+  retries: 3
+  delay: 10
+
 - name: Deploy Caddyfile
   ansible.builtin.template:
     src: Caddyfile.j2
