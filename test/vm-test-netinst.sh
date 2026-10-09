@@ -21,7 +21,6 @@ REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORK_DIR="$(mktemp -d "${TMPDIR:-/var/tmp}/linumed-base-netinst.XXXXXX")"
 chmod 711 "${WORK_DIR}"
 VM_NAME="linumed-base-netinst-$$"
-ISO_URL="https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-13.6.0-amd64-netinst.iso"
 SSH_KEY="${WORK_DIR}/id_ed25519"
 ANSIBLE_USER="root"
 # Random, generated per run, never committed - only exists inside this throwaway VM's
@@ -33,6 +32,8 @@ ROOT_PASSWORD="$(tr -dc 'A-Za-z0-9' </dev/urandom | head -c 24 || true)"
 
 # shellcheck source=lib/site-idempotency.sh
 source "${REPO_ROOT}/test/lib/site-idempotency.sh"
+# shellcheck source=lib/netinst-iso.sh
+source "${REPO_ROOT}/test/lib/netinst-iso.sh"
 
 cleanup() {
   virsh destroy "${VM_NAME}" >/dev/null 2>&1 || true
@@ -51,8 +52,7 @@ done
 echo "==> ansible-lint"
 (cd "${REPO_ROOT}/ansible" && ansible-lint)
 
-echo "==> Downloading Debian 13 netinst ISO"
-curl -fsSL -o "${WORK_DIR}/netinst.iso" "${ISO_URL}"
+fetch_netinst_iso "${WORK_DIR}/netinst.iso"
 qemu-img create -f qcow2 "${WORK_DIR}/disk.qcow2" 10G >/dev/null
 chmod 644 "${WORK_DIR}/disk.qcow2" "${WORK_DIR}/netinst.iso"
 

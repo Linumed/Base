@@ -36,6 +36,8 @@ export LIBVIRT_DEFAULT_URI="qemu:///system"
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 GIT_REMOTE="${QUICKSTART_TEST_REMOTE:-https://github.com/Linumed/Base.git}"
+# shellcheck source=lib/netinst-iso.sh
+source "${REPO_ROOT}/test/lib/netinst-iso.sh"
 # See test/vm-test.sh for why /var/tmp, not /tmp, on the maintainer's dev server.
 WORK_DIR="$(mktemp -d "${TMPDIR:-/var/tmp}/linumed-quickstart.XXXXXX")"
 chmod 711 "${WORK_DIR}"
@@ -97,9 +99,7 @@ echo "==> ansible-lint"
 # test/vm-test-netinst.sh, kept in sync by hand (issue #14's rationale applies here too:
 # a cloud image already has python3/sudo/git and would silently mask their absence).
 # ---------------------------------------------------------------------------
-ISO_URL="https://cdimage.debian.org/debian-cd/current/amd64/iso-cd/debian-13.6.0-amd64-netinst.iso"
-echo "==> Downloading Debian 13 netinst ISO"
-curl -fsSL -o "${WORK_DIR}/netinst.iso" "${ISO_URL}"
+fetch_netinst_iso "${WORK_DIR}/netinst.iso"
 qemu-img create -f qcow2 "${WORK_DIR}/disk.qcow2" 10G >/dev/null
 chmod 644 "${WORK_DIR}/disk.qcow2" "${WORK_DIR}/netinst.iso"
 ssh-keygen -t ed25519 -N "" -f "${SSH_KEY}" -C "linumed-quickstart-test" >/dev/null
