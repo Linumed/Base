@@ -45,6 +45,8 @@ source "${REPO_ROOT}/test/lib/node-baseline-check.sh"
 source "${REPO_ROOT}/test/lib/role-selection-check.sh"
 # shellcheck source=lib/teardown-check.sh
 source "${REPO_ROOT}/test/lib/teardown-check.sh"
+# shellcheck source=lib/loki-log-check.sh
+source "${REPO_ROOT}/test/lib/loki-log-check.sh"
 
 cleanup() {
   virsh destroy "${VM_NAME}" >/dev/null 2>&1 || true
@@ -150,6 +152,10 @@ run_upgrade_from_previous_tag
 
 run_site_idempotency_check
 report_upgrade_changed_count
+
+# Right after the stack has settled: Prometheus targets being up says nothing about logs,
+# and nothing else in this script ever asks Loki (issue #123).
+run_loki_log_check
 
 # Needs the opposite state: the full stack that just deployed, so the residue this
 # detects (caddy's deploy directory) is real rather than staged.
