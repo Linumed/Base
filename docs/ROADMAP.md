@@ -9,7 +9,7 @@ Written 2026-08-14, after an audit of the repository against its own stated requ
 
 ## Where this actually stands
 
-**As of 2026-09-16, `v2.1.1`:** six roles - `common`, `docker`, `caddy`, `monitoring`,
+**As of 2026-10-09, `v2.2.0`:** six roles - `common`, `docker`, `caddy`, `monitoring`,
 `bridgelink` and `backup` - implemented, VM-tested and idempotent. The surface named in
 [ADR 0008](adr/0008-what-the-v1-0-stability-guarantee-covers.md) carries a stability
 guarantee; `v2.0.0` is what a breach of it costs, five days after `v1.0.0`
@@ -88,6 +88,14 @@ itself.
 > stale version-plan bullet, this file's own update-block readability (the fix you are
 > reading right now), a RAM-table figure that looked wrong but wasn't, and a quick-start
 > caveat easy to miss inside a code block.
+>
+> **Update 2026-10-09: `v2.2.0` is tagged.** BridgeLink 26.9, Alloy 1.20 and Alertmanager 0.34
+> replace their older series (#124); Grafana 13.2 and Prometheus 3.15 were checked and not
+> taken. The weekly `image-scan` had been red for three weeks before anyone noticed (#115) -
+> a failed CI run now opens a Forgejo issue with the end of its log (#117). `vm-test.sh`
+> gained the checks
+> that would have caught a broken log pipeline or a silent exporter (#123). Nothing in the
+> stability surface moved.
 
 ## The audit behind Stage 1-5
 
