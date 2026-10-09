@@ -108,8 +108,8 @@ All variables are prefixed `bridgelink_*` and live in
 
 | Variable | Default | Meaning |
 |---|---|---|
-| `bridgelink_image` | `innovarhealthcare/bridgelink:26.6.0-dhi-slim` | Hardened image (Debian 13, no shell, non-root UID 65532) |
-| `bridgelink_postgres_image` | `postgres:17.10-alpine` | Backend database |
+| `bridgelink_image` | `innovarhealthcare/bridgelink:26.9.0-dhi-slim` | Hardened image (Debian 13, no shell, non-root UID 65532) |
+| `bridgelink_postgres_image` | `postgres:17.11-alpine` | Backend database |
 | `bridgelink_admin_port` | `8443` | Bound to `127.0.0.1` only - access via SSH tunnel |
 | `bridgelink_db_password` | `""` (required) | The role aborts in its preflight without a value |
 | `bridgelink_keystore_storepass` | `""` (required) | Keystore password - **don't change after the first start** |
@@ -340,6 +340,44 @@ deliberate distinction. The exporter reports the failure as data rather than fai
 scrape, so "BridgeLink is down" stays separate from "the exporter is gone", and its
 container healthcheck checks only its own liveness. Restarting the exporter because the
 engine it watches is down would delete the metric that says so, exactly when it is needed.
+
+## Upgrading from 26.6 to 26.9
+
+The role's default moved from `26.6.1-dhi-slim` to `26.9.0-dhi-slim` (#124). For the role
+itself nothing changes, and that was measured, not assumed: the two images share the same
+bootstrap code, the same Java 21 runtime, the same user (65532) and entrypoint;
+`server.includecustomlib` still ships `false`; `/api/system/stats`, which the exporter
+reads, returns the same fields; login and `/api/channels/statuses` behave the same. The
+full `test/vm-test.sh` run, including the exporter and an upgrade from v1.0.0, passes.
+
+**What it can change is your channels.** The test has none, so none of the following is
+covered by it. Upstream's 26.9.0 release notes list these as breaking; the ones that can
+reach a deployment of this role are:
+
+- **HL7 v2 messages with XML-incompatible characters** (an `ESC` control character, for
+  example) now fail serialization instead of passing through. Check whether any sending
+  system produces them before upgrading a production engine.
+- **XSLT steps can no longer load external files.** A stylesheet that uses
+  `<!DOCTYPE ... SYSTEM>`, `xsl:import`, `xsl:include` or `document()` now fails the step.
+- **`Default` encoding means the server-wide setting.** TCP/MLLP and HTTP connectors set to
+  `Default` now follow `server.defaultencoding` (new in `mirth.properties`, blank = the
+  JVM's UTF-8). Channels migrated from an old Mirth that relied on `windows-1252` need it
+  set explicitly - through the `mirth_properties` secret this role already manages.
+- **SFTP connections to servers with weak algorithms** may be refused by the upgraded
+  SSH library.
+- **SQL Server**: the jTDS driver is gone; channels must use `jdbc:sqlserver://` URLs, and
+  certificate validation is now strict. Sybase support is dropped.
+- **Stored passwords are checked at login** (`password.enforceatlogin = true`). A user
+  whose password no longer meets the policy is asked to change it in the Administrator;
+  API logins - the exporter's included - still succeed.
+
+Upstream also removed the bundled `/webadmin`. This role never shipped it (see
+[Access](#access)), so nothing changes here.
+
+**Recommended order on a production engine:** export your channels, read the list above
+against them, upgrade a test instance with the same channels first, then production, with a
+backup taken right before. Going back by pinning `26.6.1-dhi-slim` again over a database
+that 26.9.0 has already started on was **not tested** - plan the rollback as a restore.
 
 ## Pitfalls
 

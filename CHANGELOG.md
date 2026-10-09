@@ -20,6 +20,29 @@ click away instead of restated here.
   Prompted by a weekly image scan that stayed red for three weeks (#115) and a `vm-test`
   failure whose log was gone by the time anyone looked (#116).
 
+- **`test/vm-test.sh` now checks that logs reach Loki and that the BridgeLink exporter
+  reports the engine's own figures** (#123). Nothing in `test/` had ever queried Loki: a
+  green run proved Alloy and Loki start, not that a log line arrives. The new check asks
+  Loki, through Grafana's provisioned datasource, for `{job="journal"}` and
+  `{container=~".+"}`. Alloy 1.19 would have failed it - it overwrote that `job` label
+  (grafana/alloy#6508). The exporter check now also requires the JVM, CPU and disk metrics,
+  not only `bridgelink_up`. Both checks were run against the previous pins first, and their
+  failure paths against empty, error and unauthorized responses.
+
+### Changed
+
+- **BridgeLink 26.9.0, Alloy 1.20.1 and Alertmanager 0.34.1 replace the 26.6, 1.18 and
+  0.33 series** (#124). Measured fixable HIGH/CRITICAL findings: BridgeLink 22 -> 7, Alloy
+  18 -> 3, Alertmanager 27 -> 3. **BridgeLink 26.9 can change how your channels behave** -
+  HL7 v2 messages with XML-incompatible characters, XSLT that loads external files,
+  `Default` encoding, weak-algorithm SFTP servers and SQL Server via jTDS. The role itself
+  is unaffected (same image internals, same API fields - measured), but read
+  [Upgrading from 26.6 to 26.9](roles/bridgelink.md#upgrading-from-266-to-269) before
+  rolling it onto an engine with real channels. Grafana 13.2 and Prometheus 3.15 were
+  checked and deliberately not taken: Grafana 13.2 carries more findings than 13.1, and
+  both older series are still maintained upstream. Two Go standard library CVEs published
+  on 2026-10-08 appear in eight images at once and are recorded until upstreams rebuild.
+
 ### Documentation
 
 - **ADR 0012 records why this is a configuration kit, not a distribution** (#112). The
@@ -37,6 +60,20 @@ click away instead of restated here.
   extension ZIPs, unpacked on every start), who fills it, and what teardown does to it.
 
 ### Fixed
+
+- **A Docker Hub hiccup no longer counts as an invalid config** (#126). The caddy and
+  monitoring roles validate their configs with `docker run <image>`, which pulled the
+  image implicitly and without retries; a failed pull was read as a failed validation, a
+  freshly written config was removed on a first deploy, and Prometheus' error message came
+  out empty because the reason was in stderr. Seen in a `vm-test` run on 2026-10-09. The
+  monitoring role's retried pull now runs before any config is written, caddy has one of
+  its own, and the Prometheus and Alertmanager messages include stderr.
+
+- **`docs/roles/bridgelink.md` named outdated image defaults** (#125) -
+  `26.6.0-dhi-slim` and `postgres:17.10-alpine`, two weeks after the role had moved on.
+  Only the pin table in `docs/operations/updates.md` was compared against the roles;
+  `scripts/check-variable-docs.py` now also checks every image row in the role pages'
+  default columns, and it found exactly these two before they were corrected.
 
 - **Weekly `image-scan` had been red since 2026-09-21** (#115), three weeks before anyone
   noticed - the gap #117 now closes. Four pins had fallen behind a patch release that

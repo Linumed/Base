@@ -25,34 +25,32 @@
 # Refreshed again 2026-10-08 (issue #115): the same four-pins-behind situation, bumped;
 # entries for the replaced tags removed, and the remaining findings generated in a
 # CI-identical container (trivy binary, fresh vulnerability DB), not from a local cache.
+# 2026-10-09 (#124): alloy, BridgeLink and alertmanager moved to their newer series;
+# their old-tag entries removed. Two Go standard library CVEs published 2026-10-08 hit
+# eight images at once and are recorded per image until upstreams rebuild.
+
+# caddy:2.11.7-alpine - newest tag; clean after the 2.11.7 bump (#115) until the Go stdlib CVEs below appeared
+caddy:2.11.7-alpine  CVE-2026-78667  # Go standard library 1.26.8, published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-09)
+caddy:2.11.7-alpine  CVE-2026-97031  # Go standard library 1.26.8, published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-09)
 
 # ghcr.io/google/cadvisor:v0.60.6 - remains after bumping to the newest patch (v0.60.6); cadvisor is on its newest tag
 ghcr.io/google/cadvisor:v0.60.6  CVE-2026-56854  # remains after bumping to the newest patch (v0.60.6); cadvisor is on its newest tag (2026-10-08)
 ghcr.io/google/cadvisor:v0.60.6  CVE-2026-84304  # remains after bumping to the newest patch (v0.60.6); cadvisor is on its newest tag (2026-10-08)
 ghcr.io/google/cadvisor:v0.60.6  CVE-2026-84445  # remains after bumping to the newest patch (v0.60.6); cadvisor is on its newest tag (2026-10-08)
 ghcr.io/google/cadvisor:v0.60.6  GHSA-hrxh-6v49-42gf  # remains after bumping to the newest patch (v0.60.6); cadvisor is on its newest tag (2026-10-08)
+ghcr.io/google/cadvisor:v0.60.6  CVE-2026-78667  # Go standard library 1.26.8, published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-09)
+ghcr.io/google/cadvisor:v0.60.6  CVE-2026-97031  # Go standard library 1.26.8, published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-09)
 
-# grafana/alloy:v1.18.1 - alloy is already on its newest tag; since 2026-10-08 a newer series exists (v1.20.1) - a separate decision, #115
-grafana/alloy:v1.18.1  CVE-2026-33818  # alloy is already on its newest tag (2026-09-16)
-grafana/alloy:v1.18.1  CVE-2026-39821  # alloy is already on its newest tag (2026-09-16)
-grafana/alloy:v1.18.1  CVE-2026-43871  # alloy is already on its newest tag (2026-09-16)
-grafana/alloy:v1.18.1  CVE-2026-46600  # alloy is already on its newest tag (2026-09-16)
-grafana/alloy:v1.18.1  CVE-2026-56853  # alloy is already on its newest tag (2026-09-16)
-grafana/alloy:v1.18.1  CVE-2026-56854  # alloy is already on its newest tag (2026-09-16)
-grafana/alloy:v1.18.1  CVE-2026-56858  # alloy is already on its newest tag (2026-09-16)
-grafana/alloy:v1.18.1  CVE-2026-56859  # alloy is already on its newest tag (2026-09-16)
-grafana/alloy:v1.18.1  CVE-2026-56860  # alloy is already on its newest tag (2026-09-16)
-grafana/alloy:v1.18.1  CVE-2026-56862  # alloy is already on its newest tag (2026-09-16)
-grafana/alloy:v1.18.1  CVE-2026-56864  # alloy is already on its newest tag (2026-09-16)
-grafana/alloy:v1.18.1  CVE-2026-56865  # alloy is already on its newest tag (2026-09-16)
-grafana/alloy:v1.18.1  CVE-2026-71556  # alloy is already on its newest tag (2026-09-16)
-grafana/alloy:v1.18.1  CVE-2026-84304  # alloy is already on its newest tag (2026-09-16)
-grafana/alloy:v1.18.1  CVE-2026-84445  # alloy is already on its newest tag (2026-09-16)
-grafana/alloy:v1.18.1  CVE-2026-84782  # newest v1.18 patch; v1.20 is a series bump and a separate decision (#115) (2026-10-08)
+# grafana/alloy:v1.20.1 - newest release, after the v1.18 -> v1.20 series bump (#124)
+grafana/alloy:v1.20.1  CVE-2026-78667  # Go standard library 1.26.8, published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-09)
+grafana/alloy:v1.20.1  CVE-2026-84782  # remains on the newest release after the series bump (#124) (2026-10-09)
+grafana/alloy:v1.20.1  CVE-2026-97031  # Go standard library 1.26.8, published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-09)
 
 # grafana/grafana:13.1.7 - remains after bumping to the newest patch (13.1.7); a 13.2 series bump is a separate decision
 grafana/grafana:13.1.7  CVE-2026-21728  # remains after bumping to the newest patch (13.1.7); a 13.2 series bump is a separate decision (2026-10-08)
 grafana/grafana:13.1.7  CVE-2026-28377  # remains after bumping to the newest patch (13.1.7); a 13.2 series bump is a separate decision (2026-10-08)
+grafana/grafana:13.1.7  CVE-2026-78667  # Go standard library 1.26.8, published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-09)
+grafana/grafana:13.1.7  CVE-2026-97031  # Go standard library 1.26.8, published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-09)
 
 # grafana/loki:3.7.7 - loki is already on its newest tag
 grafana/loki:3.7.7  CVE-2026-33818  # loki is already on its newest tag (2026-09-16)
@@ -65,31 +63,17 @@ grafana/loki:3.7.7  CVE-2026-56860  # loki is already on its newest tag (2026-09
 grafana/loki:3.7.7  CVE-2026-56862  # loki is already on its newest tag (2026-09-16)
 grafana/loki:3.7.7  CVE-2026-84304  # loki is already on its newest tag (2026-09-16)
 grafana/loki:3.7.7  CVE-2026-84445  # loki is already on its newest tag (2026-09-16)
+grafana/loki:3.7.7  CVE-2026-78667  # Go standard library 1.26.8, published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-09)
+grafana/loki:3.7.7  CVE-2026-97031  # Go standard library 1.26.8, published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-09)
 
-# innovarhealthcare/bridgelink:26.6.1-dhi-slim - bridgelink is already on its newest tag; upstream gates its own build on fixable OS findings, so these are what its gate lets through; since 2026-10-08 a newer series exists (26.9.0) - a separate decision, #115
-innovarhealthcare/bridgelink:26.6.1-dhi-slim  CVE-2024-47072  # bridgelink is already on its newest tag; upstream gates its own build on fixable OS findings, so these are what its gate lets through (2026-09-16)
-innovarhealthcare/bridgelink:26.6.1-dhi-slim  CVE-2024-47554  # bridgelink is already on its newest tag; upstream gates its own build on fixable OS findings, so these are what its gate lets through (2026-09-16)
-innovarhealthcare/bridgelink:26.6.1-dhi-slim  CVE-2025-14813  # bridgelink is already on its newest tag; upstream gates its own build on fixable OS findings, so these are what its gate lets through (2026-09-16)
-innovarhealthcare/bridgelink:26.6.1-dhi-slim  CVE-2025-52999  # bridgelink is already on its newest tag; upstream gates its own build on fixable OS findings, so these are what its gate lets through (2026-09-16)
-innovarhealthcare/bridgelink:26.6.1-dhi-slim  CVE-2025-59250  # bridgelink is already on its newest tag; upstream gates its own build on fixable OS findings, so these are what its gate lets through (2026-09-16)
-innovarhealthcare/bridgelink:26.6.1-dhi-slim  CVE-2026-10050  # bridgelink is already on its newest tag; upstream gates its own build on fixable OS findings, so these are what its gate lets through (2026-09-16)
-innovarhealthcare/bridgelink:26.6.1-dhi-slim  CVE-2026-54291  # bridgelink is already on its newest tag; upstream gates its own build on fixable OS findings, so these are what its gate lets through (2026-09-16)
-innovarhealthcare/bridgelink:26.6.1-dhi-slim  CVE-2026-54512  # bridgelink is already on its newest tag; upstream gates its own build on fixable OS findings, so these are what its gate lets through (2026-09-16)
-innovarhealthcare/bridgelink:26.6.1-dhi-slim  CVE-2026-54513  # bridgelink is already on its newest tag; upstream gates its own build on fixable OS findings, so these are what its gate lets through (2026-09-16)
-innovarhealthcare/bridgelink:26.6.1-dhi-slim  CVE-2026-55831  # bridgelink is already on its newest tag; upstream gates its own build on fixable OS findings, so these are what its gate lets through (2026-09-16)
-innovarhealthcare/bridgelink:26.6.1-dhi-slim  CVE-2026-55833  # bridgelink is already on its newest tag; upstream gates its own build on fixable OS findings, so these are what its gate lets through (2026-09-16)
-innovarhealthcare/bridgelink:26.6.1-dhi-slim  CVE-2026-56745  # bridgelink is already on its newest tag; upstream gates its own build on fixable OS findings, so these are what its gate lets through (2026-09-16)
-innovarhealthcare/bridgelink:26.6.1-dhi-slim  CVE-2026-56819  # bridgelink is already on its newest tag; upstream gates its own build on fixable OS findings, so these are what its gate lets through (2026-09-16)
-innovarhealthcare/bridgelink:26.6.1-dhi-slim  CVE-2026-59901  # bridgelink is already on its newest tag; upstream gates its own build on fixable OS findings, so these are what its gate lets through (2026-09-16)
-innovarhealthcare/bridgelink:26.6.1-dhi-slim  CVE-2026-75595  # bridgelink is already on its newest tag; upstream gates its own build on fixable OS findings, so these are what its gate lets through (2026-09-16)
-innovarhealthcare/bridgelink:26.6.1-dhi-slim  GHSA-r7wm-3cxj-wff9  # bridgelink is already on its newest tag; upstream gates its own build on fixable OS findings, so these are what its gate lets through (2026-09-16)
-innovarhealthcare/bridgelink:26.6.1-dhi-slim  CVE-2026-13506  # newest 26.6 patch; 26.9.0 is a series bump and needs its changelog read first (#115) (2026-10-08)
-innovarhealthcare/bridgelink:26.6.1-dhi-slim  CVE-2026-68494  # newest 26.6 patch; 26.9.0 is a series bump and needs its changelog read first (#115) (2026-10-08)
-innovarhealthcare/bridgelink:26.6.1-dhi-slim  CVE-2026-68497  # newest 26.6 patch; 26.9.0 is a series bump and needs its changelog read first (#115) (2026-10-08)
-innovarhealthcare/bridgelink:26.6.1-dhi-slim  CVE-2026-8763  # newest 26.6 patch; 26.9.0 is a series bump and needs its changelog read first (#115) (2026-10-08)
-innovarhealthcare/bridgelink:26.6.1-dhi-slim  CVE-2026-89425  # newest 26.6 patch; 26.9.0 is a series bump and needs its changelog read first (#115) (2026-10-08)
-innovarhealthcare/bridgelink:26.6.1-dhi-slim  CVE-2026-91776  # newest 26.6 patch; 26.9.0 is a series bump and needs its changelog read first (#115) (2026-10-08)
-innovarhealthcare/bridgelink:26.6.1-dhi-slim  CVE-2026-91777  # newest 26.6 patch; 26.9.0 is a series bump and needs its changelog read first (#115) (2026-10-08)
+# innovarhealthcare/bridgelink:26.9.0-dhi-slim - newest release, after the 26.6 -> 26.9 series bump (#124); upstream gates its own build on fixable OS findings, so these are what its gate lets through
+innovarhealthcare/bridgelink:26.9.0-dhi-slim  CVE-2024-47554  # remains on the newest release after the series bump (#124) (2026-10-09)
+innovarhealthcare/bridgelink:26.9.0-dhi-slim  CVE-2025-59250  # remains on the newest release after the series bump (#124) (2026-10-09)
+innovarhealthcare/bridgelink:26.9.0-dhi-slim  CVE-2026-10050  # remains on the newest release after the series bump (#124) (2026-10-09)
+innovarhealthcare/bridgelink:26.9.0-dhi-slim  CVE-2026-89407  # remains on the newest release after the series bump (#124) (2026-10-09)
+innovarhealthcare/bridgelink:26.9.0-dhi-slim  CVE-2026-89425  # remains on the newest release after the series bump (#124) (2026-10-09)
+innovarhealthcare/bridgelink:26.9.0-dhi-slim  CVE-2026-91776  # remains on the newest release after the series bump (#124) (2026-10-09)
+innovarhealthcare/bridgelink:26.9.0-dhi-slim  CVE-2026-91777  # remains on the newest release after the series bump (#124) (2026-10-09)
 
 # postgres:17.11-alpine - remains after bumping to the newest patch (17.11); measured, the bump cleared none of them
 postgres:17.11-alpine  CVE-2025-61726  # remains after bumping to the newest patch (17.11); measured, the bump cleared none of them (2026-09-16)
@@ -122,36 +106,18 @@ postgres:17.11-alpine  CVE-2026-76642  # remains after bumping to the newest pat
 postgres:17.11-alpine  CVE-2026-78408  # remains after bumping to the newest patch (17.11); measured, the bump cleared none of them (2026-09-16)
 postgres:17.11-alpine  CVE-2026-78409  # remains after bumping to the newest patch (17.11); measured, the bump cleared none of them (2026-09-16)
 postgres:17.11-alpine  CVE-2026-78410  # remains after bumping to the newest patch (17.11); measured, the bump cleared none of them (2026-09-16)
+postgres:17.11-alpine  CVE-2026-78667  # Go standard library 1.26.8, published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-09)
+postgres:17.11-alpine  CVE-2026-97031  # Go standard library 1.26.8, published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-09)
 
-# prom/alertmanager:v0.33.1 - already on the newest 0.33 patch; v0.34 is a series bump and a separate decision
-prom/alertmanager:v0.33.1  CVE-2026-33818  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-09-16)
-prom/alertmanager:v0.33.1  CVE-2026-39821  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-09-16)
-prom/alertmanager:v0.33.1  CVE-2026-39822  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-09-16)
-prom/alertmanager:v0.33.1  CVE-2026-39828  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-09-16)
-prom/alertmanager:v0.33.1  CVE-2026-39829  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-09-16)
-prom/alertmanager:v0.33.1  CVE-2026-39830  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-09-16)
-prom/alertmanager:v0.33.1  CVE-2026-39831  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-09-16)
-prom/alertmanager:v0.33.1  CVE-2026-39832  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-09-16)
-prom/alertmanager:v0.33.1  CVE-2026-39835  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-09-16)
-prom/alertmanager:v0.33.1  CVE-2026-42508  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-09-16)
-prom/alertmanager:v0.33.1  CVE-2026-46595  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-09-16)
-prom/alertmanager:v0.33.1  CVE-2026-46597  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-09-16)
-prom/alertmanager:v0.33.1  CVE-2026-46600  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-09-16)
-prom/alertmanager:v0.33.1  CVE-2026-56852  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-09-16)
-prom/alertmanager:v0.33.1  CVE-2026-56853  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-09-16)
-prom/alertmanager:v0.33.1  CVE-2026-56854  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-09-16)
-prom/alertmanager:v0.33.1  CVE-2026-56858  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-09-16)
-prom/alertmanager:v0.33.1  CVE-2026-56859  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-09-16)
-prom/alertmanager:v0.33.1  CVE-2026-56860  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-09-16)
-prom/alertmanager:v0.33.1  CVE-2026-56862  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-09-16)
-prom/alertmanager:v0.33.1  CVE-2026-56864  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-09-16)
-prom/alertmanager:v0.33.1  CVE-2026-56865  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-09-16)
-prom/alertmanager:v0.33.1  CVE-2026-84304  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-09-16)
-prom/alertmanager:v0.33.1  CVE-2026-84445  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-09-16)
-prom/alertmanager:v0.33.1  GHSA-hrxh-6v49-42gf  # already on the newest 0.33 patch; v0.34 is a series bump and a separate decision (2026-09-16)
+# prom/alertmanager:v0.34.1 - newest release, after the v0.33 -> v0.34 series bump (#124)
+prom/alertmanager:v0.34.1  CVE-2026-78667  # Go standard library 1.26.8, published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-09)
+prom/alertmanager:v0.34.1  CVE-2026-84445  # remains on the newest release after the series bump (#124) (2026-10-09)
+prom/alertmanager:v0.34.1  CVE-2026-97031  # Go standard library 1.26.8, published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-09)
 
 # prom/prometheus:v3.13.4 - remains after bumping to the newest patch (3.13.4); v3.15 is a series bump and a separate decision
 prom/prometheus:v3.13.4  CVE-2026-84445  # remains after bumping to the newest patch (3.13.4); v3.15 is a series bump and a separate decision (2026-10-08)
+prom/prometheus:v3.13.4  CVE-2026-78667  # Go standard library 1.26.8, published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-09)
+prom/prometheus:v3.13.4  CVE-2026-97031  # Go standard library 1.26.8, published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-09)
 
 # python:3.13.15-alpine - alpine base image, already on the newest 3.13 patch
 python:3.13.15-alpine  CVE-2025-47273  # alpine base image, already on the newest 3.13 patch (2026-09-16)
@@ -168,4 +134,3 @@ python:3.13.15-alpine  CVE-2026-97689  # alpine base image, already on the newes
 
 # tecnativa/docker-socket-proxy:0.3.0 - already on its newest tag; upstream has not released since
 tecnativa/docker-socket-proxy:0.3.0  CVE-2025-26519  # already on its newest tag; upstream has not released since (2026-08-20)
-
