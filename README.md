@@ -67,8 +67,8 @@ accepted.
 
 ## Status
 
-**`v2.0.0` is tagged** - see [CHANGELOG.md](CHANGELOG.md). From here, the surface
-ADR 0008 names (role variable names, deploy paths, container/network names, this kit's
+**The current release is `v2.2.0`** - see [CHANGELOG.md](CHANGELOG.md). Since `v1.0.0`,
+the surface ADR 0008 names (role variable names, deploy paths, container/network names, this kit's
 own metric and alert names, dashboard/datasource UIDs, systemd unit names) is covered by
 a stability guarantee: a breaking change to any of it requires a major version bump. Six
 roles now, not seven - Orthanc shipped in `v1.0.0` and was removed a week later

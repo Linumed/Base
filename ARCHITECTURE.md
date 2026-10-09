@@ -459,6 +459,13 @@ contradiction, a stale version-plan bullet, a ROADMAP.md readability fix, a RAM-
 figure that looked wrong but wasn't, and a quick-start caveat easy to miss inside a code
 block.
 
+**`v2.2.0` followed on 2026-10-09** - the BridgeLink engine moves from the 26.6 to the 26.9
+series, alongside Alloy 1.20 and Alertmanager 0.34 (#124). For the role nothing changed -
+same image internals and API, measured - but the engine's own upstream changes can affect
+operators' channels, which is why this is a minor and not a patch release. Nothing in the
+ADR 0008 surface moves. It also makes CI failures reach someone (#117): the weekly
+`image-scan` had been red for three weeks unnoticed (#115).
+
 The scope of that promise is defined in
 [ADR 0008](https://github.com/Linumed/Base/blob/main/docs/adr/0008-what-the-v1-0-stability-guarantee-covers.md).
 The surface was measured, not estimated: re-measured against all seven roles on

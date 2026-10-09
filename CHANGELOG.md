@@ -11,6 +11,17 @@ click away instead of restated here.
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-10-09
+
+A maintenance and hardening release with one change to read before rolling it out: the
+BridgeLink engine moves from the 26.6 to the 26.9 series, which can change how existing
+**channels** behave - see
+[Upgrading from 26.6 to 26.9](roles/bridgelink.md#upgrading-from-266-to-269). Nothing in the
+[ADR 0008](adr/0008-what-the-v1-0-stability-guarantee-covers.md) stability surface moved:
+variable, container, network, metric and alert names, dashboard and datasource UIDs and
+systemd units were compared against `v2.1.1`, not assumed. The minor bump is for the
+engine series and for CI failures that now reach someone (#117).
+
 ### Added
 
 - **A failed CI run now opens a Forgejo issue** (#117), titled `CI rot: <workflow>`,
@@ -60,6 +71,14 @@ click away instead of restated here.
   extension ZIPs, unpacked on every start), who fills it, and what teardown does to it.
 
 ### Fixed
+
+- **The release tests could not download their install image** (#127).
+  `vm-test-netinst.sh` and `vm-test-quickstart.sh` pinned
+  `debian-cd/current/.../debian-13.6.0-amd64-netinst.iso`; `current/` only holds the
+  newest point release, so the URL turned 404 with Debian 13.7.0 - found right before
+  tagging this release. The quick-start test, which runs without `set -e` by design, went
+  on to start an installer with no ISO and hung. Both now take the file name from Debian's
+  `SHA512SUMS`, verify the checksum (never done before), and stop on any failure.
 
 - **A Docker Hub hiccup no longer counts as an invalid config** (#126). The caddy and
   monitoring roles validate their configs with `docker run <image>`, which pulled the
