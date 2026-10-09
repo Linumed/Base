@@ -186,6 +186,26 @@ run_bridgelink_exporter_check() {
   fi
   echo "==> PASS: bridgelink_up is 1"
 
+  # bridgelink_up only says the API answered. The engine's own figures come from a second
+  # call, /api/system/stats, whose XML is shaped by BridgeLink's OSHI library - 26.9.0
+  # jumped it from 3.9 to 6.12. If a field is renamed, the exporter emits nothing for it
+  # and every check above stays green (#123). Same reasoning as above: present, not merely
+  # scraped.
+  echo "==> Checking the exporter reports the engine's JVM, CPU and disk figures"
+  local metric missing=()
+  local metrics
+  metrics="$(ssh "${ssh_opts[@]}" "${remote}" 'curl -s localhost:9151/metrics' || true)"
+  for metric in bridgelink_jvm_memory_allocated_bytes bridgelink_jvm_memory_free_bytes \
+                bridgelink_jvm_memory_max_bytes bridgelink_cpu_usage_ratio \
+                bridgelink_disk_free_bytes bridgelink_disk_total_bytes; do
+    grep -q "^${metric} " <<<"${metrics}" || missing+=("${metric}")
+  done
+  if [ "${#missing[@]}" -gt 0 ]; then
+    echo "FAIL: the exporter does not report ${missing[*]} - /api/system/stats changed shape?" >&2
+    return 1
+  fi
+  echo "==> PASS: JVM, CPU and disk figures are reported"
+
   # Same reasoning and the same 20s as in site-idempotency.sh: Prometheus has just been
   # reconfigured, and the first scrape of the new job is not phase-aligned with the
   # scrape interval.
