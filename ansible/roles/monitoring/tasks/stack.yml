@@ -61,6 +61,59 @@
     label: "{{ item.login | default('?') }}"
   no_log: true
 
+# Pulled first - before any config file is written - rather than relying on pull: missing
+# or on the implicit pull of a `docker run`. Two reasons, the second added 2026-10-09:
+#
+# 1. Ahead of the compose apply, rather than relying on pull: missing
+# during "Deploy the monitoring stack". Root-caused 2026-08-10: for services with no
+# explicit `command:` override (grafana, cadvisor - both rely on the image's own default
+# entrypoint/CMD), docker compose resolves that default command as part of the
+# container's config-hash. If the image isn't fully present locally yet at the moment the
+# very first apply computes that hash, the resolved value differs from what a second,
+# later apply computes once the image is fully local - causing a one-time spurious
+# recreate on the second run and breaking idempotency. Confirmed by reproducing with
+# pre-pulled images: zero recreates. Services with an explicit `command:` (prometheus,
+# loki, alloy, alertmanager) were never affected, since their hash doesn't depend on
+# image introspection.
+#
+# docker-socket-proxy (added in cb68e1b, #21) missed this list on the day it was added -
+# it has no `command:` override either, and the same second-run recreate reproduced
+# against a real VM on 2026-08-14 while verifying an unrelated fix (issue #40). Confirmed
+# fixed by adding it here: this is exactly the class of bug this comment already
+# describes, so if a future service without an explicit `command:` is added, it needs a
+# line here too - ansible-lint and a syntax check will not catch a missing entry, only an
+# actual two-run idempotency check against a real VM will.
+- name: Pull monitoring images ahead of the compose apply
+  community.docker.docker_image:
+    name: "{{ item }}"
+    source: pull
+  become: true
+  loop:
+    - "{{ monitoring_prometheus_image }}"
+    - "{{ monitoring_grafana_image }}"
+    - "{{ monitoring_loki_image }}"
+    - "{{ monitoring_alloy_image }}"
+    - "{{ monitoring_alertmanager_image }}"
+    - "{{ monitoring_cadvisor_image }}"
+    - "{{ monitoring_docker_socket_proxy_image }}"
+  # Retried for the same reason as the bridgelink role's pull task: a failed pull fails the
+  # whole playbook, and pull failures here are measured rather than theoretical (#43, plus a
+  # CI run on 2026-08-20 that died on "invalid tar header" while the pull-through cache
+  # fetched a freshly bumped Grafana tag for the first time - the same pull worked seconds
+  # later). Three attempts make that a slower run instead of a red build; a genuinely
+  # missing image still fails.
+  register: monitoring_image_pull
+  until: monitoring_image_pull is succeeded
+  retries: 3
+  delay: 10
+
+# 2. Ahead of the validation steps below (#126). Each one runs `docker run <image>` and
+#    pulled implicitly, without retries - a pull that failed on a Docker Hub hiccup was
+#    read as an invalid config, the freshly written file was removed on a first deploy,
+#    and Prometheus' message stayed empty because the reason was in stderr. Seen in a
+#    vm-test run on 2026-10-09. With the images already local, a validation step can only
+#    fail on the config it is validating.
+
 - name: Ensure deploy directory exists
   ansible.builtin.file:
     path: "{{ monitoring_deploy_dir }}"
@@ -189,7 +242,7 @@
 
 - name: Fail if Prometheus config or alert rules are invalid
   ansible.builtin.fail:
-    msg: "Prometheus config/rules validation failed: {{ monitoring_prometheus_validate.stdout }}"
+    msg: "Prometheus config/rules validation failed: {{ monitoring_prometheus_validate.stdout }} {{ monitoring_prometheus_validate.stderr }}"
   when: monitoring_prometheus_validate.rc != 0
 
 - name: Deploy Loki config
@@ -353,7 +406,7 @@
 
 - name: Fail if Alertmanager config is invalid
   ansible.builtin.fail:
-    msg: "Alertmanager config validation failed: {{ monitoring_alertmanager_validate.stdout }}"
+    msg: "Alertmanager config validation failed: {{ monitoring_alertmanager_validate.stdout }} {{ monitoring_alertmanager_validate.stderr }}"
   when: monitoring_alertmanager_validate.rc != 0
 
 - name: Ensure Grafana provisioning directories exist
@@ -410,49 +463,6 @@
     group: root
     mode: "0644"
   become: true
-
-# Pulled explicitly, ahead of the compose apply, rather than relying on pull: missing
-# during "Deploy the monitoring stack". Root-caused 2026-08-10: for services with no
-# explicit `command:` override (grafana, cadvisor - both rely on the image's own default
-# entrypoint/CMD), docker compose resolves that default command as part of the
-# container's config-hash. If the image isn't fully present locally yet at the moment the
-# very first apply computes that hash, the resolved value differs from what a second,
-# later apply computes once the image is fully local - causing a one-time spurious
-# recreate on the second run and breaking idempotency. Confirmed by reproducing with
-# pre-pulled images: zero recreates. Services with an explicit `command:` (prometheus,
-# loki, alloy, alertmanager) were never affected, since their hash doesn't depend on
-# image introspection.
-#
-# docker-socket-proxy (added in cb68e1b, #21) missed this list on the day it was added -
-# it has no `command:` override either, and the same second-run recreate reproduced
-# against a real VM on 2026-08-14 while verifying an unrelated fix (issue #40). Confirmed
-# fixed by adding it here: this is exactly the class of bug this comment already
-# describes, so if a future service without an explicit `command:` is added, it needs a
-# line here too - ansible-lint and a syntax check will not catch a missing entry, only an
-# actual two-run idempotency check against a real VM will.
-- name: Pull monitoring images ahead of the compose apply
-  community.docker.docker_image:
-    name: "{{ item }}"
-    source: pull
-  become: true
-  loop:
-    - "{{ monitoring_prometheus_image }}"
-    - "{{ monitoring_grafana_image }}"
-    - "{{ monitoring_loki_image }}"
-    - "{{ monitoring_alloy_image }}"
-    - "{{ monitoring_alertmanager_image }}"
-    - "{{ monitoring_cadvisor_image }}"
-    - "{{ monitoring_docker_socket_proxy_image }}"
-  # Retried for the same reason as the bridgelink role's pull task: a failed pull fails the
-  # whole playbook, and pull failures here are measured rather than theoretical (#43, plus a
-  # CI run on 2026-08-20 that died on "invalid tar header" while the pull-through cache
-  # fetched a freshly bumped Grafana tag for the first time - the same pull worked seconds
-  # later). Three attempts make that a slower run instead of a red build; a genuinely
-  # missing image still fails.
-  register: monitoring_image_pull
-  until: monitoring_image_pull is succeeded
-  retries: 3
-  delay: 10
 
 - name: Deploy the monitoring stack
   community.docker.docker_compose_v2:
