@@ -35,7 +35,7 @@ re-measuring before every change to this surface rather than estimating.
 | systemd units | 4 (`backup`, `restore-test`, each `.service` and `.timer`) | 4 | 4 |
 | Variables a plain `site.yml` run aborts without | **7** | 9 | "6 with no default" |
 | Grafana dashboard and datasource UIDs | 3 dashboards, plus `prometheus` and `loki` | unchanged | unchanged |
-| Docker volume names | **9**, project-derived rather than `linumed-base-*` | 11 | 9 |
+| Docker volume names | **10** (9 until 2026-10-12, when `bridgelink_custom_lib` was added, #98 - additive), project-derived rather than `linumed-base-*` | 11 | 9 |
 
 Three of those rows need a word beyond the number.
 

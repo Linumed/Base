@@ -45,6 +45,7 @@ services:
     volumes:
       - bridgelink_appdata:/opt/bridgelink/appdata
       - bridgelink_extensions:/opt/bridgelink/custom-extensions
+      - bridgelink_custom_lib:/opt/bridgelink/custom-lib
     # No HEALTHCHECK: the -dhi image has no shell and no package manager, so there is no
     # wget/curl/sh for an exec-form healthcheck to run.
     depends_on:
@@ -80,4 +81,5 @@ secrets:
 volumes:
   bridgelink_appdata:
   bridgelink_extensions:
+  bridgelink_custom_lib:
   bridgelink_db_data:

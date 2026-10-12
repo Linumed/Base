@@ -11,6 +11,19 @@ click away instead of restated here.
 
 ## [Unreleased]
 
+### Added
+
+- **`bridgelink_custom_lib` volume on `/opt/bridgelink/custom-lib`** (#98). Libraries for
+  channel scripts now survive a container rebuild; before, a JAR copied into the container
+  was lost at the next `docker compose up` after an image update, silently. Measured with
+  the real thing, not a marker JAR: HAPI FHIR 7.6.1 (R4 and the instance validator, 64 JARs)
+  against the unmodified `26.9.0-dhi-slim` image with `server.includecustomlib = false`.
+  Two dependency traps found on the way and written down in
+  [the role page](roles/bridgelink.md): `hapi-fhir-caching-caffeine` has to be added by hand,
+  and `xpp3` has to stay out (it repackages `javax.xml.namespace.QName`). The kit ships no
+  libraries. A new volume name is additive for [ADR 0008](adr/0008-what-the-v1-0-stability-guarantee-covers.md);
+  the count there goes from 9 to 10. An existing install gets an empty volume at the next run.
+
 ## [2.2.0] - 2026-10-09
 
 A maintenance and hardening release with one change to read before rolling it out: the

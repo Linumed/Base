@@ -47,6 +47,8 @@ source "${REPO_ROOT}/test/lib/role-selection-check.sh"
 source "${REPO_ROOT}/test/lib/teardown-check.sh"
 # shellcheck source=lib/loki-log-check.sh
 source "${REPO_ROOT}/test/lib/loki-log-check.sh"
+# shellcheck source=lib/bridgelink-custom-lib-check.sh
+source "${REPO_ROOT}/test/lib/bridgelink-custom-lib-check.sh"
 
 cleanup() {
   virsh destroy "${VM_NAME}" >/dev/null 2>&1 || true
@@ -167,6 +169,9 @@ run_role_selection_residue_check
 run_docker_reference_smoke_check
 
 run_bridgelink_exporter_check
+
+# The mount that keeps operator-supplied libraries across a container rebuild (issue #98).
+run_bridgelink_custom_lib_check
 
 # Absolutely last: it removes the installation everything above depends on. The VM is
 # destroyed straight afterwards, so exercising the documented teardown here is nearly free -

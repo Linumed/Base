@@ -76,7 +76,7 @@ of package installs is prefixed, which is what makes a manual removal tractable.
   |---|---|
   | caddy | `caddy_caddy_data`, `caddy_caddy_config` |
   | monitoring | `monitoring_prometheus_data`, `monitoring_loki_data`, `monitoring_grafana_data`, `monitoring_alertmanager_data` |
-  | bridgelink | `bridgelink_bridgelink_appdata`, `bridgelink_bridgelink_extensions`, `bridgelink_bridgelink_db_data` |
+  | bridgelink | `bridgelink_bridgelink_appdata`, `bridgelink_bridgelink_extensions`, `bridgelink_bridgelink_custom_lib`, `bridgelink_bridgelink_db_data` |
   | orthanc | `orthanc_orthanc_storage`, `orthanc_orthanc_db_data` |
 
   This page originally told you to look for them with `grep linumed-base`, which finds

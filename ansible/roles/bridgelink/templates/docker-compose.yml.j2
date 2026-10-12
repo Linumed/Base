@@ -34,6 +34,11 @@ services:
     volumes:
       - bridgelink_appdata:/opt/bridgelink/appdata
       - bridgelink_extensions:/opt/bridgelink/custom-extensions
+      # Libraries for channel scripts (HAPI FHIR and the like). Not in the image, so without
+      # this mount a JAR copied into the container is gone at the next rebuild. Channels see
+      # it through the engine's [Default Resource], which is why server.includecustomlib can
+      # stay false (issues #98, #113; measured with real HAPI FHIR 7.6.1, docs/roles/bridgelink.md).
+      - bridgelink_custom_lib:/opt/bridgelink/custom-lib
     # No HEALTHCHECK: the -dhi image is a hardened Docker Hardened Image with no shell and
     # no package manager - there is no wget/curl/sh an exec-form healthcheck could run
     # (same situation as grafana/loki in the monitoring role). Functional health is
@@ -136,4 +141,5 @@ secrets:
 volumes:
   bridgelink_appdata:
   bridgelink_extensions:
+  bridgelink_custom_lib:
   bridgelink_db_data:

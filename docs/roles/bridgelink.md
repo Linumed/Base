@@ -27,7 +27,7 @@ What is possible, in order of increasing effort:
 | Goal | How | Status here |
 |---|---|---|
 | Send/receive FHIR JSON over HTTP | HTTP listener/sender + `datatype-json`, transformers in JavaScript | Works with what ships - transport and parsing only |
-| Resource model, validation | HAPI FHIR (Apache-2.0) libraries loaded into the engine, used from transformers | **Identified, not yet wired into this role** - see below (issue #98) |
+| Resource model, validation | HAPI FHIR (Apache-2.0) libraries loaded into the engine, used from transformers | **Works, measured** with HAPI FHIR 7.6.1 (R4 and validation) in the `custom-lib` volume - the operator supplies the JARs, see below (issue #98) |
 | FHIR server: search, CapabilityStatement, conformance | A real FHIR server next to the engine | Out of scope - application software by this kit's own boundary ([ADR 0011](../adr/0011-orthanc-removed-not-part-of-base.md)) |
 
 **Where a library goes, measured with a real class load.** A channel's scripts see a
@@ -58,9 +58,36 @@ The two other directories in the image are not classpath entries on their own:
 - **`custom-extensions`** expects `*.zip` in Mirth's extension format, unpacked into
   `extensions/` on every start - not the same thing as a library.
 
-**Still open before this role changes** (issue #98): the marker JAR proves the mechanism,
-not a real HAPI-FHIR load with its dependency tree. The role change itself would then be
-the `custom-lib` mount alone - `server.includecustomlib` can stay `false`.
+**Measured with the real library (2026-10-12, issue #98).** HAPI FHIR 7.6.1 (`hapi-fhir-structures-r4`,
+`hapi-fhir-validation`, `hapi-fhir-validation-resources-r4`, 64 JARs with their dependencies, 124 MB)
+in a volume mounted at `custom-lib`, against the unmodified upstream image `26.9.0-dhi-slim`
+with `server.includecustomlib = false`. A channel's JavaScript Reader loaded the classes
+through the Default Resource (a `ChildFirstURLClassLoader`), parsed and re-encoded a Patient,
+and ran the instance validator: a valid Patient passed, an Observation without `status` and
+`code` failed with `minimum required = 1, but only found 0` for both. It ran with the
+image's own 256 MB heap default; the role's default is 512 MB.
+
+Two things in the dependency set are not obvious and cost a failed run each:
+
+- **`hapi-fhir-caching-caffeine` is not a transitive dependency.** The validator looks for a
+  cache provider through `ServiceLoader` and stops with `HAPI-2200: No Cache Service
+  Providers found` if only `hapi-fhir-caching-api` is present. Add `hapi-fhir-caching-caffeine`
+  (it brings `caffeine`) explicitly.
+- **`xpp3` must stay out.** It ships its own `javax.xml.namespace.QName`. The channel
+  classloader loads from `custom-lib` first, so the copy collides with the JDK's and the
+  first XML parse dies with `LinkageError: loader constraint violation ... javax.xml.namespace.QName`.
+  Any JAR that repackages JDK classes (`xpp3`, old `stax-api`, `xml-apis`) does the same.
+  A JSON-only use did not hit it; the validator's profile loading does.
+
+A Maven POM with those three artifacts plus the caffeine provider resolves to this set;
+`mvn dependency:copy-dependencies` and deleting `xpp3-*.jar` gives the directory to copy in.
+HAPI's `slf4j-api` has no logging provider inside the Resource, so its log output is
+dropped and the engine prints three `SLF4J(W)` lines at the first load - harmless, but not
+a sign that the load failed.
+
+The role's change is the `custom-lib` mount alone (the [`bridgelink_custom_lib`
+volume](#the-bridgelink_custom_lib-volume)); `server.includecustomlib` stays `false`. The kit
+ships no libraries: it does not download third-party code into an image it does not build.
 
 Stated this plainly because tenders ask for FHIR by name. "An HTTP channel that moves
 FHIR JSON" and "FHIR R4 support" are not the same promise, and only the first one is
@@ -148,14 +175,40 @@ The role mounts a named volume, `bridgelink_extensions`, on `/opt/bridgelink/cus
 On every container start the image's bootstrap unpacks each `*.zip` found there into the
 engine's `extensions/` directory. What it expects is Mirth's **extension format** (a
 packaged extension), not a bare library: a plain JAR dropped in here is not put on the
-classpath (see "FHIR, precisely" above for the directory that is, and why it is not wired
-up yet).
+classpath (see "FHIR, precisely" above and the [`bridgelink_custom_lib`
+volume](#the-bridgelink_custom_lib-volume) below for the directory that is).
 
 The operator fills it - the kit ships no extensions. The volume survives container
 rebuilds and image updates, which is the point of it. `teardown` removes it together with
 the other volumes (`bridgelink_bridgelink_extensions`, see
 [Teardown](../operations/teardown.md)), so extensions that exist only there are gone
 afterwards - keep the original ZIPs elsewhere.
+
+### The `bridgelink_custom_lib` volume
+
+The role mounts a named volume, `bridgelink_custom_lib`, on `/opt/bridgelink/custom-lib`
+(added in the release after 2.2.0, issue #98). It is where a library for channel scripts
+goes - HAPI FHIR, a JDBC driver, anything a transformer instantiates. The directory does
+not exist in the image, so before this volume a JAR copied into a running container was
+gone at the next rebuild, with no message.
+
+The operator fills it; the kit ships nothing. The engine only reads it, so root-owned
+files are fine. With the stack up:
+
+```bash
+docker run --rm -v bridgelink_bridgelink_custom_lib:/d -v "$PWD/jars":/j:ro busybox cp -r /j/. /d/
+docker restart linumed-base-bridgelink
+```
+
+A channel finds the classes through the Default Resource, which every channel created
+afterwards is assigned to. The measurement restarted the engine after filling the
+directory; whether a reload of the running resource is enough was not tried. Mind the two
+dependency traps under "FHIR, precisely" above: caching provider in, `xpp3` out.
+
+The volume survives container rebuilds and image updates. `teardown` removes it with the
+others (`bridgelink_bridgelink_custom_lib`, see [Teardown](../operations/teardown.md)), so
+JARs that exist only there are gone afterwards. The `backup` role covers it with the rest of
+`/var/lib/docker/volumes`, but the original JARs are the better source than a restore.
 
 ## Access
 
