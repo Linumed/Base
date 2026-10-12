@@ -286,6 +286,23 @@ Four workflows under `.forgejo/workflows/`:
   local daemon, anything else from the registry - with `GITHUB_TOKEN` removed, because the
   forge's token in that variable makes ghcr.io refuse the pull (#115, #122).
 
+- `secret-scan.yml` - scans the whole git history for secrets with gitleaks (issue #129).
+  On every push and pull request, full history (`fetch-depth: 0`), because a secret
+  deleted in a later commit is still published. No schedule: the scanner version is pinned
+  with its checksum, so the verdict on unchanged history cannot change. A release binary
+  rather than `gitleaks-action`, which needs a paid licence for organisation repositories.
+  The one finding of the first scan, a throwaway test password in a since-removed script,
+  is recorded with its reason in `.gitleaksignore`; add entries there the same way and
+  never rewrite history to hide a finding - a secret that reached `main` is rotated.
+
+  **The same scan runs before a commit, if you set up the hook.** `.git/hooks/` is not
+  versioned, so this is a one-time local step: make `.git/hooks/pre-commit` call
+  `scripts/secret-scan.sh` (add `scripts/secret-scan.sh || exit 1` to an existing hook, or
+  create a two-line one). The script scans only the staged changes, needs the gitleaks
+  version pinned in `secret-scan.yml` on `PATH` (it tells you where to get it and refuses
+  another version), and fails closed. CI is the backstop, the hook is what keeps a secret
+  out of history in the first place - the only point at which it can still be stopped.
+
 **A failed run opens an issue** (issue #117). Every workflow loads `scripts/ci-log.sh`
 through `BASH_ENV` and ends with an `if: failure()` step running
 `scripts/ci-failure-issue.py`, which opens `CI rot: <workflow>` or comments on the open

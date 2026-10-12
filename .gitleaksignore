@@ -1,0 +1,12 @@
+# Allowlist for gitleaks - findings someone looked at and decided are not secrets.
+#
+# Format: <commit>:<file>:<rule>:<line>, one per finding, each with the reason above it.
+# This is a record of a decision, not a way to hide something: an entry without a reason
+# does not belong here. Do not rewrite history to make a finding disappear; a real secret in
+# history is rotated, not deleted.
+
+# test/lib/orthanc-check.sh (removed with the Orthanc role, #92): the password in the curl
+# call is the literal throwaway value of a disposable test VM ("throwaway-test-metrics-
+# password"), set up by the same script moments earlier. It never protected anything.
+# Found by the first full-history scan, 2026-10-12 (#129).
+13d866a88057496c552a81a6b6a00cf60873bd26:test/lib/orthanc-check.sh:curl-auth-user:79

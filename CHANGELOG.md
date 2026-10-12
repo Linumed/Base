@@ -13,6 +13,14 @@ click away instead of restated here.
 
 ### Added
 
+- **Secret scan with gitleaks** (#129). The repository is public and mirrored, and until now
+  nothing looked for secrets in it - code comments assumed a scan that did not exist. New
+  workflow `secret-scan.yml` scans the full history on every push and pull request, and
+  `scripts/secret-scan.sh` runs the same scanner on the staged changes for a pre-commit hook
+  (set-up steps in `CONVENTIONS.md`). gitleaks 8.30.1 as a checksum-verified release binary,
+  not the paid action. The first full-history scan, 201 commits, found one thing: a throwaway
+  test password in the removed Orthanc check script, recorded with its reason in
+  `.gitleaksignore`. gitleaks' default rules matched nothing else.
 - **`bridgelink_custom_lib` volume on `/opt/bridgelink/custom-lib`** (#98). Libraries for
   channel scripts now survive a container rebuild; before, a JAR copied into the container
   was lost at the next `docker compose up` after an image update, silently. Measured with
