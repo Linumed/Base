@@ -32,6 +32,17 @@ click away instead of restated here.
   libraries. A new volume name is additive for [ADR 0008](adr/0008-what-the-v1-0-stability-guarantee-covers.md);
   the count there goes from 9 to 10. An existing install gets an empty volume at the next run.
 
+### Fixed
+
+- **Weekly `image-scan` red again** (#131). Four pins had fallen behind a patch that clears
+  findings and were bumped: `grafana/grafana` 13.1.7 to 13.1.9 (13 findings down to 2),
+  `grafana/loki` 3.7.7 to 3.7.9 (14 down to 0), `prom/prometheus` v3.13.4 to v3.13.5 (5
+  down to 1), `python` 3.13.15-alpine to 3.13.18-alpine (5 down to 4, the BridgeLink
+  exporter). New upstream findings published since the last refresh - CVE-2026-111943 (Go
+  standard library `crypto/x509`, 2026-10-21) on five images, plus brotli-libs and curl on
+  Caddy and two vendored Go modules in cAdvisor - are recorded in
+  `security/accepted-image-findings.txt` until the upstreams rebuild.
+
 ## [2.2.0] - 2026-10-09
 
 A maintenance and hardening release with one change to read before rolling it out: the

@@ -153,7 +153,7 @@ A few things worth knowing before sizing a real host:
   comparable and does increase with the stack, as expected.
 
 - **The optional BridgeLink exporter is not in these numbers.** Enabling
-  `bridgelink_exporter_enabled` adds one more container (a pinned `python:3.13.15-alpine`
+  `bridgelink_exporter_enabled` adds one more container (a pinned `python:3.13.18-alpine`
   running a standard-library script, no extra image built by this repo). Small next to the
   JVM, but it is one container and one image more than the table was measured with.
 - **`/var/lib/docker/volumes` starts small and grows.** 51-100 MB here is a fresh

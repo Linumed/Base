@@ -2,9 +2,9 @@
 monitoring_deploy_dir: "/opt/linumed-base/monitoring"
 
 # Container images, all pinned (checked 2026-08-10, no "latest" per CONVENTIONS.md).
-monitoring_prometheus_image: "prom/prometheus:v3.13.4"
-monitoring_grafana_image: "grafana/grafana:13.1.7"
-monitoring_loki_image: "grafana/loki:3.7.7"
+monitoring_prometheus_image: "prom/prometheus:v3.13.5"
+monitoring_grafana_image: "grafana/grafana:13.1.9"
+monitoring_loki_image: "grafana/loki:3.7.9"
 # Alloy, not Promtail - Promtail reached Node.js-unrelated EOL on 2026-03-02 and gets no
 # more security fixes. See ARCHITECTURE.md.
 monitoring_alloy_image: "grafana/alloy:v1.20.1"

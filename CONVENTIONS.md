@@ -141,7 +141,7 @@ linumed-base/
 - Container images must be pinned to a **specific version**, never `latest` and never a
   floating series tag - applies to both the Ansible templates and any `docker/<role>/`
   reference. `python:3.13-alpine` looks pinned and is not: it points at whatever patch
-  release is current and moves without any change here. Use `python:3.13.15-alpine`.
+  release is current and moves without any change here. Use `python:3.13.18-alpine`.
 - **Pins are scanned, not just set.** `scripts/scan-images.py` checks every pinned image
   for known vulnerabilities and runs weekly in CI. A finding that a newer patch would clear
   is fixed by bumping; one on an image already at its newest tag is recorded with a reason

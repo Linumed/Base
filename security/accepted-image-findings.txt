@@ -28,6 +28,9 @@
 # 2026-10-09 (#124): alloy, BridgeLink and alertmanager moved to their newer series;
 # their old-tag entries removed. Two Go standard library CVEs published 2026-10-08 hit
 # eight images at once and are recorded per image until upstreams rebuild.
+# 2026-10-27 (#131): grafana, loki, prometheus and python bumped to their newest patches;
+# entries for the replaced tags removed. CVE-2026-111943 (Go stdlib, 2026-10-21) and a few
+# base-image CVEs published since hit the newest-tag images and are recorded per image.
 # 2026-10-12 (#128): a third CVE of the same batch (CVE-2026-78669, published later on
 # 2026-10-08) reached the vulnerability DB after that and hit the same eight images.
 
@@ -35,6 +38,9 @@
 caddy:2.11.7-alpine  CVE-2026-78667  # Go standard library 1.26.8, published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-09)
 caddy:2.11.7-alpine  CVE-2026-78669  # Go standard library 1.26.8 (net/http HTTP/2 SETTINGS flood, DoS), published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-12)
 caddy:2.11.7-alpine  CVE-2026-97031  # Go standard library 1.26.8, published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-09)
+caddy:2.11.7-alpine  CVE-2026-111943  # Go standard library, crypto/x509 (untrusted intermediates), published 2026-10-21, fixed in Go 1.26.10/1.27.3 - clears when upstream rebuilds with it; no newer tag yet (2026-10-27)
+caddy:2.11.7-alpine  CVE-2026-111497  # brotli-libs 1.2.0 in the alpine base, published 2026-10-22, fixed in 1.2.1-r0 - clears when upstream rebuilds; no newer tag yet (2026-10-27)
+caddy:2.11.7-alpine  CVE-2026-92392  # curl/libcurl 8.22.0 in the alpine base (HTTP/2 upload use-after-free), published 2026-10-14, fixed in 8.23.0-r0 - clears when upstream rebuilds; no newer tag yet (2026-10-27)
 
 # ghcr.io/google/cadvisor:v0.60.6 - remains after bumping to the newest patch (v0.60.6); cadvisor is on its newest tag
 ghcr.io/google/cadvisor:v0.60.6  CVE-2026-56854  # remains after bumping to the newest patch (v0.60.6); cadvisor is on its newest tag (2026-10-08)
@@ -44,34 +50,20 @@ ghcr.io/google/cadvisor:v0.60.6  GHSA-hrxh-6v49-42gf  # remains after bumping to
 ghcr.io/google/cadvisor:v0.60.6  CVE-2026-78667  # Go standard library 1.26.8, published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-09)
 ghcr.io/google/cadvisor:v0.60.6  CVE-2026-78669  # Go standard library 1.26.8 (net/http HTTP/2 SETTINGS flood, DoS), published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-12)
 ghcr.io/google/cadvisor:v0.60.6  CVE-2026-97031  # Go standard library 1.26.8, published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-09)
+ghcr.io/google/cadvisor:v0.60.6  CVE-2026-111943  # Go standard library, crypto/x509 (untrusted intermediates), published 2026-10-21, fixed in Go 1.26.10/1.27.3 - clears when upstream rebuilds with it; no newer tag yet (2026-10-27)
+ghcr.io/google/cadvisor:v0.60.6  CVE-2026-56851  # golang.org/x/text v0.40.0 vendored in the binary, fixed in 0.41.0 - clears when upstream rebuilds; cadvisor is on its newest tag (2026-10-27)
+ghcr.io/google/cadvisor:v0.60.6  CVE-2026-63209  # klauspost/compress v1.18.0 vendored in the binary, fixed in 1.18.7 - clears when upstream rebuilds; cadvisor is on its newest tag (2026-10-27)
 
 # grafana/alloy:v1.20.1 - newest release, after the v1.18 -> v1.20 series bump (#124)
 grafana/alloy:v1.20.1  CVE-2026-78667  # Go standard library 1.26.8, published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-09)
 grafana/alloy:v1.20.1  CVE-2026-84782  # remains on the newest release after the series bump (#124) (2026-10-09)
 grafana/alloy:v1.20.1  CVE-2026-78669  # Go standard library 1.26.8 (net/http HTTP/2 SETTINGS flood, DoS), published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-12)
 grafana/alloy:v1.20.1  CVE-2026-97031  # Go standard library 1.26.8, published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-09)
+grafana/alloy:v1.20.1  CVE-2026-111943  # Go standard library, crypto/x509 (untrusted intermediates), published 2026-10-21, fixed in Go 1.26.10/1.27.3 - clears when upstream rebuilds with it; no newer tag yet (2026-10-27)
 
-# grafana/grafana:13.1.7 - remains after bumping to the newest patch (13.1.7); a 13.2 series bump is a separate decision
-grafana/grafana:13.1.7  CVE-2026-21728  # remains after bumping to the newest patch (13.1.7); a 13.2 series bump is a separate decision (2026-10-08)
-grafana/grafana:13.1.7  CVE-2026-28377  # remains after bumping to the newest patch (13.1.7); a 13.2 series bump is a separate decision (2026-10-08)
-grafana/grafana:13.1.7  CVE-2026-78667  # Go standard library 1.26.8, published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-09)
-grafana/grafana:13.1.7  CVE-2026-78669  # Go standard library 1.26.8 (net/http HTTP/2 SETTINGS flood, DoS), published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-12)
-grafana/grafana:13.1.7  CVE-2026-97031  # Go standard library 1.26.8, published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-09)
-
-# grafana/loki:3.7.7 - loki is already on its newest tag
-grafana/loki:3.7.7  CVE-2026-33818  # loki is already on its newest tag (2026-09-16)
-grafana/loki:3.7.7  CVE-2026-39821  # loki is already on its newest tag (2026-09-16)
-grafana/loki:3.7.7  CVE-2026-46600  # loki is already on its newest tag (2026-09-16)
-grafana/loki:3.7.7  CVE-2026-56853  # loki is already on its newest tag (2026-09-16)
-grafana/loki:3.7.7  CVE-2026-56858  # loki is already on its newest tag (2026-09-16)
-grafana/loki:3.7.7  CVE-2026-56859  # loki is already on its newest tag (2026-09-16)
-grafana/loki:3.7.7  CVE-2026-56860  # loki is already on its newest tag (2026-09-16)
-grafana/loki:3.7.7  CVE-2026-56862  # loki is already on its newest tag (2026-09-16)
-grafana/loki:3.7.7  CVE-2026-84304  # loki is already on its newest tag (2026-09-16)
-grafana/loki:3.7.7  CVE-2026-84445  # loki is already on its newest tag (2026-09-16)
-grafana/loki:3.7.7  CVE-2026-78667  # Go standard library 1.26.8, published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-09)
-grafana/loki:3.7.7  CVE-2026-78669  # Go standard library 1.26.8 (net/http HTTP/2 SETTINGS flood, DoS), published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-12)
-grafana/loki:3.7.7  CVE-2026-97031  # Go standard library 1.26.8, published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-09)
+# grafana/grafana:13.1.9 - remains after bumping to the newest patch (13.1.9); a 13.3 series bump is a separate decision
+grafana/grafana:13.1.9  CVE-2026-21728  # remains after bumping to the newest patch (13.1.9); a 13.3 series bump is a separate decision (2026-10-27)
+grafana/grafana:13.1.9  CVE-2026-28377  # remains after bumping to the newest patch (13.1.9); a 13.3 series bump is a separate decision (2026-10-27)
 
 # innovarhealthcare/bridgelink:26.9.0-dhi-slim - newest release, after the 26.6 -> 26.9 series bump (#124); upstream gates its own build on fixable OS findings, so these are what its gate lets through
 innovarhealthcare/bridgelink:26.9.0-dhi-slim  CVE-2024-47554  # remains on the newest release after the series bump (#124) (2026-10-09)
@@ -116,31 +108,23 @@ postgres:17.11-alpine  CVE-2026-78410  # remains after bumping to the newest pat
 postgres:17.11-alpine  CVE-2026-78667  # Go standard library 1.26.8, published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-09)
 postgres:17.11-alpine  CVE-2026-78669  # Go standard library 1.26.8 (net/http HTTP/2 SETTINGS flood, DoS), published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-12)
 postgres:17.11-alpine  CVE-2026-97031  # Go standard library 1.26.8, published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-09)
+postgres:17.11-alpine  CVE-2026-111943  # Go standard library, crypto/x509 (untrusted intermediates), published 2026-10-21, fixed in Go 1.26.10/1.27.3 - clears when upstream rebuilds with it; no newer tag yet (2026-10-27)
 
 # prom/alertmanager:v0.34.1 - newest release, after the v0.33 -> v0.34 series bump (#124)
 prom/alertmanager:v0.34.1  CVE-2026-78667  # Go standard library 1.26.8, published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-09)
 prom/alertmanager:v0.34.1  CVE-2026-84445  # remains on the newest release after the series bump (#124) (2026-10-09)
 prom/alertmanager:v0.34.1  CVE-2026-78669  # Go standard library 1.26.8 (net/http HTTP/2 SETTINGS flood, DoS), published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-12)
 prom/alertmanager:v0.34.1  CVE-2026-97031  # Go standard library 1.26.8, published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-09)
+prom/alertmanager:v0.34.1  CVE-2026-111943  # Go standard library, crypto/x509 (untrusted intermediates), published 2026-10-21, fixed in Go 1.26.10/1.27.3 - clears when upstream rebuilds with it; no newer tag yet (2026-10-27)
 
-# prom/prometheus:v3.13.4 - remains after bumping to the newest patch (3.13.4); v3.15 is a series bump and a separate decision
-prom/prometheus:v3.13.4  CVE-2026-84445  # remains after bumping to the newest patch (3.13.4); v3.15 is a series bump and a separate decision (2026-10-08)
-prom/prometheus:v3.13.4  CVE-2026-78667  # Go standard library 1.26.8, published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-09)
-prom/prometheus:v3.13.4  CVE-2026-78669  # Go standard library 1.26.8 (net/http HTTP/2 SETTINGS flood, DoS), published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-12)
-prom/prometheus:v3.13.4  CVE-2026-97031  # Go standard library 1.26.8, published 2026-10-08, fixed in Go 1.26.9/1.27.2 - clears when upstream rebuilds with it; no newer tag yet (2026-10-09)
+# prom/prometheus:v3.13.5 - remains after bumping to the newest patch (3.13.5); v3.15 is a series bump and a separate decision
+prom/prometheus:v3.13.5  CVE-2026-84445  # remains after bumping to the newest patch (3.13.5); v3.15 is a series bump and a separate decision (2026-10-27)
 
-# python:3.13.15-alpine - alpine base image, already on the newest 3.13 patch
-python:3.13.15-alpine  CVE-2025-47273  # alpine base image, already on the newest 3.13 patch (2026-09-16)
-python:3.13.15-alpine  CVE-2026-53612  # alpine base image, already on the newest 3.13 patch (2026-09-16)
-python:3.13.15-alpine  CVE-2026-53613  # alpine base image, already on the newest 3.13 patch (2026-09-16)
-python:3.13.15-alpine  CVE-2026-53614  # alpine base image, already on the newest 3.13 patch (2026-09-16)
-python:3.13.15-alpine  CVE-2026-76642  # alpine base image, already on the newest 3.13 patch (2026-09-16)
-python:3.13.15-alpine  CVE-2026-78408  # alpine base image, already on the newest 3.13 patch (2026-09-16)
-python:3.13.15-alpine  CVE-2026-78409  # alpine base image, already on the newest 3.13 patch (2026-09-16)
-python:3.13.15-alpine  CVE-2026-78410  # alpine base image, already on the newest 3.13 patch (2026-09-16)
-python:3.13.15-alpine  GHSA-6v7p-g79w-8964  # alpine base image, already on the newest 3.13 patch (2026-09-16)
-python:3.13.15-alpine  CVE-2026-97687  # alpine base image, already on the newest 3.13 patch (2026-10-08)
-python:3.13.15-alpine  CVE-2026-97689  # alpine base image, already on the newest 3.13 patch (2026-10-08)
+# python:3.13.18-alpine - alpine base image, already on the newest 3.13 patch
+python:3.13.18-alpine  CVE-2025-47273  # alpine base image, already on the newest 3.13 patch; clears when upstream rebuilds (2026-10-27)
+python:3.13.18-alpine  GHSA-6v7p-g79w-8964  # alpine base image, already on the newest 3.13 patch; clears when upstream rebuilds (2026-10-27)
+python:3.13.18-alpine  CVE-2026-97687  # alpine base image, already on the newest 3.13 patch; clears when upstream rebuilds (2026-10-27)
+python:3.13.18-alpine  CVE-2026-97689  # alpine base image, already on the newest 3.13 patch; clears when upstream rebuilds (2026-10-27)
 
 # tecnativa/docker-socket-proxy:0.3.0 - already on its newest tag; upstream has not released since
 tecnativa/docker-socket-proxy:0.3.0  CVE-2025-26519  # already on its newest tag; upstream has not released since (2026-08-20)

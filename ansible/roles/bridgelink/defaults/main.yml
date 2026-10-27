@@ -79,7 +79,7 @@ bridgelink_exporter_enabled: false
 # CONVENTIONS.md means by "pinned to a specific version tag". Caught by scripts/scan-images.py
 # (issue #67) - with the series tag it could not tell a security patch from a Python version
 # jump and proposed 3.14-alpine as an update.
-bridgelink_exporter_image: "python:3.13.15-alpine"
+bridgelink_exporter_image: "python:3.13.18-alpine"
 
 # Loopback only, same reasoning as every other port in this repo. This port is for a human
 # with curl, NOT the path Prometheus uses: a container port published on 127.0.0.1 is not
