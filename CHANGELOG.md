@@ -34,6 +34,10 @@ click away instead of restated here.
 
 ### Fixed
 
+- **Local-tooling settings directory removed from the repository root** (#132). It held one
+  setting that is already applied machine-wide, so the committed copy added nothing but a
+  tool name in the public file tree. The directory is now ignored locally instead of
+  committed.
 - **Weekly `image-scan` red again** (#131). Four pins had fallen behind a patch that clears
   findings and were bumped: `grafana/grafana` 13.1.7 to 13.1.9 (13 findings down to 2),
   `grafana/loki` 3.7.7 to 3.7.9 (14 down to 0), `prom/prometheus` v3.13.4 to v3.13.5 (5
