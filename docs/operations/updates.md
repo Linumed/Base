@@ -36,7 +36,7 @@ conscious action:
 | monitoring | `monitoring_grafana_image` | `grafana/grafana:13.1.9` |
 | monitoring | `monitoring_loki_image` | `grafana/loki:3.7.9` |
 | monitoring | `monitoring_alloy_image` | `grafana/alloy:v1.20.1` |
-| monitoring | `monitoring_alertmanager_image` | `prom/alertmanager:v0.34.1` |
+| monitoring | `monitoring_alertmanager_image` | `prom/alertmanager:v0.34.2` |
 | monitoring | `monitoring_cadvisor_image` | `ghcr.io/google/cadvisor:v0.60.6` |
 | monitoring | `monitoring_docker_socket_proxy_image` | `tecnativa/docker-socket-proxy:0.3.0` |
 

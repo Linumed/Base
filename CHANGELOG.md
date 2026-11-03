@@ -34,6 +34,11 @@ click away instead of restated here.
 
 ### Fixed
 
+- **Weekly `image-scan` red again** (#133). `prom/alertmanager` v0.34.1 had fallen behind
+  v0.34.2, which clears all five of its findings; bumped. Five findings published since the
+  last refresh are recorded in `security/accepted-image-findings.txt` until the upstreams
+  rebuild: go-jose 4.1.6 (CVE-2026-116587, 2026-10-26) on Caddy, Alloy and Grafana, guava
+  (CVE-2026-102554) in BridgeLink, msgpack (CVE-2026-114613) in the Python exporter image.
 - **Local-tooling settings directory removed from the repository root** (#132). It held one
   setting that is already applied machine-wide, so the committed copy added nothing but a
   tool name in the public file tree. The directory is now ignored locally instead of
